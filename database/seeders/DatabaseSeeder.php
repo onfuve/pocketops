@@ -15,11 +15,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Create admin user if none exists
+        if (!User::where('role', User::ROLE_ADMIN)->exists()) {
+            User::factory()->create([
+                'name' => 'مدیر',
+                'email' => 'admin@example.com',
+                'role' => User::ROLE_ADMIN,
+                'can_delete_invoice' => true,
+                'can_delete_contact' => true,
+                'can_delete_lead' => true,
+            ]);
+        }
     }
 }

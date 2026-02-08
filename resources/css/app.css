@@ -5,7 +5,154 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/* Local Vazirmatn Farsi font (no CDN) */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Vazirmatn', ui-sans-serif, system-ui, 'Segoe UI', 'Tahoma', sans-serif;
+    /* Theme: warm primary + accent for a lived-in feel */
+    --color-primary-50: #ecfdf5;
+    --color-primary-100: #d1fae5;
+    --color-primary-200: #a7f3d0;
+    --color-primary-500: #10b981;
+    --color-primary-600: #059669;
+    --color-primary-700: #047857;
+    --color-primary-800: #065f46;
+    --color-accent-500: #0ea5e9;
+    --color-accent-600: #0284c7;
+}
+
+.font-vazir {
+    font-family: 'Vazirmatn', sans-serif;
+}
+
+/* RTL and mobile-first base */
+@layer base {
+    [dir="rtl"] {
+        text-align: right;
+    }
+    input[type="text"],
+    input[type="search"],
+    input[type="email"],
+    input[type="url"],
+    input[type="number"],
+    input[type="tel"],
+    textarea,
+    select {
+        font-size: 1rem;
+    }
+    a, button {
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* Themed components – explicit colors so they always apply */
+@layer components {
+    .card {
+        @apply rounded-2xl border bg-white p-5 shadow-sm transition sm:p-6;
+        border-color: #e7e5e4;
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06);
+    }
+    .card:hover {
+        border-color: #d6d3d1;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08);
+    }
+    .card-flat {
+        @apply rounded-2xl border bg-white p-5 sm:p-6;
+        border-color: #e7e5e4;
+    }
+    .btn-primary {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-2 btn-touch;
+        background-color: #059669;
+    }
+    .btn-primary:hover {
+        background-color: #047857;
+    }
+    .btn-primary:focus {
+        --tw-ring-color: #10b981;
+    }
+    .btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition btn-touch;
+        border-color: #e7e5e4;
+        background-color: #fff;
+        color: #44403c;
+    }
+    .btn-secondary:hover {
+        border-color: #d6d3d1;
+        background-color: #fafaf9;
+    }
+    .btn-danger {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition btn-touch;
+        border-color: #fecaca;
+        background-color: #fff;
+        color: #b91c1c;
+    }
+    .btn-danger:hover {
+        background-color: #fef2f2;
+        border-color: #fca5a5;
+    }
+    .badge {
+        @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    }
+    .badge-primary {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    .badge-accent {
+        background-color: #e0f2fe;
+        color: #0369a1;
+    }
+    .badge-amber {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    .badge-violet {
+        background-color: #ede9fe;
+        color: #5b21b6;
+    }
+    .input-ring {
+        @apply w-full rounded-xl border-2 px-4 py-2.5 transition;
+        border-color: #e7e5e4;
+        color: #292524;
+    }
+    .input-ring::placeholder {
+        color: #a8a29e;
+    }
+    .input-ring:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgb(16 185 129 / 0.2);
+    }
+    .page-title {
+        @apply text-xl font-bold sm:text-2xl;
+        color: #292524;
+    }
+    .page-subtitle {
+        @apply mt-1 text-sm;
+        color: #78716c;
+    }
+    .empty-state {
+        @apply rounded-2xl border-2 border-dashed p-8 text-center;
+        border-color: #e7e5e4;
+        background-color: #fafaf9;
+        color: #78716c;
+    }
+    .nav-link {
+        @apply flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition min-h-[44px];
+        color: #57534e;
+    }
+    .nav-link:hover {
+        background-color: #ecfdf5;
+        color: #047857;
+    }
+    .nav-link-active {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+}
+
+/* Touch-friendly */
+@layer utilities {
+    @media (pointer: coarse) {
+        .touch-target { min-height: 44px; min-width: 44px; }
+        .btn-touch { min-height: 44px; padding-top: 0.625rem; padding-bottom: 0.625rem; }
+    }
 }

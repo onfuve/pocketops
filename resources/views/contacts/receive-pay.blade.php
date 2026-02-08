@@ -96,16 +96,16 @@
                     <label for="pay_type_contact">از طریق مخاطب دیگر</label>
                 </div>
                 <div id="panel-bank" class="payment-panel {{ old('payment_type', 'bank') === 'bank' ? 'active' : '' }}">
-                    <select name="bank_account_id" id="bank_account_id">
+                    <select name="payment_option_id" id="payment_option_id">
                         <option value="">انتخاب حساب بانکی</option>
-                        @foreach($bankAccounts as $b)
-                            <option value="{{ $b->id }}" {{ old('bank_account_id') == $b->id ? 'selected' : '' }}>{{ $b->name }} @if($b->account_number)({{ $b->account_number }})@endif</option>
+                        @foreach($paymentOptions as $opt)
+                            <option value="{{ $opt->id }}" {{ old('payment_option_id') == $opt->id ? 'selected' : '' }}>{{ $opt->label ?: ($opt->holder_name ?? $opt->bank_name ?? '—') }} @if($opt->account_number)({{ $opt->account_number }})@endif</option>
                         @endforeach
                     </select>
-                    @if($bankAccounts->isEmpty())
+                    @if($paymentOptions->isEmpty())
                         <p class="text-muted" style="margin-top: 0.5rem;">
                             هنوز حسابی تعریف نشده است.
-                            <a href="{{ route('bank-accounts.create') }}" style="font-weight: 600; color: #059669; text-decoration: none;">افزودن حساب بانکی</a>
+                            <a href="{{ route('settings.payment-options') }}" style="font-weight: 600; color: #059669; text-decoration: none;">تنظیمات کارت و حساب</a>
                         </p>
                     @endif
                 </div>
@@ -130,7 +130,7 @@
                 <label>یادداشت</label>
                 <textarea name="notes" rows="2" placeholder="اختیاری">{{ old('notes') }}</textarea>
             </div>
-            @error('bank_account_id')<p class="text-danger">{{ $message }}</p>@enderror
+            @error('payment_option_id')<p class="text-danger">{{ $message }}</p>@enderror
             @error('counterparty_contact_id')<p class="text-danger">{{ $message }}</p>@enderror
             <div class="flex flex-wrap items-center gap-3 mt-6">
                 <button type="submit" class="btn btn-primary px-6 py-3" style="font-size:1rem;"><span style="color:#fff;">ثبت</span></button>
@@ -148,7 +148,7 @@
     var payTypeContact = document.getElementById('pay_type_contact');
     var panelBank = document.getElementById('panel-bank');
     var panelContact = document.getElementById('panel-contact');
-    var bankSelect = document.getElementById('bank_account_id');
+    var bankSelect = document.getElementById('payment_option_id');
     var counterpartyInput = document.getElementById('counterparty_contact_id');
     var contactSearch = document.getElementById('contact_search');
     var contactResults = document.getElementById('contact_results');

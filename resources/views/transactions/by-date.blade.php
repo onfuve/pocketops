@@ -46,7 +46,9 @@
                         <td>@if($t->invoice->type === Invoice::TYPE_SELL)<span class="badge bg-success">فروش</span>@else<span class="badge bg-warning text-dark">خرید</span>@endif</td>
                         <td><a href="{{ route('contacts.show', $t->invoice->contact) }}">{{ $t->invoice->contact->name }}</a></td>
                         <td>
-                            @if($t->bankAccount)
+                            @if($t->paymentOption)
+                                <i class="fas fa-university me-1"></i>{{ $t->paymentOption->label ?: ($t->paymentOption->holder_name ?? $t->paymentOption->bank_name ?? '—') }}
+                            @elseif($t->bankAccount)
                                 <i class="fas fa-university me-1"></i>{{ $t->bankAccount->name }}
                             @elseif($t->contact)
                                 <i class="fas fa-user me-1"></i><a href="{{ route('contacts.show', $t->contact) }}">{{ $t->contact->name }}</a>

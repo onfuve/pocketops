@@ -13,6 +13,7 @@ class ContactTransaction extends Model
         'amount',
         'paid_at',
         'bank_account_id',
+        'payment_option_id',
         'counterparty_contact_id',
         'notes',
     ];
@@ -33,6 +34,11 @@ class ContactTransaction extends Model
     public function bankAccount(): BelongsTo
     {
         return $this->belongsTo(BankAccount::class);
+    }
+
+    public function paymentOption(): BelongsTo
+    {
+        return $this->belongsTo(PaymentOption::class);
     }
 
     public function counterpartyContact(): BelongsTo

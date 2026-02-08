@@ -4,11 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Helpers\FormatHelper;
 use App\Models\Attachment;
-use App\Models\BankAccount;
+use App\Models\PaymentOption;
 use App\Models\Contact;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
-use App\Models\PaymentOption;
 use App\Models\Tag;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -237,10 +236,10 @@ class InvoiceController extends Controller
         abort_unless($invoice->isVisibleTo(request()->user()), 403, 'شما به این فاکتور دسترسی ندارید.');
 
         $invoice->load('contact');
-        $bankAccounts = BankAccount::orderBy('name')->get();
+        $paymentOptions = PaymentOption::orderBy('sort')->get();
         $remaining = (float) $invoice->total - $invoice->totalPaid();
         $defaultPaidAt = FormatHelper::shamsi(now());
-        return view('invoices.set-paid', compact('invoice', 'bankAccounts', 'remaining', 'defaultPaidAt'));
+        return view('invoices.set-paid', compact('invoice', 'paymentOptions', 'remaining', 'defaultPaidAt'));
     }
 
     public function submitSetPaid(Request $request, Invoice $invoice)
@@ -250,15 +249,15 @@ class InvoiceController extends Controller
         $data = $request->validate([
             'amount' => 'required|numeric|min:0.01',
             'paid_at' => 'required|string|max:20',
-            'bank_account_id' => 'nullable|exists:bank_accounts,id',
+            'payment_option_id' => 'nullable|exists:payment_options,id',
             'contact_id' => 'nullable|exists:contacts,id',
             'notes' => 'nullable|string',
         ]);
-        if (empty($data['bank_account_id']) && empty($data['contact_id'])) {
-            return back()->withErrors(['bank_account_id' => 'یکی از حساب بانکی یا مخاطب را انتخاب کنید.'])->withInput();
+        if (empty($data['payment_option_id']) && empty($data['contact_id'])) {
+            return back()->withErrors(['payment_option_id' => 'یکی از حساب بانکی یا مخاطب را انتخاب کنید.'])->withInput();
         }
-        if (!empty($data['bank_account_id']) && !empty($data['contact_id'])) {
-            return back()->withErrors(['bank_account_id' => 'فقط یکی از حساب بانکی یا مخاطب را انتخاب کنید.'])->withInput();
+        if (!empty($data['payment_option_id']) && !empty($data['contact_id'])) {
+            return back()->withErrors(['payment_option_id' => 'فقط یکی از حساب بانکی یا مخاطب را انتخاب کنید.'])->withInput();
         }
         $paidAt = trim($data['paid_at']);
         $gregorian = FormatHelper::shamsiToGregorian($paidAt);
@@ -269,7 +268,7 @@ class InvoiceController extends Controller
         $payment = new InvoicePayment([
             'amount' => $data['amount'],
             'paid_at' => $data['paid_at'],
-            'bank_account_id' => $data['bank_account_id'] ?? null,
+            'payment_option_id' => $data['payment_option_id'] ?? null,
             'contact_id' => $data['contact_id'] ?? null,
             'notes' => $data['notes'] ?? null,
         ]);

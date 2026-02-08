@@ -12,7 +12,7 @@ class TransactionController extends Controller
     public function byDate(Request $request)
     {
         $user = $request->user();
-        $query = InvoicePayment::with(['invoice.contact', 'bankAccount', 'contact'])
+        $query = InvoicePayment::with(['invoice.contact', 'bankAccount', 'paymentOption', 'contact'])
             ->whereHas('invoice', fn ($q) => $q->visibleToUser($user))
             ->orderByDesc('paid_at')->orderByDesc('id');
         if ($request->filled('from')) {

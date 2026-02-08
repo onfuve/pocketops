@@ -12,6 +12,7 @@ class InvoicePayment extends Model
         'amount',
         'paid_at',
         'bank_account_id',
+        'payment_option_id',
         'contact_id',
         'notes',
     ];
@@ -29,6 +30,11 @@ class InvoicePayment extends Model
     public function bankAccount(): BelongsTo
     {
         return $this->belongsTo(BankAccount::class);
+    }
+
+    public function paymentOption(): BelongsTo
+    {
+        return $this->belongsTo(PaymentOption::class);
     }
 
     public function contact(): BelongsTo

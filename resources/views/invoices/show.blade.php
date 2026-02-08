@@ -151,7 +151,9 @@
                                     <td class="px-4 py-3 text-stone-700 border-l border-stone-200">{{ FormatHelper::shamsi($pay->paid_at) }}</td>
                                     <td class="px-4 py-3 font-medium text-stone-800 border-l border-stone-200">{{ FormatHelper::rial($pay->amount) }}</td>
                                     <td class="px-4 py-3 border-l border-stone-200">
-                                        @if ($pay->bankAccount)
+                                        @if ($pay->paymentOption)
+                                            <span>{{ $pay->paymentOption->label ?: ($pay->paymentOption->holder_name ?? $pay->paymentOption->bank_name ?? '—') }}</span>
+                                        @elseif ($pay->bankAccount)
                                             <span>{{ $pay->bankAccount->name }}</span>
                                         @elseif ($pay->contact)
                                             <a href="{{ route('contacts.show', $pay->contact) }}" class="text-stone-700 hover:underline">{{ $pay->contact->name }}</a>

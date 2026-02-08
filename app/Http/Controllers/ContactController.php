@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FormatHelper;
-use App\Models\BankAccount;
+use App\Models\PaymentOption;
 use App\Models\Contact;
 use App\Models\ContactPhone;
 use App\Models\ContactTransaction;
@@ -153,9 +153,9 @@ class ContactController extends Controller
     {
         abort_unless($contact->isVisibleTo(request()->user()), 403, 'شما به این مخاطب دسترسی ندارید.');
 
-        $bankAccounts = BankAccount::orderBy('name')->get();
+        $paymentOptions = PaymentOption::orderBy('sort')->get();
         $defaultPaidAt = FormatHelper::shamsi(now());
-        return view('contacts.receive-pay', compact('contact', 'bankAccounts', 'defaultPaidAt'));
+        return view('contacts.receive-pay', compact('contact', 'paymentOptions', 'defaultPaidAt'));
     }
 
     public function submitReceivePay(Request $request, Contact $contact)
@@ -166,15 +166,15 @@ class ContactController extends Controller
             'type' => 'required|in:receive,pay',
             'amount' => 'required|numeric|min:0.01',
             'paid_at' => 'required|string|max:20',
-            'bank_account_id' => 'nullable|exists:bank_accounts,id',
+            'payment_option_id' => 'nullable|exists:payment_options,id',
             'counterparty_contact_id' => 'nullable|exists:contacts,id',
             'notes' => 'nullable|string',
         ]);
-        if (empty($data['bank_account_id']) && empty($data['counterparty_contact_id'])) {
-            return back()->withErrors(['bank_account_id' => 'یکی از حساب بانکی یا مخاطب طرف معامله را انتخاب کنید.'])->withInput();
+        if (empty($data['payment_option_id']) && empty($data['counterparty_contact_id'])) {
+            return back()->withErrors(['payment_option_id' => 'یکی از حساب بانکی یا مخاطب طرف معامله را انتخاب کنید.'])->withInput();
         }
-        if (!empty($data['bank_account_id']) && !empty($data['counterparty_contact_id'])) {
-            return back()->withErrors(['bank_account_id' => 'فقط یکی از حساب بانکی یا مخاطب را انتخاب کنید.'])->withInput();
+        if (!empty($data['payment_option_id']) && !empty($data['counterparty_contact_id'])) {
+            return back()->withErrors(['payment_option_id' => 'فقط یکی از حساب بانکی یا مخاطب را انتخاب کنید.'])->withInput();
         }
         $paidAt = trim($data['paid_at']);
         $gregorian = FormatHelper::shamsiToGregorian($paidAt);

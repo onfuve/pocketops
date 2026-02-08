@@ -4,7 +4,6 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\BankAccountController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\InvoiceController;
@@ -79,7 +78,11 @@ Route::post('settings/company/address', [SettingController::class, 'updateCompan
 
 Route::resource('tags', TagController::class);
 
-Route::resource('bank-accounts', BankAccountController::class)->except('show');
+Route::redirect('bank-accounts', '/settings/payment-options');
+Route::redirect('bank-accounts/create', '/settings/payment-options');
+Route::get('bank-accounts/{path}', function () {
+    return redirect()->route('settings.payment-options');
+})->where('path', '.+');
 
 Route::get('api/tasks/search-taskable', [TaskController::class, 'searchTaskableApi'])->name('tasks.search-taskable.api');
 Route::resource('tasks', TaskController::class);

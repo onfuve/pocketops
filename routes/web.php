@@ -84,6 +84,8 @@ Route::get('settings/company', [SettingController::class, 'companyIndex'])->name
 Route::get('settings/company/address', [SettingController::class, 'companyAddress'])->name('settings.company.address');
 Route::post('settings/company/address', [SettingController::class, 'updateCompany'])->name('settings.company.update');
 
+Route::get('products/import/form', [ProductController::class, 'importForm'])->name('products.import');
+Route::post('products/import', [ProductController::class, 'import'])->name('products.import.store');
 Route::resource('products', ProductController::class);
 Route::post('price-lists/{priceList}/duplicate', [PriceListController::class, 'duplicate'])->name('price-lists.duplicate');
 Route::post('price-lists/{priceList}/generate-code', [PriceListController::class, 'generateCode'])->name('price-lists.generate-code');

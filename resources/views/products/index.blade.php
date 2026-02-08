@@ -22,10 +22,16 @@
             </h1>
             <p class="ds-page-subtitle">کاتالوگ کالاها و خدمات برای فاکتور و لیست قیمت.</p>
         </div>
-        <a href="{{ route('products.create') }}" class="ds-btn ds-btn-primary">
-            @include('components._icons', ['name' => 'plus', 'class' => 'w-4 h-4'])
-            کالا/خدمت جدید
-        </a>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            <a href="{{ route('products.create') }}" class="ds-btn ds-btn-primary">
+                @include('components._icons', ['name' => 'plus', 'class' => 'w-4 h-4'])
+                کالا/خدمت جدید
+            </a>
+            <a href="{{ route('products.import') }}" class="ds-btn ds-btn-outline">
+                @include('components._icons', ['name' => 'file-import', 'class' => 'w-4 h-4'])
+                ورود CSV
+            </a>
+        </div>
     </div>
 
     <div class="ds-search-row" style="margin-bottom: 1.5rem;">
@@ -45,7 +51,11 @@
     @if ($products->isEmpty())
         <div class="ds-empty">
             <p style="margin: 0 0 0.5rem 0; color: var(--ds-text-subtle);">هنوز کالا یا خدمتی ثبت نشده است.</p>
-            <p style="margin: 0; font-size: 0.875rem;"><a href="{{ route('products.create') }}" style="font-weight: 600; color: var(--ds-primary); text-decoration: none;">اولین کالا/خدمت را اضافه کنید</a></p>
+            <p style="margin: 0; font-size: 0.875rem;">
+                <a href="{{ route('products.create') }}" style="font-weight: 600; color: var(--ds-primary); text-decoration: none;">اولین کالا/خدمت را اضافه کنید</a>
+                یا
+                <a href="{{ route('products.import') }}" style="font-weight: 600; color: var(--ds-primary); text-decoration: none;">از فایل CSV وارد کنید</a>.
+            </p>
         </div>
     @else
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">

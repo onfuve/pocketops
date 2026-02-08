@@ -48,14 +48,26 @@ class TaskController extends Controller
     {
         $taskable = $this->resolveTaskable($request);
         $users = User::orderBy('name')->get();
+        $shamsiToday = FormatHelper::shamsi(now());
+        $dueDateShamsi = $shamsiToday;
 
-        return view('tasks.create', compact('taskable', 'users'));
+        return view('tasks.create', compact('taskable', 'users', 'shamsiToday', 'dueDateShamsi'));
     }
 
     public function store(Request $request)
     {
         $taskable = $this->resolveTaskable($request);
-        abort_unless($taskable && $this->canAccessTaskable($taskable), 403, 'شما به این مورد دسترسی ندارید.');
+        if ($taskable && !$this->canAccessTaskable($taskable)) {
+            abort(403, 'شما به این مورد دسترسی ندارید.');
+        }
+
+        $dueDate = $request->get('due_date');
+        if (is_string($dueDate) && trim($dueDate) !== '') {
+            $gregorian = FormatHelper::shamsiToGregorian($dueDate);
+            if ($gregorian !== null) {
+                $request->merge(['due_date' => $gregorian]);
+            }
+        }
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -73,8 +85,8 @@ class TaskController extends Controller
             'status' => $validated['status'],
             'due_date' => $validated['due_date'] ?? null,
             'due_time' => $validated['due_time'] ?? null,
-            'taskable_type' => get_class($taskable),
-            'taskable_id' => $taskable->id,
+            'taskable_type' => $taskable ? get_class($taskable) : null,
+            'taskable_id' => $taskable?->id,
             'user_id' => $request->user()->id,
         ]);
 
@@ -88,13 +100,25 @@ class TaskController extends Controller
     {
         $this->authorizeTask($task);
         $users = User::orderBy('name')->get();
+        $shamsiToday = FormatHelper::shamsi(now());
+        $dueDateShamsi = $task->due_date ? FormatHelper::shamsi($task->due_date) : '';
 
-        return view('tasks.edit', compact('task', 'users'));
+        return view('tasks.edit', compact('task', 'users', 'shamsiToday', 'dueDateShamsi'));
     }
 
     public function update(Request $request, Task $task)
     {
         $this->authorizeTask($task);
+
+        $dueDate = $request->get('due_date');
+        if (is_string($dueDate) && trim($dueDate) !== '') {
+            $gregorian = FormatHelper::shamsiToGregorian($dueDate);
+            if ($gregorian !== null) {
+                $request->merge(['due_date' => $gregorian]);
+            }
+        } elseif (is_string($dueDate) && trim($dueDate) === '') {
+            $request->merge(['due_date' => null]);
+        }
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -233,6 +257,54 @@ class TaskController extends Controller
         };
 
         return $model;
+    }
+
+    public function searchTaskableApi(Request $request)
+    {
+        $type = $request->get('type'); // contact, lead, invoice
+        $q = trim((string) $request->get('q', ''));
+        if (!in_array($type, ['contact', 'lead', 'invoice'], true) || $q === '') {
+            return response()->json([]);
+        }
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([]);
+        }
+        $like = '%' . $q . '%';
+        if ($type === 'contact') {
+            $items = Contact::query()
+                ->visibleToUser($user)
+                ->where('name', 'like', $like)
+                ->orderBy('name')
+                ->limit(20)
+                ->get(['id', 'name'])
+                ->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'type' => 'contact']);
+        } elseif ($type === 'lead') {
+            $items = Lead::query()
+                ->visibleToUser($user)
+                ->search($q)
+                ->orderBy('name')
+                ->limit(20)
+                ->get(['id', 'name'])
+                ->map(fn ($l) => ['id' => $l->id, 'name' => $l->name, 'type' => 'lead']);
+        } else {
+            $items = Invoice::query()
+                ->visibleToUser($user)
+                ->with('contact:id,name')
+                ->where(function ($query) use ($like) {
+                    $query->where('invoice_number', 'like', $like)
+                        ->orWhereHas('contact', fn ($cq) => $cq->where('name', 'like', $like));
+                })
+                ->orderByDesc('id')
+                ->limit(20)
+                ->get()
+                ->map(fn ($i) => [
+                    'id' => $i->id,
+                    'name' => ($i->type === 'buy' ? 'رسید ' : 'فاکتور ') . ($i->invoice_number ?? $i->id) . ($i->contact ? ' — ' . $i->contact->name : ''),
+                    'type' => 'invoice',
+                ]);
+        }
+        return response()->json($items->values()->all());
     }
 
     private function canAccessTaskable($model): bool

@@ -81,6 +81,7 @@ Route::resource('tags', TagController::class);
 
 Route::resource('bank-accounts', BankAccountController::class)->except('show');
 
+Route::get('api/tasks/search-taskable', [TaskController::class, 'searchTaskableApi'])->name('tasks.search-taskable.api');
 Route::resource('tasks', TaskController::class);
 Route::post('tasks/{task}/notes', [TaskController::class, 'storeNote'])->name('tasks.notes.store');
 Route::post('tasks/{task}/attachments', [TaskController::class, 'storeAttachment'])->name('tasks.attachments.store');

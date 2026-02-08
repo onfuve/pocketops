@@ -47,16 +47,9 @@
         @if ($task->assignedUsers->isNotEmpty())
             <p style="font-size: 0.875rem; margin: 0 0 0.75rem 0; color: #0369a1;">در حال حاضر واگذار شده به: <strong>{{ $task->assignedUsers->pluck('name')->implode('، ') }}</strong></p>
         @endif
-        <form action="{{ route('tasks.assign', $task) }}" method="post" style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
+        <form action="{{ route('tasks.assign', $task) }}" method="post">
             @csrf
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
-                @foreach ($users ?? [] as $u)
-                    <label style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.75rem; border-radius: 0.5rem; border: 2px solid #bae6fd; background: #fff; cursor: pointer; font-size: 0.875rem;">
-                        <input type="checkbox" name="assigned_user_ids[]" value="{{ $u->id }}" {{ $task->assignedUsers->contains('id', $u->id) ? 'checked' : '' }}>
-                        {{ $u->name }}{{ $u->id === auth()->id() ? ' (من)' : '' }}
-                    </label>
-                @endforeach
-            </div>
+            @include('tasks._assignees', ['users' => $users ?? collect(), 'selectedIds' => $task->assignedUsers->pluck('id')->toArray(), 'showMeLabel' => true])
             <button type="submit" style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 1rem; border-radius: 0.5rem; background: #0284c7; color: #fff; font-size: 0.875rem; font-weight: 600; border: none; cursor: pointer;">
                 @include('components._icons', ['name' => 'users', 'class' => 'w-4 h-4'])
                 <span>واگذار / به‌روزرسانی</span>

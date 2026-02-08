@@ -1,4 +1,4 @@
-@php use App\Models\Task; @endphp
+@php use App\Helpers\FormatHelper; use App\Models\Task; @endphp
 @extends('layouts.app')
 
 @section('title', 'ویرایش وظیفه — ' . config('app.name'))
@@ -35,25 +35,33 @@
                 </select>
             </div>
             <div>
-                <label for="due_date" style="display: block; font-size: 0.875rem; font-weight: 500; color: #44403c; margin-bottom: 0.375rem;">تاریخ</label>
-                <input type="date" name="due_date" id="due_date" value="{{ old('due_date', $task->due_date?->format('Y-m-d')) }}" style="width: 100%; padding: 0.5rem 0.75rem; border: 2px solid #d6d3d1; border-radius: 0.5rem; font-size: 1rem;">
+                <label for="due_date" style="display: block; font-size: 0.875rem; font-weight: 500; color: #44403c; margin-bottom: 0.375rem;">تاریخ سررسید</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" name="due_date" id="due_date" value="{{ old('due_date', $dueDateShamsi) }}" placeholder="۱۴۰۳/۱۱/۱۷" autocomplete="off"
+                           style="flex: 1; min-width: 0; padding: 0.5rem 0.75rem; border: 2px solid #d6d3d1; border-radius: 0.5rem; font-size: 1rem;">
+                    <button type="button" id="due_date_today" class="ds-btn ds-btn-secondary" data-today="{{ $shamsiToday }}">امروز</button>
+                </div>
             </div>
         </div>
-        <div style="margin-bottom: 1.5rem;">
-            <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #44403c; margin-bottom: 0.5rem;">واگذار به</label>
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                @foreach ($users as $u)
-                    <label style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.75rem; border-radius: 0.5rem; border: 2px solid #e7e5e4; background: #fff; cursor: pointer; font-size: 0.875rem;">
-                        <input type="checkbox" name="assigned_user_ids[]" value="{{ $u->id }}" {{ in_array($u->id, old('assigned_user_ids', $task->assignedUsers->pluck('id')->toArray())) ? 'checked' : '' }}>
-                        {{ $u->name }}
-                    </label>
-                @endforeach
-            </div>
-        </div>
+        @include('tasks._assignees', ['users' => $users, 'selectedIds' => old('assigned_user_ids', $task->assignedUsers->pluck('id')->toArray())])
         <div style="display: flex; gap: 0.75rem;">
             <button type="submit" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; border-radius: 0.5rem; background: #059669; color: #fff; font-size: 0.9375rem; font-weight: 600; border: none; cursor: pointer;">ذخیره</button>
             <a href="{{ route('tasks.show', $task) }}" style="display: inline-flex; align-items: center; padding: 0.5rem 1.25rem; border-radius: 0.5rem; background: #fff; color: #44403c; border: 2px solid #d6d3d1; text-decoration: none; font-size: 0.9375rem;">انصراف</a>
         </div>
     </form>
 </div>
+
+@push('scripts')
+<script>
+(function () {
+    var btn = document.getElementById('due_date_today');
+    var input = document.getElementById('due_date');
+    if (btn && input) {
+        btn.addEventListener('click', function () {
+            input.value = this.getAttribute('data-today') || '';
+        });
+    }
+})();
+</script>
+@endpush
 @endsection

@@ -42,6 +42,11 @@
 .inv-form .item-row .item-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; }
 @media (min-width: 640px) { .inv-form .item-row .item-grid { grid-template-columns: repeat(12, 1fr); } }
 .inv-form .item-row .item-grid > div:first-child { grid-column: 1 / -1; }
+.inv-form .item-desc-wrap { position: relative; }
+.inv-form .item-product-results { position: absolute; left: 0; right: 0; top: 100%; margin-top: 0.25rem; z-index: 25; max-height: 12rem; overflow-y: auto; border-radius: var(--ds-radius); border: 2px solid var(--ds-border); background: var(--ds-bg); box-shadow: var(--ds-shadow-hover); }
+.inv-form .item-product-results a { display: block; padding: 0.625rem 1rem; font-size: 0.875rem; color: var(--ds-text); border-bottom: 1px solid var(--ds-bg-subtle); }
+.inv-form .item-product-results a:last-child { border-bottom: none; }
+.inv-form .item-product-results a:hover { background: var(--ds-bg-subtle); }
 .inv-form .item-row .sm-col-4 { grid-column: 1 / -1; }
 .inv-form .item-row .sm-col-3 { grid-column: 1 / -1; }
 @media (min-width: 640px) { .inv-form .item-row .sm-col-4 { grid-column: span 4; } .inv-form .item-row .sm-col-3 { grid-column: span 3; } }
@@ -127,10 +132,12 @@
             @foreach ($items as $idx => $row)
                 <div class="item-row">
                     <div class="item-grid">
-                        <div class="item-desc">
+                        <div class="item-desc-wrap item-desc">
                             <label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">شرح کالا یا خدمت</label>
+                            <input type="hidden" name="items[{{ $idx }}][product_id]" value="{{ old("items.{$idx}.product_id", $row->product_id ?? '') }}" class="item-product-id">
                             <input type="text" name="items[{{ $idx }}][description]" value="{{ old("items.{$idx}.description", $row->description ?? '') }}"
-                                   class="ds-input item-desc" placeholder="شرح کالا یا خدمت">
+                                   class="ds-input item-desc-input" placeholder="شرح کالا یا خدمت (از لیست انتخاب کنید یا تایپ کنید)" autocomplete="off">
+                            <div class="item-product-results hidden"></div>
                         </div>
                         <div class="sm-col-4">
                             <label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">تعداد</label>
@@ -338,7 +345,7 @@
         row.className = 'item-row';
         row.innerHTML =
             '<div class="item-grid">' +
-            '<div class="item-desc"><label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">شرح کالا یا خدمت</label><input type="text" name="items[' + itemIndex + '][description]" class="ds-input item-desc" placeholder="شرح کالا یا خدمت"></div>' +
+            '<div class="item-desc-wrap item-desc"><label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">شرح کالا یا خدمت</label><input type="hidden" name="items[' + itemIndex + '][product_id]" value="" class="item-product-id"><input type="text" name="items[' + itemIndex + '][description]" class="ds-input item-desc-input" placeholder="شرح کالا یا خدمت (از لیست انتخاب کنید یا تایپ کنید)" autocomplete="off"><div class="item-product-results hidden"></div></div>' +
             '<div class="sm-col-4"><label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">تعداد</label><input type="number" step="0.01" min="0" name="items[' + itemIndex + '][quantity]" value="1" class="ds-input item-qty" dir="ltr"></div>' +
             '<div class="sm-col-4"><label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">قیمت واحد (ریال)</label><input type="text" name="items[' + itemIndex + '][unit_price]" value="۰" class="ds-input item-price" dir="ltr" placeholder="۰"></div>' +
             '<div class="sm-col-3" style="display: flex; align-items: flex-end; gap: 0.75rem;"><div style="flex: 1; min-width: 0;"><label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">مبلغ (ریال)</label><input type="text" name="items[' + itemIndex + '][amount]" value="۰" class="ds-input item-amount" dir="ltr" placeholder="۰"></div><button type="button" class="remove-item ds-btn ds-btn-danger" style="width: 2.5rem; height: 2.5rem; padding: 0; min-height: 2.5rem; display: inline-flex; align-items: center; justify-content: center;" aria-label="حذف ردیف">×</button></div>' +
@@ -356,6 +363,60 @@
         itemIndex++;
         updateFormTotals();
     });
+
+    // Product autocomplete for invoice items
+    var productDebounce = null;
+    container.addEventListener('input', function (e) {
+        if (!e.target.matches('.item-desc-input')) return;
+        var wrap = e.target.closest('.item-desc-wrap');
+        var results = wrap ? wrap.querySelector('.item-product-results') : null;
+        var productIdInput = wrap ? wrap.querySelector('.item-product-id') : null;
+        var row = e.target.closest('.item-row');
+        if (!wrap || !results || !row) return;
+        var q = e.target.value.trim();
+        if (q.length < 1) {
+            results.classList.add('hidden');
+            if (productIdInput) productIdInput.value = '';
+            return;
+        }
+        clearTimeout(productDebounce);
+        productDebounce = setTimeout(function () {
+            fetch('{{ route("products.search.api") }}?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json(); })
+                .then(function (list) {
+                    results.innerHTML = '';
+                    if (list.length === 0) { results.classList.add('hidden'); return; }
+                    list.forEach(function (p) {
+                        var a = document.createElement('a');
+                        a.href = '#';
+                        a.textContent = p.name + (p.default_unit_price ? ' — ' + formatCurrency(p.default_unit_price) : '');
+                        a.dataset.id = p.id;
+                        a.dataset.name = p.name;
+                        a.dataset.price = p.default_unit_price || 0;
+                        a.addEventListener('click', function (ev) {
+                            ev.preventDefault();
+                            var inp = wrap.querySelector('.item-desc-input');
+                            var priceInp = row.querySelector('.item-price');
+                            if (inp) inp.value = p.name;
+                            if (productIdInput) productIdInput.value = p.id;
+                            if (priceInp) {
+                                priceInp.value = formatCurrency(p.default_unit_price || 0);
+                                updateAmount(row);
+                            }
+                            results.classList.add('hidden');
+                        });
+                        results.appendChild(a);
+                    });
+                    results.classList.remove('hidden');
+                });
+        }, 250);
+    });
+    container.addEventListener('blur', function (e) {
+        if (!e.target.matches('.item-desc-input')) return;
+        var wrap = e.target.closest('.item-desc-wrap');
+        var results = wrap ? wrap.querySelector('.item-product-results') : null;
+        if (results) setTimeout(function () { results.classList.add('hidden'); }, 150);
+    }, true);
 
     var contactInput = document.getElementById('contact_id');
     var contactSearch = document.getElementById('contact_search');

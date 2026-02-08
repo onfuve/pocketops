@@ -59,6 +59,9 @@ class LeadController extends Controller
         $this->syncTags($lead, $request->input('tag_ids', []));
 
         if ($request->boolean('add_another')) {
+            if ($request->boolean('from_quick_add')) {
+                return redirect()->route('leads.index')->with('success', 'سرنخ ذخیره شد. سرنخ بعدی را وارد کنید.');
+            }
             return redirect()->route('leads.create')->with('success', 'سرنخ ذخیره شد. سرنخ بعدی را وارد کنید.');
         }
 
@@ -141,7 +144,7 @@ class LeadController extends Controller
 
         $referrerName = $lead->referrerContact?->name ?? $lead->source;
         $contact = Contact::create([
-            'name' => $lead->name,
+            'name' => trim((string) ($lead->name ?? '')) ?: 'بدون نام',
             'user_id' => request()->user()->id,
             'address' => null,
             'city' => null,
@@ -176,7 +179,7 @@ class LeadController extends Controller
         if (!$lead->contact_id) {
             $referrerName = $lead->referrerContact?->name ?? $lead->source;
             $contact = Contact::create([
-                'name' => $lead->name,
+                'name' => trim((string) ($lead->name ?? '')) ?: 'بدون نام',
                 'user_id' => request()->user()->id,
                 'address' => null,
                 'city' => null,
@@ -280,7 +283,7 @@ class LeadController extends Controller
     private function rules(): array
     {
         $rules = [
-            'name' => 'required|string|max:255',
+            'name' => 'nullable|string|max:255',
             'company' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',

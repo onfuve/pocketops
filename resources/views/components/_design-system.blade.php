@@ -104,6 +104,7 @@
 
 /* ─── Alerts ─── */
 .ds-alert-success { padding: 0.75rem 1rem; border-radius: var(--ds-radius); background: var(--ds-primary-bg); border: 2px solid var(--ds-primary-border); color: var(--ds-primary-dark); font-size: 0.875rem; }
+.ds-alert-warning { padding: 0.75rem 1rem; border-radius: var(--ds-radius); background: #fef3c7; border: 2px solid #fcd34d; color: #92400e; font-size: 0.875rem; }
 .ds-alert-error { padding: 0.75rem 1rem; border-radius: var(--ds-radius); background: var(--ds-danger-bg); border: 2px solid var(--ds-danger-border); color: var(--ds-danger); font-size: 0.875rem; }
 </style>
 @endpush

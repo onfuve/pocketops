@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\FormatHelper;
 use App\Models\Attachment;
 use App\Models\PaymentOption;
+use App\Models\Product;
 use App\Models\Contact;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
@@ -376,8 +377,13 @@ class InvoiceController extends Controller
             $price = $this->numericInput(is_array($item) ? ($item['unit_price'] ?? 0) : 0, 0);
             $rawAmount = is_array($item) ? ($item['amount'] ?? null) : null;
             $amount = $rawAmount !== null && $rawAmount !== '' ? $this->numericInput($rawAmount, 0) : (int) round($qty * $price);
+            $productId = null;
+            if (!empty($item['product_id']) && Product::query()->visibleToUser($request->user())->where('id', $item['product_id'])->exists()) {
+                $productId = (int) $item['product_id'];
+            }
             $items[] = [
                 'description' => $desc,
+                'product_id' => $productId,
                 'quantity' => $qty,
                 'unit_price' => $price,
                 'amount' => $amount,

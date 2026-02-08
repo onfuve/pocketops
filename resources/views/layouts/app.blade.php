@@ -96,6 +96,18 @@
                         @include('components._icons', ['name' => 'cog', 'class' => 'w-4 h-4 shrink-0'])
                         <span>کانال سرنخ</span>
                     </a>
+                    <a href="{{ route('products.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        @include('components._icons', ['name' => 'sell', 'class' => 'w-4 h-4 shrink-0'])
+                        <span>کالاها و خدمات</span>
+                    </a>
+                    <a href="{{ route('price-lists.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        @include('components._icons', ['name' => 'document', 'class' => 'w-4 h-4 shrink-0'])
+                        <span>لیست قیمت</span>
+                    </a>
+                    <a href="{{ route('product-landing-pages.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        @include('components._icons', ['name' => 'sell', 'class' => 'w-4 h-4 shrink-0'])
+                        <span>صفحه فرود</span>
+                    </a>
                     <a href="{{ route('tags.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
                         @include('components._icons', ['name' => 'tag', 'class' => 'w-4 h-4 shrink-0'])
                         <span>برچسب‌ها</span>

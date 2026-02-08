@@ -11,6 +11,11 @@ use App\Http\Controllers\LeadChannelController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\PaymentOptionController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\CustomerPriceListController;
+use App\Http\Controllers\CustomerProductController;
+use App\Http\Controllers\PriceListController;
+use App\Http\Controllers\ProductLandingPageController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TransactionController;
@@ -19,6 +24,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+
+Route::get('pricelist/{code}', [CustomerPriceListController::class, 'show'])->name('price-lists.public');
+Route::get('product/{code}', [CustomerProductController::class, 'show'])->name('product-landing-pages.public');
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -76,6 +84,15 @@ Route::get('settings/company', [SettingController::class, 'companyIndex'])->name
 Route::get('settings/company/address', [SettingController::class, 'companyAddress'])->name('settings.company.address');
 Route::post('settings/company/address', [SettingController::class, 'updateCompany'])->name('settings.company.update');
 
+Route::resource('products', ProductController::class);
+Route::post('price-lists/{priceList}/duplicate', [PriceListController::class, 'duplicate'])->name('price-lists.duplicate');
+Route::post('price-lists/{priceList}/generate-code', [PriceListController::class, 'generateCode'])->name('price-lists.generate-code');
+Route::get('price-lists/{priceList}/links', [PriceListController::class, 'links'])->name('price-lists.links');
+Route::resource('price-lists', PriceListController::class);
+Route::get('product-landing-pages/{productLandingPage}/links', [ProductLandingPageController::class, 'links'])->name('product-landing-pages.links');
+Route::post('product-landing-pages/{productLandingPage}/generate-code', [ProductLandingPageController::class, 'generateCode'])->name('product-landing-pages.generate-code');
+Route::resource('product-landing-pages', ProductLandingPageController::class)->except(['show']);
+Route::get('api/products/search', [ProductController::class, 'searchApi'])->name('products.search.api');
 Route::resource('tags', TagController::class);
 
 Route::redirect('bank-accounts', '/settings/payment-options');

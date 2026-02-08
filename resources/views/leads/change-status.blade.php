@@ -8,7 +8,7 @@
     <div style="margin-bottom: 1.5rem;">
         <a href="{{ route('leads.show', $lead) }}" style="display: inline-flex; align-items: center; gap: 0.5rem; color: #78716c; font-size: 0.875rem; text-decoration: none;">@include('components._icons', ['name' => 'arrow-left', 'class' => 'w-4 h-4']) بازگشت به سرنخ</a>
         <h1 style="font-size: 1.25rem; font-weight: 700; color: #292524; margin: 0.75rem 0 0.25rem 0;">تغییر مرحله سرنخ</h1>
-        <p style="margin: 0; font-size: 0.875rem; color: #78716c;">{{ $lead->name }}</p>
+        <p style="margin: 0; font-size: 0.875rem; color: #78716c;">{{ $lead->name ?? 'بدون نام' }}</p>
     </div>
 
     @php

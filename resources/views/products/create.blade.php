@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'سرنخ جدید — ' . config('app.name'))
+@section('title', 'کالا/خدمت جدید — ' . config('app.name'))
 
 @push('styles')
 <style>
@@ -14,17 +14,17 @@
         <div>
             <h1 class="ds-page-title">
                 <span class="ds-page-title-icon">
-                    @include('components._icons', ['name' => 'lightbulb', 'class' => 'w-5 h-5'])
+                    @include('components._icons', ['name' => 'sell', 'class' => 'w-5 h-5'])
                 </span>
-                سرنخ جدید
+                کالا/خدمت جدید
             </h1>
-            <p class="ds-page-subtitle">اطلاعات سرنخ را وارد کنید. نام اختیاری است — می‌توانید بعداً تکمیل کنید.</p>
+            <p class="ds-page-subtitle">کالا یا خدمتی که ارائه می‌دهید را ثبت کنید.</p>
         </div>
-        <a href="{{ route('leads.index') }}" class="ds-btn ds-btn-outline">
+        <a href="{{ route('products.index') }}" class="ds-btn ds-btn-outline">
             @include('components._icons', ['name' => 'arrow-left', 'class' => 'w-4 h-4'])
             بازگشت به لیست
         </a>
     </div>
-    @include('leads._form', ['lead' => $lead, 'leadChannels' => $leadChannels])
+    @include('products._form', ['product' => $product, 'tags' => $tags])
 </div>
 @endsection

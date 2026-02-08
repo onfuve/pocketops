@@ -36,6 +36,29 @@ class FormatHelper
         return self::numberFormat($amount, $persianDigits) . ' ریال';
     }
 
+    /** Format amount in Toman (amount/10) with optional Persian digits */
+    public static function toman(int|float $amount, bool $persianDigits = true): string
+    {
+        return self::numberFormat(round($amount / 10), $persianDigits) . ' تومان';
+    }
+
+    /** Format price for price list: rial, toman, or none (number only) */
+    public static function priceForList(int|float $amount, string $format = 'rial', bool $persianDigits = true): string
+    {
+        $num = match ($format) {
+            'toman' => self::numberFormat(round($amount / 10), $persianDigits),
+            'rial' => self::numberFormat((int) round($amount), $persianDigits),
+            'none' => self::numberFormat((int) round($amount), $persianDigits),
+            default => self::numberFormat((int) round($amount), $persianDigits),
+        };
+        return match ($format) {
+            'toman' => $num . ' تومان',
+            'rial' => $num . ' ریال',
+            'none' => $num,
+            default => $num . ' ریال',
+        };
+    }
+
     /** Format Carbon/date to Shamsi string (e.g. ۱۴۰۳/۱۱/۱۳) */
     public static function shamsi($date, string $format = 'Y/m/d'): string
     {

@@ -32,9 +32,9 @@
         <h2 class="ds-form-card-title">اطلاعات اصلی</h2>
         <div class="form-grid form-grid-3">
             <div class="span-2" style="position: relative;">
-                <label for="name" class="ds-label">نام طرف مقابل یا نام شرکت <span style="color: #b91c1c;">*</span></label>
-                <input type="text" name="name" id="name" value="{{ old('name', $lead->name ?? '') }}" required autocomplete="off"
-                       class="ds-input" placeholder="شروع به تایپ کنید — از لیست مخاطبین پیشنهاد می‌شود">
+                <label for="name" class="ds-label">نام طرف مقابل یا نام شرکت</label>
+                <input type="text" name="name" id="name" value="{{ old('name', $lead->name ?? '') }}" autocomplete="off"
+                       class="ds-input" placeholder="اختیاری — بعداً تکمیل شود">
                 <div id="name_contact_results" class="dropdown-results hidden"></div>
                 @error('name')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

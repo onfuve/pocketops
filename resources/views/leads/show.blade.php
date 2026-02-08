@@ -1,7 +1,7 @@
 @php use App\Helpers\FormatHelper; use App\Models\Lead; @endphp
 @extends('layouts.app')
 
-@section('title', $lead->name . ' — سرنخ — ' . config('app.name'))
+@section('title', ($lead->name ?? 'بدون نام') . ' — سرنخ — ' . config('app.name'))
 
 @push('styles')
 <style>
@@ -43,7 +43,7 @@
                     <span style="display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: #fef3c7; color: #b45309;">
                         @include('components._icons', ['name' => 'lightbulb', 'class' => 'w-5 h-5'])
                     </span>
-                    {{ $lead->name }}
+                    {{ $lead->name ?? 'بدون نام' }}
                 </h1>
                 @if ($lead->company)
                     <p class="page-subtitle" style="margin: 0;">{{ $lead->company }}</p>
@@ -104,7 +104,7 @@
     </div>
 
     {{-- Quick actions: Share + Calendar, Assign --}}
-    @php $canAssign = $lead->user_id === auth()->id() || auth()->user()->isAdmin() || $lead->assigned_to_id === auth()->id(); $shareUrl = route('leads.show', $lead); $shareText = 'سرنخ: ' . $lead->name . ($lead->company ? ' — ' . $lead->company : ''); @endphp
+    @php $canAssign = $lead->user_id === auth()->id() || auth()->user()->isAdmin() || $lead->assigned_to_id === auth()->id(); $shareUrl = route('leads.show', $lead); $shareText = 'سرنخ: ' . ($lead->name ?? 'بدون نام') . ($lead->company ? ' — ' . $lead->company : ''); @endphp
     <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-bottom: 1.5rem;">
         <div style="padding: 1rem; border-radius: 0.75rem; border: 2px solid #e7e5e4; background: #fff;">
             <h3 style="font-size: 0.875rem; font-weight: 600; color: #44403c; margin: 0 0 0.75rem 0;">اشتراک و تقویم</h3>

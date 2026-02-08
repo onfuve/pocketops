@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\FormatHelper;
 use App\Models\BankAccount;
 use App\Models\Contact;
+use App\Models\ContactPhone;
 use App\Models\ContactTransaction;
 use App\Models\Setting;
 use App\Models\Tag;
@@ -19,6 +20,11 @@ class ContactController extends Controller
         $q = $request->get('q');
         $balanceFilter = $request->get('balance'); // positive, negative, zero
         $sort = $request->get('sort', 'recent'); // name, balance, recent
+        $perPage = $request->get('per_page', 20);
+        $allowedPerPage = [20, 50, 100, 200, 500];
+        if (!in_array((int) $perPage, $allowedPerPage, true)) {
+            $perPage = 20;
+        }
 
         $query = Contact::query()
             ->visibleToUser($request->user())
@@ -41,9 +47,33 @@ class ContactController extends Controller
             $query->latest();
         }
 
-        $contacts = $query->paginate(20)->withQueryString();
+        $contacts = $query->paginate((int) $perPage)->withQueryString();
 
-        return view('contacts.index', compact('contacts', 'q', 'balanceFilter', 'sort'));
+        return view('contacts.index', compact('contacts', 'q', 'balanceFilter', 'sort', 'perPage'));
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        abort_unless($request->user()->canDeleteContact(), 403, 'شما مجوز حذف مخاطب را ندارید.');
+
+        $ids = $request->input('ids', []);
+        if (!is_array($ids)) {
+            $ids = [];
+        }
+        $ids = array_filter(array_map('intval', $ids));
+
+        $contacts = Contact::visibleToUser($request->user())
+            ->whereIn('id', $ids)
+            ->get();
+
+        $deleted = 0;
+        foreach ($contacts as $contact) {
+            $contact->delete();
+            $deleted++;
+        }
+
+        return redirect()->route('contacts.index', array_filter($request->only(['q', 'balance', 'sort', 'per_page', 'page'])))
+            ->with('success', $deleted > 0 ? "{$deleted} مخاطب حذف شد." : 'مخاطبی حذف نشد.');
     }
 
     public function create()
@@ -273,39 +303,83 @@ class ContactController extends Controller
             return redirect()->route('contacts.import')->with('error', 'ستون اول فایل باید «نام» باشد. نمونه‌ی خروجی CSV را ببینید.');
         }
 
+        // Existing contacts for duplicate check (visible to user)
+        $existingContactIds = Contact::visibleToUser($request->user())->pluck('id')->toArray();
+        $existingNames = Contact::visibleToUser($request->user())->pluck('name')->map(fn ($n) => $this->normalizeImportText($n))->flip()->toArray();
+        $existingPhones = ContactPhone::whereIn('contact_id', $existingContactIds)->pluck('phone')->map(fn ($p) => $this->normalizePhoneForCompare($p))->flip()->toArray();
+
         $imported = 0;
         $errors = [];
+        $seenNamesInFile = [];
+        $seenPhonesInFile = [];
+        $dupNames = [];
+        $dupPhones = [];
 
         foreach ($rows as $i => $row) {
             $row = array_pad($row, count($header), '');
             $data = array_combine($header, $row);
-            if (empty(trim($data['نام'] ?? ''))) {
+            $name = $this->normalizeImportText($data['نام'] ?? '');
+            if ($name === '') {
                 continue;
             }
             try {
-                $contact = Contact::create([
-                    'name' => trim($data['نام'] ?? ''),
-                    'user_id' => $request->user()->id,
-                    'city' => trim($data['شهر'] ?? '') ?: null,
-                    'address' => trim($data['آدرس'] ?? '') ?: null,
-                    'website' => trim($data['وب‌سایت'] ?? '') ?: null,
-                    'instagram' => trim($data['اینستاگرام'] ?? '') ?: null,
-                    'telegram' => trim($data['تلگرام'] ?? '') ?: null,
-                    'whatsapp' => trim($data['واتساپ'] ?? '') ?: null,
-                    'referrer_name' => trim($data['معرف (شخص/شرکت)'] ?? '') ?: null,
-                    'is_hamkar' => (bool) preg_match('/بله|1|yes|true/i', trim($data['همکار'] ?? '')),
-                    'notes' => trim($data['یادداشت'] ?? '') ?: null,
-                ]);
-                $phonesStr = trim($data['تلفن‌ها'] ?? '') ?: trim($data['تلفن'] ?? '');
+                // Duplicate check: name
+                if (isset($seenNamesInFile[$name])) {
+                    $dupNames[] = "«{$name}» در ردیف‌های " . $seenNamesInFile[$name] . " و " . ($i + 2);
+                } elseif (isset($existingNames[$name])) {
+                    $dupNames[] = "«{$name}» در فایل (ردیف " . ($i + 2) . ") و قبلاً در دیتابیس";
+                }
+                $seenNamesInFile[$name] = $i + 2;
+
+                // Parse phones and check duplicates; skip contact if duplicate or all-empty
+                $phonesStr = $this->normalizeImportText($data['تلفن‌ها'] ?? '') ?: $this->normalizeImportText($data['تلفن'] ?? '');
+                $phonesToAdd = [];
+                $hasDuplicatePhone = false;
                 if ($phonesStr !== '') {
-                    foreach (array_filter(array_map('trim', explode('|', $phonesStr))) as $idx => $one) {
+                    foreach (array_filter(array_map(fn ($s) => $this->normalizeImportText($s), explode('|', $phonesStr))) as $idx => $one) {
                         $label = null;
                         if (preg_match('/^(.+):\s*(.+)$/u', $one, $m)) {
-                            $label = trim($m[1]);
-                            $one = trim($m[2]);
+                            $label = $this->normalizeImportText($m[1]) ?: null;
+                            $one = $this->normalizeImportText($m[2]);
                         }
-                        $contact->contactPhones()->create(['phone' => $one, 'label' => $label, 'sort' => $idx]);
+                        $normPhone = $this->normalizePhoneForCompare($one);
+                        if ($normPhone === '') {
+                            continue; // skip empty phone, don't add
+                        }
+                        if (isset($seenPhonesInFile[$normPhone])) {
+                            $dupPhones[] = "«{$name}» ردیف " . ($i + 2) . ": شماره {$one} تکراری (ردیف " . $seenPhonesInFile[$normPhone] . ")";
+                            $hasDuplicatePhone = true;
+                            break;
+                        }
+                        if (isset($existingPhones[$normPhone])) {
+                            $dupPhones[] = "«{$name}» ردیف " . ($i + 2) . ": شماره {$one} قبلاً در دیتابیس";
+                            $hasDuplicatePhone = true;
+                            break;
+                        }
+                        $seenPhonesInFile[$normPhone] = $i + 2;
+                        $phonesToAdd[] = ['phone' => $one, 'label' => $label, 'sort' => $idx];
                     }
+                }
+
+                if ($hasDuplicatePhone) {
+                    continue; // don't insert, just report
+                }
+
+                $contact = Contact::create([
+                    'name' => $name,
+                    'user_id' => $request->user()->id,
+                    'city' => $this->normalizeImportText($data['شهر'] ?? '') ?: null,
+                    'address' => $this->normalizeImportText($data['آدرس'] ?? '') ?: null,
+                    'website' => $this->normalizeImportText($data['وب‌سایت'] ?? '') ?: null,
+                    'instagram' => $this->normalizeImportText($data['اینستاگرام'] ?? '') ?: null,
+                    'telegram' => $this->normalizeImportText($data['تلگرام'] ?? '') ?: null,
+                    'whatsapp' => $this->normalizeImportText($data['واتساپ'] ?? '') ?: null,
+                    'referrer_name' => $this->normalizeImportText($data['معرف (شخص/شرکت)'] ?? '') ?: null,
+                    'is_hamkar' => (bool) preg_match('/بله|1|yes|true/i', $this->normalizeImportText($data['همکار'] ?? '')),
+                    'notes' => $this->normalizeImportText($data['یادداشت'] ?? '') ?: null,
+                ]);
+                foreach ($phonesToAdd as $p) {
+                    $contact->contactPhones()->create($p);
                 }
                 $imported++;
             } catch (\Throwable $e) {
@@ -316,6 +390,12 @@ class ContactController extends Controller
         $msg = "{$imported} مخاطب وارد شد.";
         if (!empty($errors)) {
             $msg .= ' خطاها: ' . implode('؛ ', array_slice($errors, 0, 5));
+        }
+        if (!empty($dupNames)) {
+            $msg .= ' — تکرار نام: ' . implode('؛ ', array_slice(array_unique($dupNames), 0, 5));
+        }
+        if (!empty($dupPhones)) {
+            $msg .= ' — تکرار شماره: ' . implode('؛ ', array_slice(array_unique($dupPhones), 0, 5));
         }
 
         return redirect()->route('contacts.index')->with(
@@ -375,5 +455,25 @@ class ContactController extends Controller
             ->pluck('id')
             ->toArray();
         $contact->tags()->sync($validTagIds);
+    }
+
+    /** Normalize text: trim, collapse multiple spaces, Arabic ك/ي/ى → Persian ک/ی */
+    private function normalizeImportText(string $s): string
+    {
+        $s = trim($s);
+        $s = preg_replace('/\s+/u', ' ', $s);
+        $s = str_replace(["\xE2\x80\x8C", '‌'], ' ', $s); // ZWNJ → space
+        $s = preg_replace('/\s+/u', ' ', trim($s));
+        // Arabic ك → Persian ک
+        $s = str_replace('ك', 'ک', $s);
+        // Arabic ي and ى → Persian ی
+        $s = str_replace(['ي', 'ى'], 'ی', $s);
+        return trim($s);
+    }
+
+    /** Normalize phone for duplicate comparison: digits only */
+    private function normalizePhoneForCompare(string $phone): string
+    {
+        return preg_replace('/\D+/', '', $phone);
     }
 }

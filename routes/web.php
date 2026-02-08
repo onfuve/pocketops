@@ -33,6 +33,7 @@ Route::post('calendar/reminders/{reminder}/toggle-done', [CalendarController::cl
 Route::delete('calendar/reminders/{reminder}', [CalendarController::class, 'destroyReminder'])->name('calendar.reminders.destroy');
 
 Route::resource('contacts', ContactController::class);
+Route::post('contacts/bulk-delete', [ContactController::class, 'bulkDelete'])->name('contacts.bulk-delete');
 Route::get('contacts/{contact}/address-label', [ContactController::class, 'addressLabel'])->name('contacts.address-label');
 Route::get('contacts/{contact}/receive-pay', [ContactController::class, 'showReceivePay'])->name('contacts.receive-pay');
 Route::post('contacts/{contact}/receive-pay', [ContactController::class, 'submitReceivePay'])->name('contacts.receive-pay.submit');

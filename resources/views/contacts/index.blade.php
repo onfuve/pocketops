@@ -46,11 +46,12 @@
         <form action="{{ route('contacts.index') }}" method="get" class="ds-search-form">
             <input type="hidden" name="balance" value="{{ $balanceFilter ?? '' }}">
             <input type="hidden" name="sort" value="{{ $sort ?? 'recent' }}">
+            <input type="hidden" name="per_page" value="{{ $perPage ?? 20 }}">
             <div class="contacts-search-wrap">
                 <input type="search" name="q" value="{{ $q ?? '' }}" placeholder="جستجو نام، تلفن، شهر، آدرس…" id="contacts-search-input" autocomplete="off" class="ds-input">
                 <span class="search-icon">@include('components._icons', ['name' => 'search', 'class' => 'w-5 h-5'])</span>
                 @if(!empty($q))
-                    <a href="{{ route('contacts.index', array_filter(['balance' => $balanceFilter, 'sort' => $sort])) }}" class="contacts-search-clear" title="پاک کردن جستجو" aria-label="پاک کردن جستجو">&times;</a>
+                    <a href="{{ route('contacts.index', array_filter(['balance' => $balanceFilter, 'sort' => $sort, 'per_page' => $perPage ?? 20])) }}" class="contacts-search-clear" title="پاک کردن جستجو" aria-label="پاک کردن جستجو">&times;</a>
                 @endif
             </div>
             <button type="submit" class="ds-btn ds-btn-secondary">
@@ -80,7 +81,7 @@
     {{-- Balance filter + Sort --}}
     <div class="contacts-balance-filter">
         <div class="ds-filter-tabs" style="margin-bottom: 0;">
-            @php $baseQuery = array_filter(['q' => $q, 'sort' => $sort]); @endphp
+            @php $baseQuery = array_filter(['q' => $q, 'sort' => $sort, 'per_page' => $perPage ?? 20]); @endphp
             <span style="font-size: 0.875rem; font-weight: 500; color: var(--ds-text-subtle); padding: 0 0.25rem;">مانده:</span>
             <a href="{{ route('contacts.index', $baseQuery) }}" class="{{ empty($balanceFilter) ? 'ds-filter-active' : '' }}" style="{{ empty($balanceFilter) ? 'background: var(--ds-primary); color: #fff;' : '' }}">همه</a>
             <a href="{{ route('contacts.index', array_merge($baseQuery, ['balance' => 'positive'])) }}" class="{{ ($balanceFilter ?? '') === 'positive' ? 'ds-filter-active' : '' }}" style="{{ ($balanceFilter ?? '') === 'positive' ? 'background: var(--ds-primary); color: #fff;' : '' }}">بستانکار</a>
@@ -92,10 +93,25 @@
         <form method="get" action="{{ route('contacts.index') }}" style="display: inline;">
             <input type="hidden" name="q" value="{{ $q ?? '' }}">
             <input type="hidden" name="balance" value="{{ $balanceFilter ?? '' }}">
+            <input type="hidden" name="per_page" value="{{ $perPage ?? 20 }}">
             <select name="sort" id="contacts-sort" class="ds-select" style="width: auto; min-width: 8rem;" onchange="this.form.submit()">
                 <option value="recent" {{ ($sort ?? 'recent') === 'recent' ? 'selected' : '' }}>جدیدترین</option>
                 <option value="name" {{ ($sort ?? '') === 'name' ? 'selected' : '' }}>نام</option>
                 <option value="balance" {{ ($sort ?? '') === 'balance' ? 'selected' : '' }}>مانده</option>
+            </select>
+        </form>
+        <span style="width: 1px; height: 1.25rem; background: var(--ds-border); margin: 0 0.25rem;" aria-hidden="true"></span>
+        <label for="contacts-per-page" class="ds-label" style="margin-bottom: 0;">در هر صفحه:</label>
+        <form method="get" action="{{ route('contacts.index') }}" style="display: inline;" id="contacts-per-page-form">
+            <input type="hidden" name="q" value="{{ $q ?? '' }}">
+            <input type="hidden" name="balance" value="{{ $balanceFilter ?? '' }}">
+            <input type="hidden" name="sort" value="{{ $sort ?? 'recent' }}">
+            <select name="per_page" id="contacts-per-page" class="ds-select" style="width: auto; min-width: 5rem;" onchange="this.form.submit()">
+                <option value="20" {{ ($perPage ?? 20) == 20 ? 'selected' : '' }}>۲۰</option>
+                <option value="50" {{ ($perPage ?? 20) == 50 ? 'selected' : '' }}>۵۰</option>
+                <option value="100" {{ ($perPage ?? 20) == 100 ? 'selected' : '' }}>۱۰۰</option>
+                <option value="200" {{ ($perPage ?? 20) == 200 ? 'selected' : '' }}>۲۰۰</option>
+                <option value="500" {{ ($perPage ?? 20) == 500 ? 'selected' : '' }}>۵۰۰</option>
             </select>
         </form>
     </div>
@@ -116,11 +132,29 @@
             @endif
         </div>
     @else
-        <p style="margin: 0 0 1rem 0; font-size: 0.875rem; color: var(--ds-text-subtle);">
-            نمایش {{ FormatHelper::englishToPersian((string) $contacts->firstItem()) }}–{{ FormatHelper::englishToPersian((string) $contacts->lastItem()) }} از {{ FormatHelper::englishToPersian((string) $contacts->total()) }} مخاطب
-        </p>
+        <div style="margin: 0 0 1rem 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
+            <p style="margin: 0; font-size: 0.875rem; color: var(--ds-text-subtle);">
+                نمایش {{ FormatHelper::englishToPersian((string) $contacts->firstItem()) }}–{{ FormatHelper::englishToPersian((string) $contacts->lastItem()) }} از {{ FormatHelper::englishToPersian((string) $contacts->total()) }} مخاطب
+            </p>
+            @if (auth()->user()->canDeleteContact())
+            <form action="{{ route('contacts.bulk-delete') }}" method="post" id="contacts-bulk-delete-form" style="display: none;">
+                @csrf
+                <div id="contacts-bulk-delete-ids"></div>
+                <button type="submit" class="ds-btn ds-btn-danger" onclick="return confirm('مخاطب‌های انتخاب‌شده حذف شوند؟');">
+                    @include('components._icons', ['name' => 'trash', 'class' => 'w-4 h-4'])
+                    <span id="contacts-bulk-delete-count">۰</span> حذف
+                </button>
+            </form>
+            @endif
+        </div>
 
         <ul style="list-style: none; padding: 0; margin: 0;">
+            <li style="margin-bottom: 0.5rem; padding: 0.5rem 1rem; background: var(--ds-bg-subtle); border-radius: var(--ds-radius); border: 2px solid var(--ds-border);">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem; font-weight: 500;">
+                    <input type="checkbox" id="contacts-select-all" style="width: 1.25rem; height: 1.25rem; accent-color: var(--ds-primary);">
+                    <span>انتخاب همه این صفحه</span>
+                </label>
+            </li>
             @foreach ($contacts as $contact)
                 @php
                     $balance = (float) ($contact->balance ?? 0);
@@ -130,9 +164,13 @@
                     $balanceBg = $balance > 0 ? '#ecfdf5' : ($balance < 0 ? '#fffbeb' : 'var(--ds-bg-subtle)');
                 @endphp
                 <li>
-                    <div class="contact-card" style="border-right-width: 4px; border-right-color: {{ $balanceBorder }};">
-                        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem;">
-                            <div style="min-width: 0; flex: 1;">
+                    <div class="contact-card" style="border-right-width: 4px; border-right-color: {{ $balanceBorder }}; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.75rem;">
+                        @if (auth()->user()->canDeleteContact())
+                        <label style="flex-shrink: 0; cursor: pointer; padding: 0.25rem;">
+                            <input type="checkbox" class="contact-select-checkbox" value="{{ $contact->id }}" style="width: 1.25rem; height: 1.25rem; accent-color: var(--ds-primary);">
+                        </label>
+                        @endif
+                        <div style="min-width: 0; flex: 1;">
                                 <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
                                     <a href="{{ route('contacts.show', $contact) }}" style="font-weight: 600; color: var(--ds-text); text-decoration: none;">{{ $contact->name }}</a>
                                     @if ($contact->is_hamkar)
@@ -180,8 +218,48 @@
         </ul>
 
         <div style="margin-top: 1.5rem;">
-            {{ $contacts->links() }}
+            {{ $contacts->withQueryString()->links() }}
         </div>
     @endif
 </div>
+
+@if (!$contacts->isEmpty() && auth()->user()->canDeleteContact())
+@push('scripts')
+<script>
+(function () {
+    var selectAll = document.getElementById('contacts-select-all');
+    var checkboxes = document.querySelectorAll('.contact-select-checkbox');
+    var form = document.getElementById('contacts-bulk-delete-form');
+    var idsDiv = document.getElementById('contacts-bulk-delete-ids');
+    var countSpan = document.getElementById('contacts-bulk-delete-count');
+    function updateBulkForm() {
+        var checked = document.querySelectorAll('.contact-select-checkbox:checked');
+        if (checked.length === 0) {
+            form.style.display = 'none';
+            return;
+        }
+        form.style.display = 'inline-block';
+        idsDiv.innerHTML = '';
+        checked.forEach(function (cb) {
+            var inp = document.createElement('input');
+            inp.type = 'hidden';
+            inp.name = 'ids[]';
+            inp.value = cb.value;
+            idsDiv.appendChild(inp);
+        });
+        countSpan.textContent = checked.length;
+    }
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            checkboxes.forEach(function (cb) { cb.checked = selectAll.checked; });
+            updateBulkForm();
+        });
+    }
+    checkboxes.forEach(function (cb) {
+        cb.addEventListener('change', updateBulkForm);
+    });
+})();
+</script>
+@endpush
+@endif
 @endsection

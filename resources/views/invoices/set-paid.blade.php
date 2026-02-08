@@ -112,6 +112,12 @@
                             <option value="{{ $b->id }}" {{ old('bank_account_id') == $b->id ? 'selected' : '' }}>{{ $b->name }} @if($b->account_number)({{ $b->account_number }})@endif</option>
                         @endforeach
                     </select>
+                    @if($bankAccounts->isEmpty())
+                        <p class="text-muted" style="margin-top: 0.5rem;">
+                            هنوز حسابی تعریف نشده است.
+                            <a href="{{ route('bank-accounts.create') }}" style="font-weight: 600; color: #059669; text-decoration: none;">افزودن حساب بانکی</a>
+                        </p>
+                    @endif
                 </div>
 
                 @php

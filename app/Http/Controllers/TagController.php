@@ -20,9 +20,23 @@ class TagController extends Controller
         return view('tags.index', compact('tags'));
     }
 
+    private static function suggestedTagColor(): string
+    {
+        $palette = [
+            '#059669', '#0284c7', '#7c3aed', '#c026d3', '#db2777', '#dc2626',
+            '#ea580c', '#ca8a04', '#65a30d', '#0d9488', '#2563eb', '#4f46e5',
+            '#0891b2', '#be185d', '#b45309', '#15803d', '#1e40af', '#6d28d9',
+        ];
+        $used = Tag::forCurrentUser()->pluck('color')->map(fn ($c) => strtolower($c))->unique()->values()->all();
+        $available = array_values(array_filter($palette, fn ($c) => !in_array(strtolower($c), $used, true)));
+        $candidates = $available ?: $palette;
+
+        return $candidates[array_rand($candidates)];
+    }
+
     public function create()
     {
-        $tag = new Tag(['color' => '#059669']);
+        $tag = new Tag(['color' => self::suggestedTagColor()]);
 
         return view('tags.create', compact('tag'));
     }

@@ -18,8 +18,10 @@
 .ds-page .ds-page-title-icon { background: #d1fae5; color: #047857; border-color: #a7f3d0; }
 .contacts-balance-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; }
 .contacts-balance-filter .ds-filter-tabs { margin-bottom: 0; }
-.contact-card { background: var(--ds-bg); border: 2px solid var(--ds-border); border-radius: var(--ds-radius-lg); padding: 1rem; margin-bottom: 0.5rem; box-shadow: var(--ds-shadow); transition: all 0.2s; text-decoration: none; color: inherit; display: block; }
+.contact-card { background: var(--ds-bg); border: 2px solid var(--ds-border); border-radius: var(--ds-radius-lg); padding: 1rem; margin-bottom: 0.5rem; box-shadow: var(--ds-shadow); transition: all 0.2s; text-decoration: none; color: inherit; display: block; width: 100%; box-sizing: border-box; }
 .contact-card:hover { border-color: var(--ds-border-hover); box-shadow: var(--ds-shadow-hover); }
+.contacts-list { width: 100%; }
+.contacts-list > li { width: 100%; box-sizing: border-box; }
 </style>
 @endpush
 
@@ -148,9 +150,9 @@
             @endif
         </div>
 
-        <ul style="list-style: none; padding: 0; margin: 0;">
+        <ul class="contacts-list" style="list-style: none; padding: 0; margin: 0;">
             <li style="margin-bottom: 0.5rem; padding: 0.5rem 1rem; background: var(--ds-bg-subtle); border-radius: var(--ds-radius); border: 2px solid var(--ds-border);">
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem; font-weight: 500;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem; font-weight: 500; width: 100%;">
                     <input type="checkbox" id="contacts-select-all" style="width: 1.25rem; height: 1.25rem; accent-color: var(--ds-primary);">
                     <span>انتخاب همه این صفحه</span>
                 </label>

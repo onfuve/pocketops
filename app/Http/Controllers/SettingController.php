@@ -9,11 +9,15 @@ class SettingController extends Controller
 {
     public function companyIndex()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403, 'فقط مدیر به تنظیمات شرکت دسترسی دارد.');
+
         return view('settings.company-index');
     }
 
     public function companyAddress()
     {
+        abort_unless(auth()->user()?->isAdmin(), 403, 'فقط مدیر به تنظیمات شرکت دسترسی دارد.');
+
         $senderAddress = Setting::senderAddress();
 
         return view('settings.company-address', compact('senderAddress'));
@@ -21,6 +25,8 @@ class SettingController extends Controller
 
     public function updateCompany(Request $request)
     {
+        abort_unless($request->user()?->isAdmin(), 403, 'فقط مدیر می‌تواند تنظیمات شرکت را تغییر دهد.');
+
         $request->validate([
             'sender_address' => 'nullable|string|max:1000',
         ]);

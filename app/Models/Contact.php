@@ -37,45 +37,17 @@ class Contact extends Model
         return $this->belongsTo(User::class);
     }
 
-    /** Contacts visible to the given user: own, admin sees all, or linked to leads/invoices assigned to them. */
+    /** Contacts visible to the given user: all authenticated users can see and use all contacts. */
     public function scopeVisibleToUser(Builder $query, $user): void
     {
         if (!$user) {
             $query->whereRaw('1 = 0');
-            return;
         }
-        if ($user->isAdmin()) {
-            return;
-        }
-        $query->where(function ($q) use ($user) {
-            $q->where('user_id', $user->id)
-                ->orWhereIn('id', function ($sub) use ($user) {
-                    $sub->select('contact_id')
-                        ->from('leads')
-                        ->where('assigned_to_id', $user->id)
-                        ->whereNotNull('contact_id');
-                })
-                ->orWhereIn('id', function ($sub) use ($user) {
-                    $sub->select('contact_id')
-                        ->from('invoices')
-                        ->where('assigned_to_id', $user->id);
-                });
-        });
     }
 
     public function isVisibleTo($user): bool
     {
-        if (!$user) {
-            return false;
-        }
-        if ($user->isAdmin()) {
-            return true;
-        }
-        if ($this->user_id === $user->id) {
-            return true;
-        }
-        return \App\Models\Lead::where('contact_id', $this->id)->where('assigned_to_id', $user->id)->exists()
-            || \App\Models\Invoice::where('contact_id', $this->id)->where('assigned_to_id', $user->id)->exists();
+        return $user !== null;
     }
 
     public function linkedContact(): BelongsTo

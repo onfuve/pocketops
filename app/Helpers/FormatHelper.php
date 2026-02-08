@@ -22,10 +22,11 @@ class FormatHelper
         return str_replace($english, $persian, $value);
     }
 
-    /** Format number with comma every 3 digits, optional Persian digits */
+    /** Format number with comma thousands separator, no decimals (###,###,###) */
     public static function numberFormat(int|float $num, bool $persianDigits = true): string
     {
-        $formatted = number_format((float) $num, 0, '', ',');
+        $n = (int) round((float) $num);
+        $formatted = number_format($n, 0, '', ',');
         return $persianDigits ? self::englishToPersian($formatted) : $formatted;
     }
 

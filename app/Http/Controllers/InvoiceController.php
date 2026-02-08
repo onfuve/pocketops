@@ -47,7 +47,7 @@ class InvoiceController extends Controller
             'status' => Invoice::STATUS_DRAFT,
         ]);
         $invoice->setRelation('items', collect([(object)['description' => '', 'quantity' => 1, 'unit_price' => 0, 'amount' => 0, 'sort' => 0]]));
-        $paymentOptions = PaymentOption::orderBy('sort')->get();
+        $paymentOptions = PaymentOption::printableInSettings()->orderBy('sort')->get();
         $selectedIds = [];
         $tags = Tag::forCurrentUser()->orderBy('name')->get();
 
@@ -60,6 +60,8 @@ class InvoiceController extends Controller
         $validated = $request->validate($this->rules());
         $validated['status'] = $request->get('status', Invoice::STATUS_DRAFT);
         $validated['discount'] = $this->numericInput($request->get('discount'), 0);
+        $dp = $request->get('discount_percent');
+        $validated['discount_percent'] = ($dp !== null && $dp !== '') ? min(100, max(0, (float) preg_replace('/[^\d.]/', '', FormatHelper::persianToEnglish((string) $dp)))) : null;
         if (empty(trim($validated['invoice_number'] ?? ''))) {
             $validated['invoice_number'] = FormatHelper::shamsiNumber();
         }
@@ -105,7 +107,7 @@ class InvoiceController extends Controller
             $invoice->setRelation('tags', collect());
             $invoice->setRelation('attachments', collect());
         }
-        $paymentOptions = PaymentOption::orderBy('sort')->get();
+        $paymentOptions = PaymentOption::printableInSettings()->orderBy('sort')->get();
         $selectedIds = $invoice->payment_option_ids ?? [];
         $paymentOptionFields = $invoice->payment_option_fields ?? [];
 
@@ -145,7 +147,7 @@ class InvoiceController extends Controller
         }
         $invoice->load('items', 'tags');
         $contact = $invoice->contact;
-        $paymentOptions = PaymentOption::orderBy('sort')->get();
+        $paymentOptions = PaymentOption::printableInSettings()->orderBy('sort')->get();
         $selectedIds = $invoice->payment_option_ids ?? [];
         $paymentOptionFields = $invoice->payment_option_fields ?? [];
         $tags = Tag::forCurrentUser()->orderBy('name')->get();
@@ -170,6 +172,8 @@ class InvoiceController extends Controller
         $validated = $request->validate($this->rules());
         $validated['status'] = $request->get('status', Invoice::STATUS_DRAFT);
         $validated['discount'] = $this->numericInput($request->get('discount'), 0);
+        $dp = $request->get('discount_percent');
+        $validated['discount_percent'] = ($dp !== null && $dp !== '') ? min(100, max(0, (float) preg_replace('/[^\d.]/', '', FormatHelper::persianToEnglish((string) $dp)))) : null;
         $ids = $request->validate(['payment_option_ids' => 'nullable|array', 'payment_option_ids.*' => 'integer|exists:payment_options,id'])['payment_option_ids'] ?? [];
         $ids = array_values(array_map('intval', $ids));
         $validated['payment_option_ids'] = $ids;

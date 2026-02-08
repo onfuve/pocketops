@@ -18,10 +18,14 @@
 .ds-page .ds-page-title-icon { background: #d1fae5; color: #047857; border-color: #a7f3d0; }
 .contacts-balance-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; }
 .contacts-balance-filter .ds-filter-tabs { margin-bottom: 0; }
-.contact-card { background: var(--ds-bg); border: 2px solid var(--ds-border); border-radius: var(--ds-radius-lg); padding: 1rem; margin-bottom: 0.5rem; box-shadow: var(--ds-shadow); transition: all 0.2s; text-decoration: none; color: inherit; display: block; width: 100%; box-sizing: border-box; }
-.contact-card:hover { border-color: var(--ds-border-hover); box-shadow: var(--ds-shadow-hover); }
-.contacts-list { width: 100%; }
-.contacts-list > li { width: 100%; box-sizing: border-box; }
+.contacts-list { display: flex; flex-direction: column; width: 100%; gap: 0.5rem; }
+.contacts-list .contact-card { width: 100%; min-width: 0; box-sizing: border-box; background: var(--ds-bg); border: 2px solid var(--ds-border); border-radius: var(--ds-radius-lg); padding: 1rem; box-shadow: var(--ds-shadow); transition: border-color 0.2s, box-shadow 0.2s; }
+.contacts-list .contact-card:hover { border-color: var(--ds-border-hover); box-shadow: var(--ds-shadow-hover); }
+.contacts-list .contact-card-inner { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.75rem; }
+.contacts-list .contact-card-checkbox { flex-shrink: 0; padding: 0.25rem; }
+.contacts-list .contact-card-body { min-width: 0; flex: 1; }
+.contacts-list .contact-card-actions { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.contacts-list .contact-card.is-select-all { background: var(--ds-bg-subtle); }
 </style>
 @endpush
 
@@ -150,13 +154,20 @@
             @endif
         </div>
 
-        <ul class="contacts-list" style="list-style: none; padding: 0; margin: 0;">
-            <li style="margin-bottom: 0.5rem; padding: 0.5rem 1rem; background: var(--ds-bg-subtle); border-radius: var(--ds-radius); border: 2px solid var(--ds-border);">
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem; font-weight: 500; width: 100%;">
-                    <input type="checkbox" id="contacts-select-all" style="width: 1.25rem; height: 1.25rem; accent-color: var(--ds-primary);">
-                    <span>انتخاب همه این صفحه</span>
-                </label>
-            </li>
+        <div class="contacts-list">
+            @if (auth()->user()->canDeleteContact())
+            {{-- Select all row: identical structure to contact cards --}}
+            <div class="contact-card is-select-all" style="border-right: 4px solid var(--ds-border);">
+                <div class="contact-card-inner">
+                    <label class="contact-card-checkbox" style="cursor: pointer;">
+                        <input type="checkbox" id="contacts-select-all" style="width: 1.25rem; height: 1.25rem; accent-color: var(--ds-primary);">
+                    </label>
+                    <div class="contact-card-body" style="font-size: 0.875rem; font-weight: 500;">انتخاب همه این صفحه</div>
+                    <div class="contact-card-actions" aria-hidden="true"></div>
+                </div>
+            </div>
+            @endif
+
             @foreach ($contacts as $contact)
                 @php
                     $balance = (float) ($contact->balance ?? 0);
@@ -165,59 +176,58 @@
                     $balanceColor = $balance > 0 ? '#047857' : ($balance < 0 ? '#b45309' : 'var(--ds-text-subtle)');
                     $balanceBg = $balance > 0 ? '#ecfdf5' : ($balance < 0 ? '#fffbeb' : 'var(--ds-bg-subtle)');
                 @endphp
-                <li>
-                    <div class="contact-card" style="border-right-width: 4px; border-right-color: {{ $balanceBorder }}; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.75rem;">
+                <div class="contact-card" style="border-right: 4px solid {{ $balanceBorder }};">
+                    <div class="contact-card-inner">
                         @if (auth()->user()->canDeleteContact())
-                        <label style="flex-shrink: 0; cursor: pointer; padding: 0.25rem;">
+                        <label class="contact-card-checkbox" style="cursor: pointer;">
                             <input type="checkbox" class="contact-select-checkbox" value="{{ $contact->id }}" style="width: 1.25rem; height: 1.25rem; accent-color: var(--ds-primary);">
                         </label>
                         @endif
-                        <div style="min-width: 0; flex: 1;">
-                                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
-                                    <a href="{{ route('contacts.show', $contact) }}" style="font-weight: 600; color: var(--ds-text); text-decoration: none;">{{ $contact->name }}</a>
-                                    @if ($contact->is_hamkar)
-                                        <span class="ds-badge ds-badge-amber">همکار</span>
-                                    @endif
-                                    <span style="font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.625rem; border-radius: 9999px; background: {{ $balanceBg }}; color: {{ $balanceColor }};" title="{{ $balanceLabel }}">
-                                        {{ FormatHelper::rial(abs($balance)) }} <span style="font-weight: 400; opacity: 0.9;">({{ $balanceLabel }})</span>
-                                    </span>
-                                </div>
-                                @if ($contact->contactPhones->isNotEmpty())
-                                    <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: var(--ds-text-subtle);" dir="ltr">{{ $contact->contactPhones->pluck('phone')->implode('، ') }}</p>
-                                @endif
-                                @if ($contact->city || $contact->referrer_name)
-                                    <p style="margin: 0.25rem 0 0 0; font-size: 0.75rem; color: var(--ds-text-faint);">
-                                        @if ($contact->city)شهر: {{ $contact->city }}@endif
-                                        @if ($contact->city && $contact->referrer_name) · @endif
-                                        @if ($contact->referrer_name)معرف: {{ $contact->referrer_name }}@endif
-                                    </p>
-                                @endif
-                            </div>
+                        <div class="contact-card-body">
                             <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
-                                <a href="{{ route('contacts.receive-pay', $contact) }}" class="ds-btn ds-btn-primary">
-                                    <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-                                    <span class="hidden sm:inline">دریافت/پرداخت</span>
-                                </a>
-                                <a href="{{ route('contacts.edit', $contact) }}" class="ds-btn ds-btn-outline">
-                                    @include('components._icons', ['name' => 'pencil', 'class' => 'w-4 h-4'])
-                                    <span class="hidden sm:inline">ویرایش</span>
-                                </a>
-                                @if (auth()->user()->canDeleteContact())
-                                    <form action="{{ route('contacts.destroy', $contact) }}" method="post" style="display: inline;" onsubmit="return confirm('مخاطب حذف شود؟');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="ds-btn ds-btn-danger">
-                                            @include('components._icons', ['name' => 'trash', 'class' => 'w-4 h-4'])
-                                            <span class="hidden sm:inline">حذف</span>
-                                        </button>
-                                    </form>
+                                <a href="{{ route('contacts.show', $contact) }}" style="font-weight: 600; color: var(--ds-text); text-decoration: none;">{{ $contact->name }}</a>
+                                @if ($contact->is_hamkar)
+                                    <span class="ds-badge ds-badge-amber">همکار</span>
                                 @endif
+                                <span style="font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.625rem; border-radius: 9999px; background: {{ $balanceBg }}; color: {{ $balanceColor }};" title="{{ $balanceLabel }}">
+                                    {{ FormatHelper::rial(abs($balance)) }} <span style="font-weight: 400; opacity: 0.9;">({{ $balanceLabel }})</span>
+                                </span>
                             </div>
+                            @if ($contact->contactPhones->isNotEmpty())
+                                <p style="margin: 0.25rem 0 0 0; font-size: 0.875rem; color: var(--ds-text-subtle);" dir="ltr">{{ $contact->contactPhones->pluck('phone')->implode('، ') }}</p>
+                            @endif
+                            @if ($contact->city || $contact->referrer_name)
+                                <p style="margin: 0.25rem 0 0 0; font-size: 0.75rem; color: var(--ds-text-faint);">
+                                    @if ($contact->city)شهر: {{ $contact->city }}@endif
+                                    @if ($contact->city && $contact->referrer_name) · @endif
+                                    @if ($contact->referrer_name)معرف: {{ $contact->referrer_name }}@endif
+                                </p>
+                            @endif
+                        </div>
+                        <div class="contact-card-actions">
+                            <a href="{{ route('contacts.receive-pay', $contact) }}" class="ds-btn ds-btn-primary">
+                                <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                                <span class="hidden sm:inline">دریافت/پرداخت</span>
+                            </a>
+                            <a href="{{ route('contacts.edit', $contact) }}" class="ds-btn ds-btn-outline">
+                                @include('components._icons', ['name' => 'pencil', 'class' => 'w-4 h-4'])
+                                <span class="hidden sm:inline">ویرایش</span>
+                            </a>
+                            @if (auth()->user()->canDeleteContact())
+                                <form action="{{ route('contacts.destroy', $contact) }}" method="post" style="display: inline;" onsubmit="return confirm('مخاطب حذف شود؟');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="ds-btn ds-btn-danger">
+                                        @include('components._icons', ['name' => 'trash', 'class' => 'w-4 h-4'])
+                                        <span class="hidden sm:inline">حذف</span>
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     </div>
-                </li>
+                </div>
             @endforeach
-        </ul>
+        </div>
 
         <div style="margin-top: 1.5rem;">
             {{ $contacts->withQueryString()->links() }}

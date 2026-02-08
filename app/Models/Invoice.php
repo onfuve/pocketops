@@ -19,6 +19,7 @@ class Invoice extends Model
         'status',
         'subtotal',
         'discount',
+        'discount_percent',
         'total',
         'notes',
         'payment_option_ids',
@@ -32,6 +33,7 @@ class Invoice extends Model
         'due_date' => 'date',
         'subtotal' => 'decimal:0',
         'discount' => 'decimal:0',
+        'discount_percent' => 'decimal:2',
         'total' => 'decimal:0',
         'payment_option_ids' => 'array',
         'payment_option_fields' => 'array',
@@ -124,11 +126,23 @@ class Invoice extends Model
     public function recalculateTotals(): void
     {
         $subtotal = (int) $this->items()->sum('amount');
-        $discount = (int) $this->discount;
+        $discount = $this->discount_percent !== null
+            ? (int) round($subtotal * (float) $this->discount_percent / 100)
+            : (int) $this->discount;
         $this->update([
             'subtotal' => $subtotal,
-            'total' => $subtotal - $discount,
+            'total' => max(0, $subtotal - $discount),
         ]);
+    }
+
+    /** Effective discount amount (from fixed amount or percent of subtotal). */
+    public function effectiveDiscount(): int
+    {
+        $subtotal = (int) $this->subtotal ?: $this->items()->sum('amount');
+        if ($this->discount_percent !== null) {
+            return (int) round($subtotal * (float) $this->discount_percent / 100);
+        }
+        return (int) $this->discount;
     }
 
     public function attachments(): MorphMany

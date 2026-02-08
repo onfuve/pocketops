@@ -239,10 +239,10 @@
                     <dt class="text-stone-500">جمع کل (ریال)</dt>
                     <dd class="font-vazir font-medium">{{ FormatHelper::rial($invoice->subtotal) }}</dd>
                 </div>
-                @if ($invoice->discount > 0)
+                @if ($invoice->effectiveDiscount() > 0)
                     <div class="flex justify-between text-sm">
-                        <dt class="text-stone-500">تخفیف (ریال)</dt>
-                        <dd class="font-vazir text-red-600">−{{ FormatHelper::numberFormat($invoice->discount) }} ریال</dd>
+                        <dt class="text-stone-500">تخفیف</dt>
+                        <dd class="font-vazir text-red-600">−{{ FormatHelper::numberFormat($invoice->effectiveDiscount()) }} ریال @if($invoice->discount_percent)({{ FormatHelper::numberFormat($invoice->discount_percent) }}٪)@endif</dd>
                     </div>
                 @endif
                 <div class="flex justify-between border-t-2 border-stone-300 pt-3 text-base font-bold">

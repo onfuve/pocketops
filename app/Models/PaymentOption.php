@@ -37,6 +37,10 @@ class PaymentOption extends Model
         $printIban = $override['print_iban'] ?? $this->print_iban;
         $printAccount = $override['print_account_number'] ?? $this->print_account_number;
 
+        if (! $printCard && ! $printIban && ! $printAccount) {
+            return [];
+        }
+
         $lines = [];
         if (($this->holder_name ?? '') !== '') {
             $lines[] = ['label' => 'صاحب حساب/کارت', 'value' => $this->holder_name];
@@ -62,5 +66,15 @@ class PaymentOption extends Model
     public static function forPrint(): \Illuminate\Database\Eloquent\Collection
     {
         return static::orderBy('sort')->get();
+    }
+
+    /** Scope: only options that have at least one print flag enabled in settings (for invoice form). */
+    public function scopePrintableInSettings($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('print_card_number', true)
+                ->orWhere('print_iban', true)
+                ->orWhere('print_account_number', true);
+        });
     }
 }

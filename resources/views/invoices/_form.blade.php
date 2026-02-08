@@ -139,14 +139,14 @@
                         </div>
                         <div class="sm-col-4">
                             <label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">قیمت واحد (ریال)</label>
-                            <input type="number" min="0" name="items[{{ $idx }}][unit_price]" value="{{ old("items.{$idx}.unit_price", $row->unit_price ?? 0) }}"
-                                   class="ds-input item-price" dir="ltr">
+                            <input type="text" name="items[{{ $idx }}][unit_price]" value="{{ old("items.{$idx}.unit_price", \App\Helpers\FormatHelper::numberFormat($row->unit_price ?? 0)) }}"
+                                   class="ds-input item-price" dir="ltr" placeholder="۰">
                         </div>
                         <div class="sm-col-3" style="display: flex; align-items: flex-end; gap: 0.75rem;">
                             <div style="flex: 1; min-width: 0;">
                                 <label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">مبلغ (ریال)</label>
-                                <input type="number" min="0" name="items[{{ $idx }}][amount]" value="{{ old("items.{$idx}.amount", $row->amount ?? 0) }}"
-                                       class="ds-input item-amount" dir="ltr">
+                                <input type="text" name="items[{{ $idx }}][amount]" value="{{ old("items.{$idx}.amount", \App\Helpers\FormatHelper::numberFormat($row->amount ?? 0)) }}"
+                                       class="ds-input item-amount" dir="ltr" placeholder="۰">
                             </div>
                             <button type="button" class="remove-item ds-btn ds-btn-danger" style="width: 2.5rem; height: 2.5rem; padding: 0; min-height: 2.5rem; display: inline-flex; align-items: center; justify-content: center;" aria-label="حذف ردیف">×</button>
                         </div>
@@ -168,10 +168,15 @@
         <div class="form-grid-2" style="grid-template-columns: 1fr 1fr; gap: 1.5rem;">
             <div>
                 <label for="discount" class="ds-label">تخفیف (ریال)</label>
-                <input type="number" min="0" name="discount" id="discount" value="{{ old('discount', $invoice->discount ?? 0) }}"
-                       class="ds-input" dir="ltr">
+                <input type="text" name="discount" id="discount" value="{{ old('discount', $invoice->discount ?? 0) }}"
+                       class="ds-input" dir="ltr" placeholder="۰">
             </div>
-            <div style="padding: 1rem 1.25rem; border-radius: var(--ds-radius-lg); background: var(--ds-bg); box-shadow: var(--ds-shadow);">
+            <div>
+                <label for="discount_percent" class="ds-label">تخفیف (درصد)</label>
+                <input type="text" name="discount_percent" id="discount_percent" value="{{ old('discount_percent', $invoice->discount_percent ?? '') }}"
+                       class="ds-input" dir="ltr" placeholder="مثلاً ۱۰">
+            </div>
+            <div class="col-span-2" style="padding: 1rem 1.25rem; border-radius: var(--ds-radius-lg); background: var(--ds-bg); box-shadow: var(--ds-shadow);">
                 <p style="margin: 0 0 0.25rem 0; font-size: 0.75rem; font-weight: 500; color: var(--ds-text-subtle);">مبلغ قابل پرداخت (ریال)</p>
                 <p id="form-total" style="font-size: 1.25rem; font-weight: 700; color: var(--ds-text); margin: 0;">۰</p>
             </div>
@@ -204,20 +209,20 @@
                                 @if ($opt->holder_name)<span style="font-size: 0.75rem; color: var(--ds-text-subtle);">— {{ $opt->holder_name }}</span>@endif
                                 @if ($opt->bank_name)<span style="font-size: 0.75rem; color: var(--ds-text-subtle);">· {{ $opt->bank_name }}</span>@endif
                             </label>
-                            <div class="payment-opt-fields" style="margin-right: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.875rem; {{ $selected ? '' : 'opacity: 0.6; pointer-events: none;' }}" data-opt-id="{{ $opt->id }}">
-                                <label style="display: inline-flex; align-items: center; gap: 0.375rem; cursor: pointer;">
+                            <div class="payment-opt-fields" style="margin-right: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.875rem; {{ $selected ? '' : 'opacity: 0.5; pointer-events: none;' }}" data-opt-id="{{ $opt->id }}">
+                                <label style="display: inline-flex; align-items: center; gap: 0.375rem; cursor: {{ $selected ? 'pointer' : 'default' }};">
                                     <input type="hidden" name="payment_option_fields[{{ $opt->id }}][print_card_number]" value="0">
-                                    <input type="checkbox" name="payment_option_fields[{{ $opt->id }}][print_card_number]" value="1" {{ $printCard ? 'checked' : '' }} style="accent-color: var(--ds-primary);">
+                                    <input type="checkbox" name="payment_option_fields[{{ $opt->id }}][print_card_number]" value="1" {{ $printCard ? 'checked' : '' }} {{ $selected ? '' : 'disabled' }} style="accent-color: var(--ds-primary);">
                                     <span>شماره کارت</span>
                                 </label>
-                                <label style="display: inline-flex; align-items: center; gap: 0.375rem; cursor: pointer;">
+                                <label style="display: inline-flex; align-items: center; gap: 0.375rem; cursor: {{ $selected ? 'pointer' : 'default' }};">
                                     <input type="hidden" name="payment_option_fields[{{ $opt->id }}][print_iban]" value="0">
-                                    <input type="checkbox" name="payment_option_fields[{{ $opt->id }}][print_iban]" value="1" {{ $printIban ? 'checked' : '' }} style="accent-color: var(--ds-primary);">
+                                    <input type="checkbox" name="payment_option_fields[{{ $opt->id }}][print_iban]" value="1" {{ $printIban ? 'checked' : '' }} {{ $selected ? '' : 'disabled' }} style="accent-color: var(--ds-primary);">
                                     <span>شبا</span>
                                 </label>
-                                <label style="display: inline-flex; align-items: center; gap: 0.375rem; cursor: pointer;">
+                                <label style="display: inline-flex; align-items: center; gap: 0.375rem; cursor: {{ $selected ? 'pointer' : 'default' }};">
                                     <input type="hidden" name="payment_option_fields[{{ $opt->id }}][print_account_number]" value="0">
-                                    <input type="checkbox" name="payment_option_fields[{{ $opt->id }}][print_account_number]" value="1" {{ $printAccount ? 'checked' : '' }} style="accent-color: var(--ds-primary);">
+                                    <input type="checkbox" name="payment_option_fields[{{ $opt->id }}][print_account_number]" value="1" {{ $printAccount ? 'checked' : '' }} {{ $selected ? '' : 'disabled' }} style="accent-color: var(--ds-primary);">
                                     <span>شماره حساب</span>
                                 </label>
                             </div>
@@ -230,8 +235,12 @@
                         var id = this.getAttribute('data-opt-id');
                         var block = document.querySelector('.payment-opt-fields[data-opt-id="'+id+'"]');
                         if (block) {
-                            block.classList.toggle('opacity-60', !this.checked);
-                            block.classList.toggle('pointer-events-none', !this.checked);
+                            block.style.opacity = this.checked ? '' : '0.5';
+                            block.style.pointerEvents = this.checked ? '' : 'none';
+                            block.querySelectorAll('input[type="checkbox"]').forEach(function(ch){
+                                ch.disabled = !cb.checked;
+                            });
+                            block.querySelectorAll('label').forEach(function(l){ l.style.cursor = cb.checked ? 'pointer' : 'default'; });
                         }
                     });
                 });
@@ -265,35 +274,64 @@
     function toPersianNum(n) {
         return String(Math.round(n)).replace(/\d/g, function(d) { return persianDigits[+d]; });
     }
+    function formatCurrency(n) {
+        var s = String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return s.replace(/\d/g, function(d) { return persianDigits[+d]; });
+    }
+    function persianToEnglish(s) {
+        var p = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+        var e = ['0','1','2','3','4','5','6','7','8','9'];
+        for (var i = 0; i < 10; i++) s = s.split(p[i]).join(e[i]);
+        return s.replace(/[^\d.]/g, '');
+    }
+    function parseNum(s) { return parseInt(persianToEnglish(String(s)), 10) || 0; }
+    function parseFloatNum(s) { return parseFloat(persianToEnglish(String(s))) || 0; }
     function updateAmount(row) {
-        var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-        var price = parseInt(row.querySelector('.item-price').value, 10) || 0;
+        var qty = parseFloatNum(row.querySelector('.item-qty').value);
+        var price = parseNum(row.querySelector('.item-price').value);
         var amount = Math.round(qty * price);
-        row.querySelector('.item-amount').value = amount;
+        row.querySelector('.item-amount').value = formatCurrency(amount);
         updateFormTotals();
     }
     function updateFormTotals() {
         var subtotal = 0;
         container.querySelectorAll('.item-row').forEach(function (row) {
-            var amt = parseInt(row.querySelector('.item-amount').value, 10) || 0;
+            var amt = parseNum(row.querySelector('.item-amount').value);
             subtotal += amt;
         });
-        var discount = parseInt(document.getElementById('discount').value, 10) || 0;
+        var discountPercent = parseFloat(String(document.getElementById('discount_percent').value).replace(/[^\d.]/g, ''), 10) || 0;
+        var discount = discountPercent > 0
+            ? Math.round(subtotal * discountPercent / 100)
+            : parseNum(document.getElementById('discount').value);
         var total = Math.max(0, subtotal - discount);
-        document.getElementById('form-subtotal').textContent = toPersianNum(subtotal);
-        document.getElementById('form-total').textContent = toPersianNum(total);
+        document.getElementById('form-subtotal').textContent = formatCurrency(subtotal);
+        document.getElementById('form-total').textContent = formatCurrency(total);
     }
 
+    function formatCurrencyInput(el) {
+        var start = el.selectionStart, end = el.selectionEnd;
+        var v = parseNum(el.value);
+        el.value = formatCurrency(v);
+        var len = el.value.length;
+        el.setSelectionRange(Math.min(start, len), Math.min(end, len));
+    }
     container.querySelectorAll('.item-row').forEach(function (row) {
         updateAmount(row);
         row.querySelectorAll('.item-qty, .item-price, .item-amount').forEach(function (el) {
-            el.addEventListener('input', function () { updateAmount(row); });
+            el.addEventListener('input', function () {
+                if (el.classList.contains('item-price')) formatCurrencyInput(el);
+                updateAmount(row);
+            });
+            if (el.classList.contains('item-price') || el.classList.contains('item-amount')) {
+                el.addEventListener('blur', function () { formatCurrencyInput(el); });
+            }
         });
         row.querySelector('.remove-item').addEventListener('click', function () {
             if (container.querySelectorAll('.item-row').length > 1) { row.remove(); updateFormTotals(); }
         });
     });
     document.getElementById('discount').addEventListener('input', updateFormTotals);
+    document.getElementById('discount_percent').addEventListener('input', updateFormTotals);
 
     document.getElementById('add-item').addEventListener('click', function () {
         var row = document.createElement('div');
@@ -302,14 +340,16 @@
             '<div class="item-grid">' +
             '<div class="item-desc"><label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">شرح کالا یا خدمت</label><input type="text" name="items[' + itemIndex + '][description]" class="ds-input item-desc" placeholder="شرح کالا یا خدمت"></div>' +
             '<div class="sm-col-4"><label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">تعداد</label><input type="number" step="0.01" min="0" name="items[' + itemIndex + '][quantity]" value="1" class="ds-input item-qty" dir="ltr"></div>' +
-            '<div class="sm-col-4"><label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">قیمت واحد (ریال)</label><input type="number" min="0" name="items[' + itemIndex + '][unit_price]" value="0" class="ds-input item-price" dir="ltr"></div>' +
-            '<div class="sm-col-3" style="display: flex; align-items: flex-end; gap: 0.75rem;"><div style="flex: 1; min-width: 0;"><label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">مبلغ (ریال)</label><input type="number" min="0" name="items[' + itemIndex + '][amount]" value="0" class="ds-input item-amount" dir="ltr"></div><button type="button" class="remove-item ds-btn ds-btn-danger" style="width: 2.5rem; height: 2.5rem; padding: 0; min-height: 2.5rem; display: inline-flex; align-items: center; justify-content: center;" aria-label="حذف ردیف">×</button></div>' +
+            '<div class="sm-col-4"><label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">قیمت واحد (ریال)</label><input type="text" name="items[' + itemIndex + '][unit_price]" value="۰" class="ds-input item-price" dir="ltr" placeholder="۰"></div>' +
+            '<div class="sm-col-3" style="display: flex; align-items: flex-end; gap: 0.75rem;"><div style="flex: 1; min-width: 0;"><label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">مبلغ (ریال)</label><input type="text" name="items[' + itemIndex + '][amount]" value="۰" class="ds-input item-amount" dir="ltr" placeholder="۰"></div><button type="button" class="remove-item ds-btn ds-btn-danger" style="width: 2.5rem; height: 2.5rem; padding: 0; min-height: 2.5rem; display: inline-flex; align-items: center; justify-content: center;" aria-label="حذف ردیف">×</button></div>' +
             '</div>';
         container.appendChild(row);
         updateAmount(row);
         row.querySelector('.item-qty').addEventListener('input', function () { updateAmount(row); });
-        row.querySelector('.item-price').addEventListener('input', function () { updateAmount(row); });
-        row.querySelector('.item-amount').addEventListener('input', updateFormTotals);
+        row.querySelector('.item-price').addEventListener('input', function () { formatCurrencyInput(this); updateAmount(row); });
+        row.querySelector('.item-price').addEventListener('blur', function () { formatCurrencyInput(this); });
+        row.querySelector('.item-amount').addEventListener('input', function () { updateAmount(row); });
+        row.querySelector('.item-amount').addEventListener('blur', function () { formatCurrencyInput(this); });
         row.querySelector('.remove-item').addEventListener('click', function () {
             if (container.querySelectorAll('.item-row').length > 1) { row.remove(); updateFormTotals(); }
         });

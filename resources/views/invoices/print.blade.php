@@ -97,10 +97,10 @@
                     <dt>جمع کل (ریال)</dt>
                     <dd>{{ FormatHelper::rial($invoice->subtotal) }}</dd>
                 </div>
-                @if ($invoice->discount > 0)
+                @if ($invoice->effectiveDiscount() > 0)
                     <div>
-                        <dt>تخفیف (ریال)</dt>
-                        <dd>−{{ FormatHelper::numberFormat($invoice->discount) }} ریال</dd>
+                        <dt>تخفیف</dt>
+                        <dd>−{{ FormatHelper::numberFormat($invoice->effectiveDiscount()) }} ریال @if($invoice->discount_percent)({{ FormatHelper::numberFormat($invoice->discount_percent) }}٪)@endif</dd>
                     </div>
                 @endif
                 <div class="total-row">

@@ -38,6 +38,7 @@
     <div style="padding: 1.5rem; border-radius: 1rem; border: 2px solid #e7e5e4; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 1.5rem;">
         <h2 style="border-bottom: 2px solid #e7e5e4; padding-bottom: 0.75rem; margin-bottom: 1rem; font-size: 1rem; font-weight: 600; color: #292524;">افزودن کانال جدید</h2>
         <form action="{{ route('settings.lead-channels.store') }}" method="post">
+            @csrf
             <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem; margin-bottom: 1rem;">
                 <div style="flex: 1; min-width: 12rem;">
                     <label for="name" style="display: block; font-size: 0.875rem; font-weight: 500; color: #44403c; margin-bottom: 0.5rem;">نام کانال <span style="color: #b91c1c;">*</span></label>

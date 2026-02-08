@@ -25,7 +25,7 @@
 <body class="font-vazir min-h-screen text-stone-800 antialiased pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]" style="background: linear-gradient(to bottom, #fafaf9 0%, #f5f5f4 100%);">
     <header class="sticky top-0 z-10 border-b bg-white pt-[env(safe-area-inset-top)]" style="border-color: #e7e5e4; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
         <div style="max-width: 56rem; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem 1rem;">
-            <a href="{{ route('contacts.index') }}" class="flex items-center gap-2 shrink-0 rounded-xl px-2 py-1.5 text-base font-bold no-underline transition" style="color: #292524;" onmouseover="this.style.backgroundColor='#ecfdf5';this.style.color='#047857';" onmouseout="this.style.backgroundColor='';this.style.color='#292524';">
+            <a href="{{ route('dashboard') }}" class="flex items-center gap-2 shrink-0 rounded-xl px-2 py-1.5 text-base font-bold no-underline transition" style="color: #292524;" onmouseover="this.style.backgroundColor='#ecfdf5';this.style.color='#047857';" onmouseout="this.style.backgroundColor='';this.style.color='#292524';">
                 <span class="flex h-9 w-9 items-center justify-center rounded-lg" style="background-color: #d1fae5; color: #047857;">
                     @include('components._icons', ['name' => 'users', 'class' => 'w-5 h-5'])
                 </span>
@@ -33,6 +33,10 @@
             </a>
             {{-- Single nav: always visible (inline styles ensure it shows without Tailwind) --}}
             <nav class="main-nav nav-touch" style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem;">
+                <a href="{{ route('dashboard') }}" class="nav-link rounded-xl" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                    @include('components._icons', ['name' => 'lightbulb', 'class' => 'w-4 h-4 shrink-0'])
+                    <span>داشبورد</span>
+                </a>
                 <a href="{{ route('contacts.index') }}" class="nav-link rounded-xl" style="display: inline-flex; align-items: center; gap: 0.5rem;">
                     @include('components._icons', ['name' => 'users', 'class' => 'w-4 h-4 shrink-0'])
                     <span>مخاطبین</span>

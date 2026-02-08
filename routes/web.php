@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BankAccountController;
@@ -21,7 +22,7 @@ Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/', fn () => redirect()->route('contacts.index'));
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::get('attachments/{attachment}', [AttachmentController::class, 'show'])->name('attachments.show');
 

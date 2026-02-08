@@ -15,9 +15,13 @@
         .badge-primary { background-color: #d1fae5 !important; color: #065f46 !important; }
         .badge-amber { background-color: #fef3c7 !important; color: #92400e !important; }
         /* Desktop nav */
-        .main-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
+        .main-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; row-gap: 0.25rem; }
         .nav-drawer-backdrop { display: none; }
-        .nav-drawer-panel { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
+        .nav-drawer-panel { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; row-gap: 0.25rem; }
+        .nav-group { display: flex; align-items: center; gap: 0.25rem; flex-wrap: wrap; }
+        .nav-group + .nav-group { padding-right: 0.5rem; margin-right: 0.5rem; border-right: 1px solid #e7e5e4; }
+        .nav-group + .nav-group:last-of-type { border-right: none; margin-right: 0; padding-right: 0; }
+        .nav-group-label { display: none; }
         .main-nav a, .main-nav button { min-height: 44px; padding: 0.5rem 0.75rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; text-decoration: none; color: #57534e; }
         .main-nav a:hover, .main-nav button:hover { background-color: #ecfdf5; color: #047857; }
         /* Mobile: hamburger + drawer. JS adds body.mobile-nav when width <= 768 (see inline script). */
@@ -27,8 +31,11 @@
         body.mobile-nav .main-nav.mobile-open { display: flex !important; flex-direction: row; align-items: stretch; position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,0.4); padding: 0; gap: 0; }
         body.mobile-nav .main-nav.mobile-open .nav-drawer-backdrop { display: block !important; flex: 1; min-width: 0; cursor: pointer; }
         body.mobile-nav .main-nav.mobile-open .nav-drawer-panel { display: flex !important; flex-direction: column; width: min(85%, 20rem); max-height: 100%; margin-right: auto; background: #fff; box-shadow: 4px 0 20px rgba(0,0,0,0.15); overflow-y: auto; padding: 1rem 0; gap: 0; }
-        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel a, body.mobile-nav .main-nav.mobile-open .nav-drawer-panel button { justify-content: flex-start; padding: 0.875rem 1.25rem; border-radius: 0; min-height: 48px; width: 100%; text-align: right; }
-        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-cta { margin: 0.5rem 1.25rem; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel a, body.mobile-nav .main-nav.mobile-open .nav-drawer-panel button { justify-content: flex-start; padding: 0.875rem 1.25rem; border-radius: 0; min-height: 48px; width: 100%; text-align: right; border-right: none; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-cta { margin: 0.5rem 1.25rem; border-radius: 0.75rem; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-group { flex-direction: column; align-items: stretch; padding: 0; margin: 0; border: none; gap: 0; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-group + .nav-group { padding-top: 0.5rem; margin-top: 0.5rem; border-top: 1px solid #e7e5e4; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-group-label { display: block !important; padding: 0.75rem 1.25rem 0.25rem; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #a8a29e; }
         body.nav-drawer-open { overflow: hidden; }
     </style>
     @include('components._design-system')
@@ -39,7 +46,7 @@
     (function(){var w=document.documentElement.clientWidth||window.innerWidth;document.body.classList.toggle('mobile-nav',w<=768);window.addEventListener('resize',function(){var w=document.documentElement.clientWidth||window.innerWidth;document.body.classList.toggle('mobile-nav',w<=768);});})();
     </script>
     <header class="sticky top-0 z-10 border-b bg-white pt-[env(safe-area-inset-top)]" style="border-color: #e7e5e4; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
-        <div style="max-width: 56rem; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem 1rem;">
+        <div style="max-width: 64rem; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem 1rem;">
             <a href="{{ route('dashboard') }}" class="flex items-center gap-2 shrink-0 rounded-xl px-2 py-1.5 text-base font-bold no-underline transition" style="color: #292524;" onmouseover="this.style.backgroundColor='#ecfdf5';this.style.color='#047857';" onmouseout="this.style.backgroundColor='';this.style.color='#292524';">
                 <span class="flex h-9 w-9 items-center justify-center rounded-lg" style="background-color: #d1fae5; color: #047857;">
                     @include('components._icons', ['name' => 'users', 'class' => 'w-5 h-5'])
@@ -54,73 +61,93 @@
             <nav class="main-nav nav-touch" id="main-nav" aria-label="منوی اصلی">
                 <span class="nav-drawer-backdrop" id="nav-drawer-backdrop" aria-hidden="true"></span>
                 <div class="nav-drawer-panel">
-                    <a href="{{ route('dashboard') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        @include('components._icons', ['name' => 'lightbulb', 'class' => 'w-4 h-4 shrink-0'])
-                        <span>داشبورد</span>
-                    </a>
-                    <a href="{{ route('contacts.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        @include('components._icons', ['name' => 'users', 'class' => 'w-4 h-4 shrink-0'])
-                        <span>مخاطبین</span>
-                    </a>
-                    <a href="{{ route('invoices.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        @include('components._icons', ['name' => 'document', 'class' => 'w-4 h-4 shrink-0'])
-                        <span>فاکتورها</span>
-                    </a>
-                    <a href="{{ route('leads.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        @include('components._icons', ['name' => 'lightbulb', 'class' => 'w-4 h-4 shrink-0'])
-                        <span>سرنخ‌ها</span>
-                    </a>
-                    <a href="{{ route('calendar.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        @include('components._icons', ['name' => 'calendar', 'class' => 'w-4 h-4 shrink-0'])
-                        <span>تقویم</span>
-                    </a>
-                    <a href="{{ route('tasks.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        @include('components._icons', ['name' => 'check', 'class' => 'w-4 h-4 shrink-0'])
-                        <span>وظایف</span>
-                    </a>
-                    <a href="{{ route('contacts.create') }}" class="nav-link nav-cta" style="display: inline-flex; align-items: center; gap: 0.5rem; color: #fff !important; background-color: #059669 !important; margin-inline-end: 0.5rem;">
-                        @include('components._icons', ['name' => 'user-plus', 'class' => 'w-4 h-4'])
-                        <span>مخاطب جدید</span>
-                    </a>
-                    <a href="{{ route('contacts.import') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        @include('components._icons', ['name' => 'file-import', 'class' => 'w-4 h-4 shrink-0'])
-                        <span>ورود CSV</span>
-                    </a>
-                    @if(auth()->user()?->isAdmin())
-                    <a href="{{ route('settings.company') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                        <span>تنظیمات شرکت</span>
-                    </a>
-                    @endif
-                    <a href="{{ route('settings.lead-channels') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        @include('components._icons', ['name' => 'cog', 'class' => 'w-4 h-4 shrink-0'])
-                        <span>کانال سرنخ</span>
-                    </a>
-                    <a href="{{ route('products.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        @include('components._icons', ['name' => 'sell', 'class' => 'w-4 h-4 shrink-0'])
-                        <span>کالاها و خدمات</span>
-                    </a>
-                    <a href="{{ route('price-lists.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        @include('components._icons', ['name' => 'document', 'class' => 'w-4 h-4 shrink-0'])
-                        <span>لیست قیمت</span>
-                    </a>
-                    <a href="{{ route('product-landing-pages.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        @include('components._icons', ['name' => 'sell', 'class' => 'w-4 h-4 shrink-0'])
-                        <span>صفحه فرود</span>
-                    </a>
-                    <a href="{{ route('tags.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        @include('components._icons', ['name' => 'tag', 'class' => 'w-4 h-4 shrink-0'])
-                        <span>برچسب‌ها</span>
-                    </a>
-                    @auth
-                    <form action="{{ route('logout') }}" method="POST" class="inline" style="margin-top: 0.5rem; padding: 0 1.25rem;">
-                        @csrf
-                        <button type="submit" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem; width: 100%; background: none; border: none; cursor: pointer; font-family: inherit; font-size: inherit; text-align: right; padding: 0.875rem 0;">
-                            @include('components._icons', ['name' => 'logout', 'class' => 'w-4 h-4 shrink-0'])
-                            <span>خروج ({{ auth()->user()->name }})</span>
-                        </button>
-                    </form>
-                    @endauth
+                    {{-- Core: Dashboard, Contacts, Invoices, Leads --}}
+                    <div class="nav-group">
+                        <span class="nav-group-label">اصلی</span>
+                        <a href="{{ route('dashboard') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            @include('components._icons', ['name' => 'lightbulb', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>داشبورد</span>
+                        </a>
+                        <a href="{{ route('contacts.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            @include('components._icons', ['name' => 'users', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>مخاطبین</span>
+                        </a>
+                        <a href="{{ route('invoices.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            @include('components._icons', ['name' => 'document', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>فاکتورها</span>
+                        </a>
+                        <a href="{{ route('leads.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            @include('components._icons', ['name' => 'lightbulb', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>سرنخ‌ها</span>
+                        </a>
+                    </div>
+                    {{-- Planning --}}
+                    <div class="nav-group">
+                        <span class="nav-group-label">برنامه‌ریزی</span>
+                        <a href="{{ route('calendar.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            @include('components._icons', ['name' => 'calendar', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>تقویم</span>
+                        </a>
+                        <a href="{{ route('tasks.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            @include('components._icons', ['name' => 'check', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>وظایف</span>
+                        </a>
+                    </div>
+                    {{-- Products --}}
+                    <div class="nav-group">
+                        <span class="nav-group-label">کالا و فروش</span>
+                        <a href="{{ route('products.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            @include('components._icons', ['name' => 'sell', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>کالاها و خدمات</span>
+                        </a>
+                        <a href="{{ route('price-lists.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            @include('components._icons', ['name' => 'document', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>لیست قیمت</span>
+                        </a>
+                        <a href="{{ route('product-landing-pages.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            @include('components._icons', ['name' => 'sell', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>صفحه فرود</span>
+                        </a>
+                    </div>
+                    {{-- Settings --}}
+                    <div class="nav-group">
+                        <span class="nav-group-label">تنظیمات</span>
+                        <a href="{{ route('tags.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            @include('components._icons', ['name' => 'tag', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>برچسب‌ها</span>
+                        </a>
+                        <a href="{{ route('contacts.import') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            @include('components._icons', ['name' => 'file-import', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>ورود CSV</span>
+                        </a>
+                        <a href="{{ route('settings.lead-channels') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            @include('components._icons', ['name' => 'cog', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>کانال سرنخ</span>
+                        </a>
+                        @if(auth()->user()?->isAdmin())
+                        <a href="{{ route('settings.company') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                            <span>تنظیمات شرکت</span>
+                        </a>
+                        @endif
+                    </div>
+                    {{-- Actions --}}
+                    <div class="nav-group">
+                        <span class="nav-group-label">عملیات</span>
+                        <a href="{{ route('contacts.create') }}" class="nav-link nav-cta" style="display: inline-flex; align-items: center; gap: 0.5rem; color: #fff !important; background-color: #059669 !important;">
+                            @include('components._icons', ['name' => 'user-plus', 'class' => 'w-4 h-4'])
+                            <span>مخاطب جدید</span>
+                        </a>
+                        @auth
+                        <form action="{{ route('logout') }}" method="POST" style="margin: 0; display: inline-flex;">
+                            @csrf
+                            <button type="submit" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem; width: 100%; background: none; border: none; cursor: pointer; font-family: inherit; font-size: inherit; text-align: right; padding: 0.5rem 0.75rem;">
+                                @include('components._icons', ['name' => 'logout', 'class' => 'w-4 h-4 shrink-0'])
+                                <span>خروج ({{ auth()->user()->name }})</span>
+                            </button>
+                        </form>
+                        @endauth
+                    </div>
                 </div>
             </nav>
         </div>

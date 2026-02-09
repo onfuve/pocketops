@@ -146,13 +146,13 @@
                         </div>
                         <div class="sm-col-4">
                             <label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">قیمت واحد (ریال)</label>
-                            <input type="text" name="items[{{ $idx }}][unit_price]" value="{{ old("items.{$idx}.unit_price", \App\Helpers\FormatHelper::numberFormat($row->unit_price ?? 0)) }}"
+                            <input type="text" name="items[{{ $idx }}][unit_price]" value="{{ old("items.{$idx}.unit_price", \App\Helpers\FormatHelper::numberFormat((float)($row->unit_price ?? 0))) }}"
                                    class="ds-input item-price" dir="ltr" placeholder="۰">
                         </div>
                         <div class="sm-col-3" style="display: flex; align-items: flex-end; gap: 0.75rem;">
                             <div style="flex: 1; min-width: 0;">
                                 <label class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">مبلغ (ریال)</label>
-                                <input type="text" name="items[{{ $idx }}][amount]" value="{{ old("items.{$idx}.amount", \App\Helpers\FormatHelper::numberFormat($row->amount ?? 0)) }}"
+                                <input type="text" name="items[{{ $idx }}][amount]" value="{{ old("items.{$idx}.amount", \App\Helpers\FormatHelper::numberFormat((float)($row->amount ?? 0))) }}"
                                        class="ds-input item-amount" dir="ltr" placeholder="۰">
                             </div>
                             <button type="button" class="remove-item ds-btn ds-btn-danger" style="width: 2.5rem; height: 2.5rem; padding: 0; min-height: 2.5rem; display: inline-flex; align-items: center; justify-content: center;" aria-label="حذف ردیف">×</button>

@@ -57,7 +57,10 @@ class InvoiceController extends Controller
 
     public function store(Request $request)
     {
-        $this->normalizeShamsiDates($request);
+        $dateErrors = $this->normalizeShamsiDates($request);
+        if (!empty($dateErrors)) {
+            return back()->withErrors($dateErrors)->withInput();
+        }
         $validated = $request->validate($this->rules());
         $validated['status'] = $request->get('status', Invoice::STATUS_DRAFT);
         $validated['discount'] = $this->numericInput($request->get('discount'), 0);
@@ -169,7 +172,10 @@ class InvoiceController extends Controller
         } else {
             return redirect()->route('invoices.show', $invoice)->with('error', 'این فاکتور قابل ویرایش نیست.');
         }
-        $this->normalizeShamsiDates($request);
+        $dateErrors = $this->normalizeShamsiDates($request);
+        if (!empty($dateErrors)) {
+            return back()->withErrors($dateErrors)->withInput();
+        }
         $validated = $request->validate($this->rules());
         $validated['status'] = $request->get('status', Invoice::STATUS_DRAFT);
         $validated['discount'] = $this->numericInput($request->get('discount'), 0);
@@ -401,13 +407,16 @@ class InvoiceController extends Controller
         }
     }
 
-    private function normalizeShamsiDates(Request $request): void
+    private function normalizeShamsiDates(Request $request): array
     {
+        $errors = [];
         $date = $request->get('date');
         if (is_string($date) && $date !== '') {
             $gregorian = FormatHelper::shamsiToGregorian($date);
             if ($gregorian !== null) {
                 $request->merge(['date' => $gregorian]);
+            } else {
+                $errors['date'] = 'تاریخ شمسی معتبر نیست. فرمت صحیح: ۱۴۰۳/۱۱/۱۳';
             }
         }
         $dueDate = $request->get('due_date');
@@ -415,8 +424,11 @@ class InvoiceController extends Controller
             $gregorian = FormatHelper::shamsiToGregorian($dueDate);
             if ($gregorian !== null) {
                 $request->merge(['due_date' => $gregorian]);
+            } else {
+                $errors['due_date'] = 'تاریخ سررسید معتبر نیست. فرمت صحیح: ۱۴۰۳/۱۱/۱۳';
             }
         }
+        return $errors;
     }
 
     private function syncTags(Invoice $invoice, array $tagIds): void

@@ -65,6 +65,20 @@
 
     <input type="hidden" name="type" value="{{ old('type', $invoice->type ?? 'sell') }}">
 
+    @if ($errors->any())
+        <div class="mb-4 flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm shadow-sm" role="alert" style="border-color: #fecaca; background-color: #fef2f2; color: #b91c1c;">
+            @include('components._icons', ['name' => 'x', 'class' => 'w-5 h-5 shrink-0'])
+            <div>
+                <strong>خطا در ثبت اطلاعات:</strong>
+                <ul class="mt-1 list-disc list-inside">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    @endif
+
     <div class="ds-form-card">
         <h2 class="ds-form-card-title">{{ $isBuy ? 'فروشنده' : 'مشتری' }} و تاریخ</h2>
         <div class="form-grid-2">
@@ -72,16 +86,22 @@
                 <label for="contact_search" class="ds-label">{{ $isBuy ? 'فروشنده' : 'مشتری' }} <span style="color: #b91c1c;">*</span></label>
                 <input type="hidden" name="contact_id" id="contact_id" value="{{ old('contact_id', $contact->id ?? '') }}">
                 <input type="text" id="contact_search" value="{{ old('contact_name', $contact->name ?? '') }}"
-                       class="ds-input" placeholder="{{ $isBuy ? 'جستجو نام فروشنده…' : 'جستجو نام مشتری…' }}" autocomplete="off">
+                       class="ds-input {{ $errors->has('contact_id') ? 'border-red-500' : '' }}" placeholder="{{ $isBuy ? 'جستجو نام فروشنده…' : 'جستجو نام مشتری…' }}" autocomplete="off">
                 <div id="contact_results" class="dropdown-results hidden"></div>
+                @error('contact_id')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
             </div>
             <div>
-                <label for="date" class="ds-label">تاریخ</label>
+                <label for="date" class="ds-label">تاریخ <span style="color: #b91c1c;">*</span></label>
                 <div class="date-row">
                     <input type="text" name="date" id="date" value="{{ $dateShamsi }}"
-                           class="ds-input" placeholder="۱۴۰۳/۱۱/۱۴" autocomplete="off">
+                           class="ds-input {{ $errors->has('date') ? 'border-red-500' : '' }}" placeholder="۱۴۰۳/۱۱/۱۴" autocomplete="off">
                     <button type="button" id="date-today" class="ds-btn ds-btn-secondary" data-today="{{ $shamsiToday }}">امروز</button>
                 </div>
+                @error('date')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
             </div>
             <div>
                 <label class="ds-label">سررسید</label>
@@ -103,7 +123,10 @@
                 <div style="margin-top: 1rem;">
                     <label for="due_date" class="ds-label" style="font-size: 0.75rem; color: var(--ds-text-subtle);">تاریخ سررسید</label>
                     <input type="text" name="due_date" id="due_date" value="{{ $dueShamsi }}"
-                           class="ds-input" placeholder="۱۴۰۳/۱۱/۱۴ یا خالی" autocomplete="off">
+                           class="ds-input {{ $errors->has('due_date') ? 'border-red-500' : '' }}" placeholder="۱۴۰۳/۱۱/۱۴ یا خالی" autocomplete="off">
+                    @error('due_date')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
             <div class="col-span-2">

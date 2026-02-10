@@ -43,18 +43,20 @@ class Product extends Model
         return $this->hasOne(ProductLandingPage::class);
     }
 
-    /** Products visible to the given user: own, or all for admin. */
+    /**
+     * Products visible to the given user.
+     *
+     * All authenticated users (admin + team) share the same list of
+     * goods/services, similar to contacts. Only unauthenticated users
+     * are blocked here; per-action authorization is handled elsewhere.
+     */
     public function scopeVisibleToUser($query, $user)
     {
         if (!$user) {
             return $query->whereRaw('1 = 0');
         }
-        if ($user->isAdmin()) {
-            return $query;
-        }
-        return $query->where(function ($q) use ($user) {
-            $q->where('user_id', $user->id)->orWhereNull('user_id');
-        });
+
+        return $query;
     }
 
     /** Smart search: word-split, match name/description/tags, not sequential. */

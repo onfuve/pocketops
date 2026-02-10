@@ -28,6 +28,9 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('pricelist/{code}', [CustomerPriceListController::class, 'show'])->name('price-lists.public');
 Route::get('product/{code}', [CustomerProductController::class, 'show'])->name('product-landing-pages.public');
 
+Route::get('f/{code}', [App\Http\Controllers\PublicFormController::class, 'show'])->name('forms.public.show');
+Route::post('f/{code}', [App\Http\Controllers\PublicFormController::class, 'submit'])->name('forms.public.submit');
+
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -96,6 +99,14 @@ Route::post('product-landing-pages/{productLandingPage}/generate-code', [Product
 Route::resource('product-landing-pages', ProductLandingPageController::class)->except(['show']);
 Route::get('api/products/search', [ProductController::class, 'searchApi'])->name('products.search.api');
 Route::resource('tags', TagController::class);
+
+Route::get('forms/inbox', [App\Http\Controllers\FormController::class, 'inbox'])->name('forms.inbox');
+Route::get('forms/submissions/{submission}', [App\Http\Controllers\FormController::class, 'showSubmission'])->name('forms.submissions.show');
+Route::post('forms/{form}/modules', [App\Http\Controllers\FormController::class, 'storeModule'])->name('forms.modules.store');
+Route::put('forms/{form}/modules/{module}', [App\Http\Controllers\FormController::class, 'updateModule'])->name('forms.modules.update');
+Route::delete('forms/{form}/modules/{module}', [App\Http\Controllers\FormController::class, 'destroyModule'])->name('forms.modules.destroy');
+Route::post('forms/{form}/links', [App\Http\Controllers\FormController::class, 'createLink'])->name('forms.links.store');
+Route::resource('forms', App\Http\Controllers\FormController::class);
 
 Route::redirect('bank-accounts', '/settings/payment-options');
 Route::redirect('bank-accounts/create', '/settings/payment-options');

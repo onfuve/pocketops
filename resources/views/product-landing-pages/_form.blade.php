@@ -42,6 +42,17 @@
     <div class="ds-form-card">
         <h2 class="ds-form-card-title">تصاویر</h2>
         <p class="section-label">تصاویر باکیفیت تأثیر زیادی روی صفحه فرود دارند. تصویر اصلی برای نمایش در بالای صفحه، و تصاویر اضافه برای گالری استفاده می‌شوند.</p>
+        <div style="margin-bottom: 1rem; padding: 0.875rem 1rem; background: #eff6ff; border-radius: 0.5rem; border-right: 3px solid #3b82f6;">
+            <div style="font-size: 0.8125rem; color: #1e40af; line-height: 1.6;">
+                <strong>💡 راهنمای تصویر:</strong>
+                <ul style="margin: 0.5rem 0 0 1.25rem; padding: 0;">
+                    <li><strong>Hero/Minimal/Card:</strong> نسبت 1:1 (مربع)، اندازه 800×800 تا 1200×1200 پیکسل</li>
+                    <li><strong>Split:</strong> نسبت 3:4 یا 4:3، اندازه 900×1200 یا 1200×900 پیکسل</li>
+                    <li><strong>فرمت:</strong> JPEG یا PNG، حجم کمتر از 500KB</li>
+                    <li><a href="/docs/IMAGE_GUIDE_FA.md" target="_blank" style="color: #3b82f6; text-decoration: underline;">راهنمای کامل تصاویر →</a></li>
+                </ul>
+            </div>
+        </div>
         <div style="display: flex; flex-direction: column; gap: 1.25rem;">
             <div>
                 <label for="photo" class="ds-label">تصویر اصلی (hero)</label>

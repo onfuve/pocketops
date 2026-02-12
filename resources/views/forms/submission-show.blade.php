@@ -27,9 +27,9 @@
         @foreach($form->modules as $module)
             @php $key = 'm' . $module->id; $value = $data[$key] ?? null; @endphp
             <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--ds-border);">
-                <div style="font-weight: 600; margin-bottom: 0.5rem;">{{ $module->getConfig('label') ?: (\App\Models\FormModule::typeLabels()[$module->type] ?? $module->type) }}</div>
+                <div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9375rem; color: var(--ds-text);">{{ $module->getConfig('label') ?: (\App\Models\FormModule::typeLabels()[$module->type] ?? $module->type) }}</div>
                 @if($module->type === 'custom_text')
-                    <div style="white-space: pre-wrap; color: var(--ds-text-muted);">{!! nl2br(e($module->getConfig('content', ''))) !!}</div>
+                    <div style="white-space: pre-wrap; color: var(--ds-text-subtle); font-size: 0.875rem;">{!! nl2br(e($module->getConfig('content', ''))) !!}</div>
                 @elseif($module->type === 'file_upload')
                     @if(is_array($value) && !empty($value['attachment_id']))
                         @php $att = $submission->attachments->firstWhere('id', $value['attachment_id']); @endphp
@@ -42,16 +42,61 @@
                         <span style="color: var(--ds-text-subtle);">آپلود نشده</span>
                     @endif
                 @elseif($module->type === 'postal_address')
-                    @if(is_array($value))
-                        <div style="font-size: 0.875rem;">{{ implode(' — ', array_filter($value)) ?: '—' }}</div>
+                    @if(is_array($value) && array_filter($value))
+                        <div style="font-size: 0.875rem; line-height: 1.6;">
+                            @foreach(['receiver_name' => 'نام گیرنده', 'phone' => 'تلفن', 'province' => 'استان', 'city' => 'شهر', 'postal_code' => 'کد پستی', 'address' => 'آدرس'] as $k => $label)
+                                @if(!empty($value[$k]))
+                                    <div><span style="color: var(--ds-text-subtle);">{{ $label }}:</span> {{ $value[$k] }}</div>
+                                @endif
+                            @endforeach
+                        </div>
                     @else
                         <span style="color: var(--ds-text-subtle);">—</span>
                     @endif
-                @elseif($module->type === 'consent' || $module->type === 'survey' || $module->type === 'custom_fields')
-                    @if(is_array($value))
-                        <pre style="font-size: 0.8125rem; white-space: pre-wrap; margin: 0;">{{ json_encode($value, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) }}</pre>
+                @elseif($module->type === 'consent')
+                    @php $items = $module->getConfig('items', []); $items = array_values(array_filter($items, function ($i) { return trim($i['text'] ?? '') !== ''; })); @endphp
+                    @if(!empty($items))
+                        <div style="font-size: 0.875rem;">
+                            @foreach($items as $i => $item)
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                    @if(is_array($value) && !empty($value[$i]))
+                                        <span style="color: #059669;">✓</span>
+                                    @else
+                                        <span style="color: var(--ds-text-subtle);">—</span>
+                                    @endif
+                                    <span>{{ $item['text'] ?? 'تأیید' }}</span>
+                                </div>
+                            @endforeach
+                        </div>
                     @else
-                        <span style="color: var(--ds-text-subtle);">{{ $value ?? '—' }}</span>
+                        <span style="color: var(--ds-text-subtle);">—</span>
+                    @endif
+                @elseif($module->type === 'survey')
+                    @php $questions = $module->getConfig('questions', []); $questions = array_values(array_filter($questions, function ($q) { return trim($q['text'] ?? '') !== ''; })); @endphp
+                    @if(!empty($questions))
+                        <div style="font-size: 0.875rem;">
+                            @foreach($questions as $q)
+                                @php $ans = is_array($value) ? ($value[$q['id'] ?? '') : ''; @endphp
+                                <div style="margin-bottom: 0.75rem;">
+                                    <div style="color: var(--ds-text-subtle); margin-bottom: 0.15rem;">{{ $q['text'] ?? 'سؤال' }}</div>
+                                    <div style="font-weight: 500;">
+                                        @if(($q['type'] ?? '') === 'nps' && $ans !== '')
+                                            {{ $ans }}/۱۰
+                                        @else
+                                            {{ $ans !== '' ? $ans : '—' }}
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <span style="color: var(--ds-text-subtle);">—</span>
+                    @endif
+                @elseif($module->type === 'custom_fields')
+                    @if(is_scalar($value) && (string)$value !== '')
+                        <div style="font-size: 0.875rem;">{{ $value }}</div>
+                    @else
+                        <span style="color: var(--ds-text-subtle);">—</span>
                     @endif
                 @else
                     <span style="color: var(--ds-text-subtle);">{{ is_scalar($value) ? $value : (is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE) : '—') }}</span>

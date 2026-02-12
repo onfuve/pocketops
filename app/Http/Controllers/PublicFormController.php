@@ -43,10 +43,12 @@ class PublicFormController extends Controller
             $submission->touchActivity();
         }
 
+        $data = array_merge($submission->data ?? [], old('data', []));
         return view('forms.public-fill', [
             'form' => $form,
             'link' => $link,
             'submission' => $submission,
+            'data' => $data,
         ]);
     }
 
@@ -73,6 +75,13 @@ class PublicFormController extends Controller
 
         $data = array_merge($submission->data ?? [], $request->input('data', []));
         $isFinal = $request->boolean('final');
+
+        if ($isFinal) {
+            $errors = $this->validateSubmission($form, $data, $request, $submission);
+            if (!empty($errors)) {
+                return back()->withErrors($errors)->withInput();
+            }
+        }
 
         foreach ($form->modules as $module) {
             $key = 'm' . $module->id;
@@ -106,5 +115,46 @@ class PublicFormController extends Controller
         }
 
         return back()->with('success', 'پیش‌نویس ذخیره شد.');
+    }
+
+    private function validateSubmission(Form $form, array $data, Request $request, FormSubmission $submission): array
+    {
+        $errors = [];
+        foreach ($form->modules as $module) {
+            $key = 'm' . $module->id;
+            $value = $data[$key] ?? null;
+            $fieldKey = "data.{$key}";
+
+            if ($module->type === 'file_upload' && $module->getConfig('required')) {
+                $hasNewFile = $request->hasFile($fieldKey);
+                $existing = $submission->data[$key] ?? null;
+                $hasExisting = is_array($existing) && !empty($existing['attachment_id']);
+                if (!$hasNewFile && !$hasExisting) {
+                    $errors[$fieldKey] = ($module->getConfig('label') ?: 'فایل') . ' الزامی است.';
+                }
+            }
+
+            if ($module->type === 'consent') {
+                $items = $module->getConfig('items', []);
+                $items = array_values(array_filter($items, fn ($i) => trim($i['text'] ?? '') !== ''));
+                foreach ($items as $i => $item) {
+                    if (!empty($item['required'])) {
+                        $checked = is_array($value) && !empty($value[$i]);
+                        if (!$checked) {
+                            $errors[$fieldKey] = '«' . ($item['text'] ?? 'تأیید') . '» الزامی است.';
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($module->type === 'custom_fields' && $module->getConfig('required')) {
+                $empty = !is_scalar($value) || trim((string) $value) === '';
+                if ($empty) {
+                    $errors[$fieldKey] = ($module->getConfig('label') ?: 'این فیلد') . ' الزامی است.';
+                }
+            }
+        }
+        return $errors;
     }
 }

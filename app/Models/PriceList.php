@@ -14,6 +14,8 @@ class PriceList extends Model
         'template',
         'show_prices',
         'show_photos',
+        'show_search',
+        'show_quick_access',
         'price_format',
         'show_cta',
         'cta_url',
@@ -40,6 +42,8 @@ class PriceList extends Model
     protected $casts = [
         'show_prices' => 'boolean',
         'show_photos' => 'boolean',
+        'show_search' => 'boolean',
+        'show_quick_access' => 'boolean',
         'show_cta' => 'boolean',
         'show_notes' => 'boolean',
         'show_social' => 'boolean',

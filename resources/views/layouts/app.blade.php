@@ -24,6 +24,9 @@
         .nav-group-label { display: none; }
         .main-nav a, .main-nav button { min-height: 44px; padding: 0.5rem 0.75rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; text-decoration: none; color: #57534e; }
         .main-nav a:hover, .main-nav button:hover { background-color: #ecfdf5; color: #047857; }
+        @keyframes pulse-subtle { 0%, 100% { opacity: 1; } 50% { opacity: 0.95; } }
+        .nav-link-new-lead { background: linear-gradient(135deg, #f59e0b, #d97706) !important; border-color: #d97706 !important; color: #fff !important; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important; font-weight: 700 !important; font-size: 0.875rem !important; padding: 0.5rem 1rem !important; animation: pulse-subtle 2s ease-in-out infinite; }
+        .nav-link-new-lead:hover { background: linear-gradient(135deg, #d97706, #b45309) !important; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4) !important; color: #fff !important; }
         /* Mobile: hamburger + drawer. JS adds body.mobile-nav when width <= 768 (see inline script). */
         .nav-hamburger { display: none; width: 44px; height: 44px; align-items: center; justify-content: center; border: none; border-radius: 0.75rem; background: transparent; cursor: pointer; color: #57534e; }
         body.mobile-nav .nav-hamburger { display: flex !important; }
@@ -79,6 +82,10 @@
                         <a href="{{ route('leads.index') }}" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.5rem;">
                             @include('components._icons', ['name' => 'lightbulb', 'class' => 'w-4 h-4 shrink-0'])
                             <span>سرنخ‌ها</span>
+                        </a>
+                        <a href="{{ route('leads.create') }}" class="nav-link nav-link-new-lead" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            @include('components._icons', ['name' => 'plus', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>سرنخ جدید</span>
                         </a>
                     </div>
                     {{-- Planning --}}

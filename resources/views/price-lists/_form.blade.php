@@ -64,7 +64,28 @@
                     <input type="checkbox" name="show_photos" value="1" {{ old('show_photos', $priceList->show_photos) ? 'checked' : '' }}>
                     نمایش عکس کالاها
                 </label>
+                <label class="ds-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="show_search" value="1" {{ old('show_search', $priceList->show_search ?? true) ? 'checked' : '' }}>
+                    نمایش جعبه جستجو
+                </label>
+                <label class="ds-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="show_quick_access" value="1" {{ old('show_quick_access', $priceList->show_quick_access ?? true) ? 'checked' : '' }}>
+                    نمایش دسترسی سریع (ناوبری بخش‌ها)
+                </label>
             </div>
+            @if (old('show_photos', $priceList->show_photos))
+            <div style="margin-top: 0.5rem; padding: 0.875rem 1rem; background: #eff6ff; border-radius: 0.5rem; border-right: 3px solid #3b82f6;">
+                <div style="font-size: 0.8125rem; color: #1e40af; line-height: 1.6;">
+                    <strong>💡 راهنمای تصویر:</strong>
+                    <ul style="margin: 0.5rem 0 0 1.25rem; padding: 0;">
+                        <li><strong>With Photos:</strong> نسبت 1:1، اندازه 200×200 تا 400×400 پیکسل</li>
+                        <li><strong>Grid:</strong> نسبت 1:1، اندازه 300×300 تا 600×600 پیکسل</li>
+                        <li><strong>فرمت:</strong> JPEG یا PNG، حجم کمتر از 150KB</li>
+                        <li><a href="/docs/IMAGE_GUIDE_FA.md" target="_blank" style="color: #3b82f6; text-decoration: underline;">راهنمای کامل تصاویر →</a></li>
+                    </ul>
+                </div>
+            </div>
+            @endif
             <div>
                 <label for="price_format" class="ds-label">فرمت قیمت</label>
                 <select name="price_format" id="price_format" class="ds-select">

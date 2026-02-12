@@ -42,6 +42,13 @@
             </div>
             <div>
                 <label for="photo" class="ds-label">عکس</label>
+                <p style="font-size: 0.8125rem; color: var(--ds-text-subtle); margin: 0 0 0.5rem;">این عکس در لیست قیمت و صفحات فرود استفاده می‌شود.</p>
+                <div style="margin-bottom: 0.75rem; padding: 0.75rem 1rem; background: #eff6ff; border-radius: 0.5rem; border-right: 3px solid #3b82f6;">
+                    <div style="font-size: 0.75rem; color: #1e40af; line-height: 1.5;">
+                        <strong>💡 توصیه:</strong> نسبت 1:1 (مربع)، اندازه 400×400 تا 800×800 پیکسل، فرمت JPEG/PNG، حجم کمتر از 300KB
+                        <br><a href="/docs/IMAGE_GUIDE_FA.md" target="_blank" style="color: #3b82f6; text-decoration: underline;">راهنمای کامل →</a>
+                    </div>
+                </div>
                 @if ($isEdit && $product->photo_path)
                     <div style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.75rem;">
                         <img src="{{ asset('storage/' . $product->photo_path) }}" alt="" style="width: 5rem; height: 5rem; object-fit: cover; border-radius: var(--ds-radius);">

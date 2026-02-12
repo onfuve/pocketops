@@ -210,6 +210,13 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.show', $invoice)->with('success', 'فاکتور به‌روزرسانی شد.');
     }
 
+    /** Redirect GET requests to invoice show (e.g. bookmarks / open in new tab). */
+    public function showMarkFinal(Invoice $invoice)
+    {
+        abort_unless($invoice->isVisibleTo(request()->user()), 403, 'شما به این فاکتور دسترسی ندارید.');
+        return redirect()->route('invoices.show', $invoice);
+    }
+
     /** Mark draft invoice as final so payments can be recorded. */
     public function markFinal(Invoice $invoice)
     {

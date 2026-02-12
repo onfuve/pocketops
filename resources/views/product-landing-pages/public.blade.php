@@ -138,23 +138,38 @@ $fontCss = FontHelper::cssFor($page->font_family ?? 'vazirmatn');
 .plp-social-btn--ig { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743); }
 .plp-social-btn--tg { background: #0088cc; }
 .plp-social-btn--wa { background: #25d366; }
-.plp-contact-link { color: var(--plp-primary); text-decoration: none; font-weight: 600; }
+.plp-social-btn:hover { transform: scale(1.1); }
+.plp-contact-link { color: var(--plp-primary); text-decoration: none; font-weight: 600; transition: opacity 0.2s; }
+.plp-contact-link:hover { opacity: 0.8; }
+
+/* Print styles */
+@media print {
+    .plp-share-wrap, .plp-footer { display: none !important; }
+    .plp-hero, .plp-minimal, .plp-card, .plp-split { min-height: auto !important; }
+}
 
 /* Photo gallery (carousel) */
-.plp-gallery { display: flex; gap: 0; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; }
+.plp-gallery { display: flex; gap: 0; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; position: relative; }
 .plp-gallery::-webkit-scrollbar { display: none; }
-.plp-gallery-img { scroll-snap-align: center; flex-shrink: 0; }
-.plp-gallery--hero { max-width: 20rem; width: 100%; margin: 0 0 2rem; border-radius: 1.25rem; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); }
+.plp-gallery-img { scroll-snap-align: center; flex-shrink: 0; transition: transform 0.3s ease, opacity 0.3s ease; }
+.plp-gallery[data-gallery] .plp-gallery-img { display: none; }
+.plp-gallery[data-gallery] .plp-gallery-img:first-child { display: block; }
+.plp-gallery--hero { max-width: 20rem; width: 100%; margin: 0 0 2rem; border-radius: 1.25rem; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2); position: relative; }
 .plp-gallery--hero .plp-gallery-img { width: 100%; min-width: 100%; aspect-ratio: 1; object-fit: cover; }
-.plp-gallery--card { width: 100%; aspect-ratio: 1; }
+.plp-gallery--card { width: 100%; aspect-ratio: 1; position: relative; }
 .plp-gallery--card .plp-gallery-img { width: 100%; height: 100%; aspect-ratio: 1; object-fit: cover; }
-.plp-gallery--split { width: 100%; max-height: 60vh; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 16px 32px -12px rgba(0,0,0,0.15); }
+.plp-gallery--split { width: 100%; max-height: 60vh; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 16px 32px -12px rgba(0,0,0,0.15); position: relative; }
 @media (min-width: 768px) { .plp-gallery--split { max-height: 75vh; } }
 .plp-gallery--split .plp-gallery-img { width: 100%; height: 100%; max-height: 60vh; object-fit: contain; }
 @media (min-width: 768px) { .plp-gallery--split .plp-gallery-img { max-height: 75vh; } }
+.plp-gallery-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.9); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: all 0.2s; z-index: 2; }
+.plp-gallery-nav:hover { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.plp-gallery-nav--prev { right: 0.75rem; }
+.plp-gallery-nav--next { left: 0.75rem; }
+.plp-gallery-nav:disabled { opacity: 0.3; cursor: not-allowed; }
 .plp-gallery-dots { display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.75rem; }
-.plp-gallery-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--ds-text-muted); opacity: 0.5; transition: opacity 0.2s; }
-.plp-gallery-dot.active { opacity: 1; background: var(--plp-primary); }
+.plp-gallery-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--ds-text-muted); opacity: 0.5; transition: all 0.2s; cursor: pointer; }
+.plp-gallery-dot.active { opacity: 1; background: var(--plp-primary); width: 1.5rem; border-radius: 9999px; }
 </style>
 @endpush
 
@@ -190,10 +205,17 @@ $fontCss = FontHelper::cssFor($page->font_family ?? 'vazirmatn');
             <div class="plp-card-box plp-anim">
                 @if ($mainPhotoUrl)
                     @if (count($displayPhotoUrls) > 1)
-                        <div class="plp-gallery plp-gallery--card">
-                            @foreach ($displayPhotoUrls as $url)
-                                <img src="{{ $url }}" alt="" class="plp-gallery-img plp-card-img" loading="eager">
+                        <div class="plp-gallery plp-gallery--card" data-gallery="card">
+                            <button type="button" class="plp-gallery-nav plp-gallery-nav--prev" aria-label="قبلی">‹</button>
+                            @foreach ($displayPhotoUrls as $idx => $url)
+                                <img src="{{ $url }}" alt="" class="plp-gallery-img plp-card-img" data-index="{{ $idx }}" loading="{{ $idx === 0 ? 'eager' : 'lazy' }}">
                             @endforeach
+                            <button type="button" class="plp-gallery-nav plp-gallery-nav--next" aria-label="بعدی">›</button>
+                            <div class="plp-gallery-dots">
+                                @foreach ($displayPhotoUrls as $idx => $url)
+                                    <button type="button" class="plp-gallery-dot {{ $idx === 0 ? 'active' : '' }}" data-index="{{ $idx }}" aria-label="تصویر {{ $idx + 1 }}"></button>
+                                @endforeach
+                            </div>
                         </div>
                     @else
                         <img src="{{ $mainPhotoUrl }}" alt="" class="plp-card-img" loading="eager">
@@ -223,10 +245,17 @@ $fontCss = FontHelper::cssFor($page->font_family ?? 'vazirmatn');
             <div class="plp-split-img plp-anim">
                 @if ($mainPhotoUrl)
                     @if (count($displayPhotoUrls) > 1)
-                        <div class="plp-gallery plp-gallery--split">
-                            @foreach ($displayPhotoUrls as $url)
-                                <img src="{{ $url }}" alt="" class="plp-gallery-img" loading="eager">
+                        <div class="plp-gallery plp-gallery--split" data-gallery="split">
+                            <button type="button" class="plp-gallery-nav plp-gallery-nav--prev" aria-label="قبلی">‹</button>
+                            @foreach ($displayPhotoUrls as $idx => $url)
+                                <img src="{{ $url }}" alt="" class="plp-gallery-img" data-index="{{ $idx }}" loading="{{ $idx === 0 ? 'eager' : 'lazy' }}">
                             @endforeach
+                            <button type="button" class="plp-gallery-nav plp-gallery-nav--next" aria-label="بعدی">›</button>
+                            <div class="plp-gallery-dots">
+                                @foreach ($displayPhotoUrls as $idx => $url)
+                                    <button type="button" class="plp-gallery-dot {{ $idx === 0 ? 'active' : '' }}" data-index="{{ $idx }}" aria-label="تصویر {{ $idx + 1 }}"></button>
+                                @endforeach
+                            </div>
                         </div>
                     @else
                         <img src="{{ $mainPhotoUrl }}" alt="" loading="eager">
@@ -268,10 +297,17 @@ $fontCss = FontHelper::cssFor($page->font_family ?? 'vazirmatn');
                 @if ($mainPhotoUrl)
                     <div class="plp-hero-visual">
                         @if (count($displayPhotoUrls) > 1)
-                            <div class="plp-gallery plp-gallery--hero">
-                                @foreach ($displayPhotoUrls as $url)
-                                    <img src="{{ $url }}" alt="" class="plp-hero-img plp-gallery-img plp-anim plp-anim-delay-1" loading="eager">
+                            <div class="plp-gallery plp-gallery--hero" data-gallery="hero">
+                                <button type="button" class="plp-gallery-nav plp-gallery-nav--prev" aria-label="قبلی">‹</button>
+                                @foreach ($displayPhotoUrls as $idx => $url)
+                                    <img src="{{ $url }}" alt="" class="plp-hero-img plp-gallery-img plp-anim plp-anim-delay-1" data-index="{{ $idx }}" loading="{{ $idx === 0 ? 'eager' : 'lazy' }}">
                                 @endforeach
+                                <button type="button" class="plp-gallery-nav plp-gallery-nav--next" aria-label="بعدی">›</button>
+                                <div class="plp-gallery-dots">
+                                    @foreach ($displayPhotoUrls as $idx => $url)
+                                        <button type="button" class="plp-gallery-dot {{ $idx === 0 ? 'active' : '' }}" data-index="{{ $idx }}" aria-label="تصویر {{ $idx + 1 }}"></button>
+                                    @endforeach
+                                </div>
                             </div>
                         @else
                             <img src="{{ $mainPhotoUrl }}" alt="" class="plp-hero-img" loading="eager">
@@ -349,7 +385,6 @@ $fontCss = FontHelper::cssFor($page->font_family ?? 'vazirmatn');
     @endif
 </div>
 
-@if ($page->show_share_buttons && $page->public_url)
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -366,6 +401,74 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Gallery carousel functionality
+    document.querySelectorAll('.plp-gallery').forEach(function(gallery) {
+        var images = gallery.querySelectorAll('.plp-gallery-img');
+        if (images.length <= 1) return;
+
+        var currentIndex = 0;
+        var prevBtn = gallery.querySelector('.plp-gallery-nav--prev');
+        var nextBtn = gallery.querySelector('.plp-gallery-nav--next');
+        var dots = gallery.querySelectorAll('.plp-gallery-dot');
+
+        function showImage(index) {
+            images.forEach(function(img, i) {
+                img.style.display = i === index ? 'block' : 'none';
+            });
+            dots.forEach(function(dot, i) {
+                dot.classList.toggle('active', i === index);
+            });
+            if (prevBtn) prevBtn.disabled = index === 0;
+            if (nextBtn) nextBtn.disabled = index === images.length - 1;
+            currentIndex = index;
+        }
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function() {
+                if (currentIndex > 0) showImage(currentIndex - 1);
+            });
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function() {
+                if (currentIndex < images.length - 1) showImage(currentIndex + 1);
+            });
+        }
+        dots.forEach(function(dot, index) {
+            dot.addEventListener('click', function() {
+                showImage(index);
+            });
+        });
+
+        // Auto-hide nav buttons if only one image
+        if (images.length === 1) {
+            if (prevBtn) prevBtn.style.display = 'none';
+            if (nextBtn) nextBtn.style.display = 'none';
+        } else {
+            showImage(0);
+        }
+
+        // Touch/swipe support
+        var startX = 0;
+        var isDragging = false;
+        gallery.addEventListener('touchstart', function(e) {
+            startX = e.touches[0].clientX;
+            isDragging = true;
+        });
+        gallery.addEventListener('touchend', function(e) {
+            if (!isDragging) return;
+            var endX = e.changedTouches[0].clientX;
+            var diff = startX - endX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0 && currentIndex < images.length - 1) {
+                    showImage(currentIndex + 1);
+                } else if (diff < 0 && currentIndex > 0) {
+                    showImage(currentIndex - 1);
+                }
+            }
+            isDragging = false;
+        });
+    });
 });
 </script>
 @endpush

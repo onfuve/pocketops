@@ -29,42 +29,80 @@ if ($priceList->social_whatsapp) {
 <style>
 /* Layout: mobile-first, wide-screen friendly */
 .pl-public { --pl-primary: {{ $primary }}; --pl-primary-dark: {{ Illuminate\Support\Str::of($primary)->replace('#','')->toString() }}; font-family: {{ $fontCss }}; direction: rtl; }
-.pl-public .pl-container { max-width: 64rem; margin: 0 auto; padding: 0 1rem; box-sizing: border-box; }
+.pl-public .pl-container { max-width: 64rem; margin: 0 auto; padding: 0 1rem; box-sizing: border-box; width: 100%; }
 @media (min-width: 768px) { .pl-public .pl-container { padding: 0 1.5rem; } }
 @media (min-width: 1024px) { .pl-public .pl-container { max-width: 72rem; padding: 0 2rem; } }
+@media (max-width: 640px) {
+  .pl-public .pl-container { padding: 0 0.75rem; }
+  .pl-public .pl-header { padding: 1.5rem 0 1rem; }
+}
+
+/* Animations */
+@keyframes pl-fade-up { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pl-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.pl-anim { animation: pl-fade-up 0.5s ease-out forwards; opacity: 0; }
+.pl-anim-delay-1 { animation-delay: 0.1s; }
+.pl-anim-delay-2 { animation-delay: 0.2s; }
+.pl-anim-delay-3 { animation-delay: 0.3s; }
 
 .pl-public .pl-header { text-align: center; padding: 2rem 0 1.5rem; }
 .pl-public .pl-title { font-size: 1.75rem; font-weight: 800; margin: 0; color: var(--ds-text); line-height: 1.3; letter-spacing: -0.02em; }
 @media (min-width: 768px) { .pl-public .pl-title { font-size: 2.25rem; } }
 
+/* Search bar */
+.pl-public .pl-search-wrap { margin: 1.5rem 0 2rem; position: sticky; top: 0.75rem; z-index: 10; }
+.pl-public .pl-search { width: 100%; max-width: 100%; padding: 0.875rem 1.25rem; border-radius: 9999px; border: 2px solid var(--ds-border); background: #fff; font-size: 0.9375rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; }
+.pl-public .pl-search:focus { outline: none; border-color: var(--pl-primary); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.pl-public .pl-search::placeholder { color: var(--ds-text-subtle); }
+@media (max-width: 640px) {
+  .pl-public .pl-search-wrap { margin: 1rem 0 1.5rem; padding: 0; }
+  .pl-public .pl-search { padding: 0.75rem 1rem; font-size: 0.875rem; }
+}
+
+/* Section navigation */
+.pl-public .pl-nav-wrap { margin: 1.5rem 0; padding: 0.75rem 1rem; background: #fff; border-radius: 0.75rem; border: 1px solid var(--ds-border); position: sticky; top: 0.75rem; z-index: 9; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.pl-public .pl-nav-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ds-text-subtle); margin: 0 0 0.5rem 0; }
+.pl-public .pl-nav-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.pl-public .pl-nav-link { padding: 0.375rem 0.875rem; border-radius: 9999px; font-size: 0.8125rem; font-weight: 600; text-decoration: none; color: var(--ds-text); background: var(--ds-bg-muted); transition: all 0.2s; }
+.pl-public .pl-nav-link:hover { background: var(--pl-primary); color: #fff; }
+@media (max-width: 640px) {
+  .pl-public .pl-nav-wrap { margin: 1rem 0; padding: 0.625rem 0.875rem; }
+  .pl-public .pl-nav-links { gap: 0.375rem; }
+  .pl-public .pl-nav-link { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
+}
+
 /* Sections */
-.pl-public .pl-section { margin-bottom: 2rem; }
-.pl-public .pl-section-title { font-size: 1rem; font-weight: 700; margin: 0 0 0.75rem 0; color: var(--ds-text); padding-bottom: 0.5rem; border-bottom: 2px solid var(--pl-primary); display: inline-block; }
+.pl-public .pl-section { margin-bottom: 2.5rem; scroll-margin-top: 1rem; }
+.pl-public .pl-section-title { font-size: 1rem; font-weight: 700; margin: 0 0 0.75rem 0; color: var(--ds-text); padding-bottom: 0.5rem; border-bottom: 2px solid var(--pl-primary); display: inline-block; position: relative; }
+.pl-public .pl-section-title::after { content: ''; position: absolute; bottom: -2px; right: 0; width: 3rem; height: 2px; background: var(--pl-primary); }
 @media (min-width: 768px) { .pl-public .pl-section-title { font-size: 1.125rem; } }
 
 /* Items: simple list */
-.pl-public .pl-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.875rem 1rem; background: #fff; border-radius: 0.75rem; border: 1px solid var(--ds-border); margin-bottom: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.04); transition: box-shadow 0.2s; }
-.pl-public .pl-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-.pl-public .pl-item-name { font-weight: 600; font-size: 0.9375rem; }
-.pl-public .pl-item-desc { font-size: 0.8125rem; color: var(--ds-text-subtle); margin-top: 0.25rem; }
-.pl-public .pl-item-price { font-weight: 700; font-size: 0.9375rem; color: var(--pl-primary); white-space: nowrap; }
+.pl-public .pl-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 1rem 1.25rem; background: #fff; border-radius: 0.875rem; border: 1px solid var(--ds-border); margin-bottom: 0.625rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.25s ease; }
+.pl-public .pl-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); border-color: var(--pl-primary); }
+.pl-public .pl-item-name { font-weight: 600; font-size: 0.9375rem; line-height: 1.4; }
+.pl-public .pl-item-desc { font-size: 0.8125rem; color: var(--ds-text-subtle); margin-top: 0.35rem; line-height: 1.5; }
+.pl-public .pl-item-price { font-weight: 700; font-size: 1rem; color: var(--pl-primary); white-space: nowrap; }
 
 /* Items: with_photos */
-.pl-public .pl-item-with-photo { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: 1rem; background: #fff; border-radius: 0.75rem; border: 1px solid var(--ds-border); margin-bottom: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-.pl-public .pl-item-photo { width: 3.5rem; height: 3.5rem; border-radius: 0.5rem; object-fit: cover; background: var(--ds-bg-muted); flex-shrink: 0; }
-@media (min-width: 768px) { .pl-public .pl-item-photo { width: 4rem; height: 4rem; } }
+.pl-public .pl-item-with-photo { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: 1rem 1.25rem; background: #fff; border-radius: 0.875rem; border: 1px solid var(--ds-border); margin-bottom: 0.625rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.25s ease; }
+.pl-public .pl-item-with-photo:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); border-color: var(--pl-primary); }
+.pl-public .pl-item-photo { width: 4rem; height: 4rem; border-radius: 0.625rem; object-fit: cover; background: var(--ds-bg-muted); flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.08); transition: transform 0.2s; }
+.pl-public .pl-item-with-photo:hover .pl-item-photo { transform: scale(1.05); }
+@media (min-width: 768px) { .pl-public .pl-item-photo { width: 4.5rem; height: 4.5rem; } }
 
 /* Grid */
 .pl-public .pl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 1rem; }
 @media (min-width: 640px) { .pl-public .pl-grid { grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); } }
 @media (min-width: 1024px) { .pl-public .pl-grid { grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); } }
-.pl-public .pl-card { background: #fff; border-radius: 1rem; overflow: hidden; border: 1px solid var(--ds-border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.2s, box-shadow 0.2s; }
-.pl-public .pl-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-.pl-public .pl-card-photo { width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--ds-bg-muted); }
-.pl-public .pl-card-body { padding: 1rem; }
-.pl-public .pl-card-name { font-weight: 600; font-size: 0.9375rem; margin: 0 0 0.25rem 0; }
-.pl-public .pl-card-desc { font-size: 0.8125rem; color: var(--ds-text-subtle); margin: 0 0 0.5rem 0; }
-.pl-public .pl-card-price { font-weight: 700; font-size: 0.9375rem; color: var(--pl-primary); }
+.pl-public .pl-card { background: #fff; border-radius: 1rem; overflow: hidden; border: 1px solid var(--ds-border); box-shadow: 0 2px 6px rgba(0,0,0,0.06); transition: all 0.3s ease; }
+.pl-public .pl-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); border-color: var(--pl-primary); }
+.pl-public .pl-card-photo { width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--ds-bg-muted); transition: transform 0.3s; }
+.pl-public .pl-card:hover .pl-card-photo { transform: scale(1.05); }
+.pl-public .pl-card-body { padding: 1.25rem; }
+.pl-public .pl-card-name { font-weight: 600; font-size: 0.9375rem; margin: 0 0 0.35rem 0; line-height: 1.4; }
+.pl-public .pl-card-desc { font-size: 0.8125rem; color: var(--ds-text-subtle); margin: 0 0 0.625rem 0; line-height: 1.5; }
+.pl-public .pl-card-price { font-weight: 700; font-size: 1rem; color: var(--pl-primary); }
 
 /* Item badges */
 .pl-public .pl-badge { display: inline-flex; align-items: center; padding: 0.25rem 0.55rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
@@ -111,6 +149,21 @@ if ($priceList->social_whatsapp) {
 .pl-public .pl-share-btn--copy { background: var(--ds-text-muted); }
 .pl-public .pl-share-btn--wa { background: #25d366; }
 .pl-public .pl-share-btn--tg { background: #0088cc; }
+
+/* Back to top button */
+.pl-public .pl-back-top { position: fixed; bottom: 2rem; left: 2rem; width: 48px; height: 48px; border-radius: 50%; background: var(--pl-primary); color: #fff; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer; opacity: 0; visibility: hidden; transition: all 0.3s; z-index: 100; display: flex; align-items: center; justify-content: center; }
+.pl-public .pl-back-top.visible { opacity: 1; visibility: visible; }
+.pl-public .pl-back-top:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.2); }
+
+/* Print styles */
+@media print {
+    .pl-public .pl-search-wrap, .pl-public .pl-nav-wrap, .pl-public .pl-share-wrap, .pl-public .pl-back-top, .pl-public .pl-cta-wrap { display: none !important; }
+    .pl-public .pl-section { page-break-inside: avoid; }
+    .pl-public .pl-item, .pl-public .pl-card { page-break-inside: avoid; }
+}
+
+/* Hidden class for search filter */
+.pl-public .pl-hidden { display: none !important; }
 </style>
 @endpush
 
@@ -130,6 +183,65 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Search functionality
+    var searchInput = document.getElementById('pl-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            var query = this.value.toLowerCase().trim();
+            var items = document.querySelectorAll('.pl-item, .pl-item-with-photo, .pl-card');
+            var sections = document.querySelectorAll('.pl-section');
+            var hasVisible = false;
+
+            items.forEach(function(item) {
+                var name = item.getAttribute('data-item-name') || '';
+                var desc = item.getAttribute('data-item-desc') || '';
+                if (query === '' || name.includes(query) || desc.includes(query)) {
+                    item.classList.remove('pl-hidden');
+                    hasVisible = true;
+                } else {
+                    item.classList.add('pl-hidden');
+                }
+            });
+
+            sections.forEach(function(section) {
+                var sectionItems = section.querySelectorAll('.pl-item:not(.pl-hidden), .pl-item-with-photo:not(.pl-hidden), .pl-card:not(.pl-hidden)');
+                if (sectionItems.length === 0 && query !== '') {
+                    section.style.display = 'none';
+                } else {
+                    section.style.display = '';
+                }
+            });
+        });
+    }
+
+    // Back to top button
+    var backTopBtn = document.getElementById('pl-back-top');
+    if (backTopBtn) {
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backTopBtn.classList.add('visible');
+            } else {
+                backTopBtn.classList.remove('visible');
+            }
+        });
+        backTopBtn.addEventListener('click', function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
+    // Smooth scroll for section navigation
+    var navLinks = document.querySelectorAll('.pl-nav-link');
+    navLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            var targetId = this.getAttribute('href');
+            var target = document.querySelector(targetId);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
 });
 </script>
 @endpush
@@ -137,9 +249,26 @@ document.addEventListener('DOMContentLoaded', function() {
 @section('content')
 <div class="pl-public">
     <div class="pl-container">
-        <header class="pl-header">
+        <header class="pl-header pl-anim">
             <h1 class="pl-title">{{ $title }}</h1>
         </header>
+
+        @if (($priceList->show_quick_access ?? true) && count($priceList->sections) > 1)
+            <div class="pl-nav-wrap pl-anim pl-anim-delay-1">
+                <div class="pl-nav-title">دسترسی سریع</div>
+                <div class="pl-nav-links">
+                    @foreach ($priceList->sections as $section)
+                        <a href="#section-{{ $section->id }}" class="pl-nav-link">{{ $section->name }}</a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        @if ($priceList->show_search ?? true)
+            <div class="pl-search-wrap pl-anim pl-anim-delay-1">
+                <input type="text" id="pl-search" class="pl-search" placeholder="جستجو در لیست قیمت...">
+            </div>
+        @endif
 
         @if ($priceList->show_cta && $priceList->cta_url)
             <div class="pl-cta-wrap">
@@ -164,13 +293,13 @@ document.addEventListener('DOMContentLoaded', function() {
         @endif
 
         @forelse ($priceList->sections as $section)
-            <section class="pl-section">
+            <section class="pl-section" id="section-{{ $section->id }}" data-section-name="{{ strtolower($section->name) }}">
                 <h2 class="pl-section-title">{{ $section->name }}</h2>
 
                 @if ($priceList->template === 'grid')
                     <div class="pl-grid">
                         @foreach ($section->items as $item)
-                            <div class="pl-card">
+                            <div class="pl-card" data-item-name="{{ strtolower($item->display_name) }}" data-item-desc="{{ strtolower($item->display_description ?? '') }}">
                                 @if ($priceList->show_photos && $item->product?->photo_url)
                                     <img src="{{ $item->product->photo_url }}" alt="" class="pl-card-photo" loading="lazy">
                                 @endif
@@ -194,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 @elseif ($priceList->template === 'with_photos')
                     <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                         @foreach ($section->items as $item)
-                            <div class="pl-item-with-photo">
+                            <div class="pl-item-with-photo" data-item-name="{{ strtolower($item->display_name) }}" data-item-desc="{{ strtolower($item->display_description ?? '') }}">
                                 @if ($priceList->show_photos && $item->product?->photo_url)
                                     <img src="{{ $item->product->photo_url }}" alt="" class="pl-item-photo" loading="lazy">
                                 @endif
@@ -218,7 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 @else
                     <div style="display: flex; flex-direction: column; gap: 0;">
                         @foreach ($section->items as $item)
-                            <div class="pl-item">
+                            <div class="pl-item" data-item-name="{{ strtolower($item->display_name) }}" data-item-desc="{{ strtolower($item->display_description ?? '') }}">
                                 <div>
                                     <div class="pl-item-name" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                                         {{ $item->display_name }}
@@ -299,6 +428,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </footer>
         @endif
+
+        <button type="button" class="pl-back-top" id="pl-back-top" aria-label="بازگشت به بالا">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+        </button>
     </div>
 </div>
 @endsection

@@ -21,7 +21,7 @@ class LeadController extends Controller
     {
         $leads = Lead::query()
             ->visibleToUser($request->user())
-            ->with('contact', 'leadChannel', 'referrerContact', 'user', 'assignedTo')
+            ->with('contact', 'leadChannel', 'referrerContact', 'user', 'assignedTo', 'tags')
             ->search($request->get('q'))
             ->ofStatus($request->get('status'))
             ->latest('lead_date')
@@ -57,6 +57,9 @@ class LeadController extends Controller
 
         $lead = Lead::create($validated);
         $this->syncTags($lead, $request->input('tag_ids', []));
+
+        // Log call if call fields provided
+        $this->logCallIfProvided($lead, $request);
 
         if ($request->boolean('add_another')) {
             if ($request->boolean('from_quick_add')) {
@@ -120,6 +123,9 @@ class LeadController extends Controller
 
         $lead->update($validated);
         $this->syncTags($lead, $request->input('tag_ids', []));
+
+        // Log call if call fields provided
+        $this->logCallIfProvided($lead, $request);
 
         return redirect()->route('leads.show', $lead)->with('success', 'سرنخ به‌روزرسانی شد.');
     }
@@ -398,5 +404,74 @@ class LeadController extends Controller
         ]);
 
         return redirect()->route('leads.show', $lead)->with('success', 'نظر ثبت شد.');
+    }
+
+    /** Store call log from lead show page. */
+    public function storeCallLog(Request $request, Lead $lead)
+    {
+        abort_unless($lead->isVisibleTo($request->user()), 403, 'شما به این سرنخ دسترسی ندارید.');
+
+        $validated = $request->validate([
+            'call_date' => 'required|string',
+            'call_type' => 'required|in:incoming,outgoing',
+            'call_notes' => 'required|string|max:2000',
+        ]);
+
+        $callDate = now();
+        if ($request->filled('call_date')) {
+            $gregorian = \App\Helpers\FormatHelper::shamsiToGregorian($request->input('call_date'));
+            if ($gregorian !== null) {
+                $callDate = \Carbon\Carbon::parse($gregorian);
+            }
+        }
+
+        $callTypeLabel = $validated['call_type'] === 'incoming' ? 'ورودی' : 'خروجی';
+        $callNotes = '📞 تماس ' . $callTypeLabel . ' انجام شد';
+        
+        if ($request->filled('call_notes')) {
+            $callNotes .= "\n" . trim($validated['call_notes']);
+        }
+
+        LeadActivity::create([
+            'lead_id' => $lead->id,
+            'from_status' => $lead->status,
+            'to_status' => $lead->status,
+            'comment' => $callNotes,
+            'activity_date' => $callDate,
+        ]);
+
+        return redirect()->route('leads.show', $lead)->with('success', 'تماس ثبت شد.');
+    }
+
+    /** Log call activity if call fields are provided in request. */
+    private function logCallIfProvided(Lead $lead, Request $request): void
+    {
+        if (!$request->filled('call_notes') && !$request->filled('call_date')) {
+            return;
+        }
+
+        $callDate = now();
+        if ($request->filled('call_date')) {
+            $gregorian = \App\Helpers\FormatHelper::shamsiToGregorian($request->input('call_date'));
+            if ($gregorian !== null) {
+                $callDate = \Carbon\Carbon::parse($gregorian);
+            }
+        }
+
+        $callType = $request->input('call_type', 'outgoing');
+        $callTypeLabel = $callType === 'incoming' ? 'ورودی' : 'خروجی';
+        $callNotes = '📞 تماس ' . $callTypeLabel . ' انجام شد';
+        
+        if ($request->filled('call_notes')) {
+            $callNotes .= "\n" . trim($request->input('call_notes'));
+        }
+
+        LeadActivity::create([
+            'lead_id' => $lead->id,
+            'from_status' => $lead->status,
+            'to_status' => $lead->status,
+            'comment' => $callNotes,
+            'activity_date' => $callDate,
+        ]);
     }
 }

@@ -22,11 +22,11 @@
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
             <a href="{{ route('forms.inbox') }}" class="ds-btn ds-btn-outline">
-                @include('components._icons', ['name' => 'document', 'class' => 'w-4 h-4')
+                @include('components._icons', ['name' => 'document', 'class' => 'w-4 h-4'])
                 صندوق ورودی
             </a>
             <a href="{{ route('forms.create') }}" class="ds-btn ds-btn-primary">
-                @include('components._icons', ['name' => 'plus', 'class' => 'w-4 h-4')
+                @include('components._icons', ['name' => 'plus', 'class' => 'w-4 h-4'])
                 فرم جدید
             </a>
         </div>

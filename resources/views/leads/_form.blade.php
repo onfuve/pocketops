@@ -135,6 +135,34 @@
         <textarea name="details" id="details" rows="4" class="ds-textarea" placeholder="نیازها، توضیحات، یادداشت…">{{ old('details', $lead->details ?? '') }}</textarea>
     </div>
 
+    {{-- Block 4: Call log (for team members) --}}
+    @if (!$isEdit || ($isEdit && $lead->isVisibleTo(auth()->user())))
+    <div class="ds-form-card" style="border-color: #3b82f6; background: linear-gradient(to bottom, #eff6ff 0%, #fff 100%);">
+        <h2 class="ds-form-card-title" style="color: #1e40af;">📞 ثبت تماس</h2>
+        <p style="font-size: 0.8125rem; color: #1e40af; margin: 0 0 1rem 0;">برای ثبت تماس‌های انجام شده با مشتری از این بخش استفاده کنید.</p>
+        <div class="form-grid form-grid-2">
+            <div>
+                <label for="call_date" class="ds-label">تاریخ تماس</label>
+                <div class="date-row">
+                    <input type="text" name="call_date" id="call_date" value="{{ old('call_date', \App\Helpers\FormatHelper::shamsi(now())) }}" class="ds-input" placeholder="۱۴۰۳/۱۱/۱۵" autocomplete="off">
+                    <button type="button" id="call_date_today" class="ds-btn ds-btn-secondary" data-today="{{ \App\Helpers\FormatHelper::shamsi(now()) }}">امروز</button>
+                </div>
+            </div>
+            <div>
+                <label for="call_type" class="ds-label">نوع تماس</label>
+                <select name="call_type" id="call_type" class="ds-select">
+                    <option value="outgoing" {{ old('call_type', 'outgoing') === 'outgoing' ? 'selected' : '' }}>خروجی (شما تماس گرفتید)</option>
+                    <option value="incoming" {{ old('call_type') === 'incoming' ? 'selected' : '' }}>ورودی (مشتری تماس گرفت)</option>
+                </select>
+            </div>
+            <div class="span-full">
+                <label for="call_notes" class="ds-label">یادداشت تماس</label>
+                <textarea name="call_notes" id="call_notes" rows="3" class="ds-textarea" placeholder="خلاصه مکالمه، نتیجه تماس، قرار بعدی، نیازهای مطرح شده…">{{ old('call_notes') }}</textarea>
+            </div>
+        </div>
+    </div>
+    @endif
+
     @isset($tags)
     @include('components._tag-section', ['tags' => $tags, 'entity' => $lead ?? null, 'accentColor' => '#059669'])
     @endisset
@@ -160,6 +188,13 @@
     if (btn && input) {
         btn.addEventListener('click', function () {
             input.value = this.getAttribute('data-today') || '';
+        });
+    }
+    var callDateBtn = document.getElementById('call_date_today');
+    var callDateInput = document.getElementById('call_date');
+    if (callDateBtn && callDateInput) {
+        callDateBtn.addEventListener('click', function () {
+            callDateInput.value = this.getAttribute('data-today') || '';
         });
     }
 

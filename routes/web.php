@@ -52,6 +52,7 @@ Route::get('leads/{lead}/create-invoice', [LeadController::class, 'createInvoice
 Route::post('leads/{lead}/assign', [LeadController::class, 'assignLead'])->name('leads.assign');
 Route::post('leads/{lead}/tags', [LeadController::class, 'updateTags'])->name('leads.tags.update');
 Route::post('leads/{lead}/comments', [LeadController::class, 'storeComment'])->name('leads.comments.store');
+Route::post('leads/{lead}/call-log', [LeadController::class, 'storeCallLog'])->name('leads.call-log.store');
 Route::get('leads/{lead}/change-status', [LeadController::class, 'showChangeStatus'])->name('leads.change-status');
 Route::post('leads/{lead}/change-status', [LeadController::class, 'submitChangeStatus'])->name('leads.change-status.submit');
 Route::post('leads/{lead}/attachments', [LeadController::class, 'storeAttachment'])->name('leads.attachments.store');
@@ -66,6 +67,7 @@ Route::get('api/contacts/{contact}', [ContactController::class, 'showApi'])->nam
 Route::resource('invoices', InvoiceController::class);
 Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');
 // Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf'); // Disabled - fix PDF generation later
+Route::get('invoices/{invoice}/mark-final', [InvoiceController::class, 'showMarkFinal'])->name('invoices.mark-final.show');
 Route::post('invoices/{invoice}/mark-final', [InvoiceController::class, 'markFinal'])->name('invoices.mark-final');
 Route::get('invoices/{invoice}/set-paid', [InvoiceController::class, 'showSetPaid'])->name('invoices.set-paid');
 Route::post('invoices/{invoice}/set-paid', [InvoiceController::class, 'submitSetPaid'])->name('invoices.set-paid.submit');

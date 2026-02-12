@@ -27,6 +27,8 @@ class PriceListController extends Controller
         $priceList = new PriceList([
             'show_prices' => true,
             'show_photos' => false,
+            'show_search' => true,
+            'show_quick_access' => true,
             'template' => 'simple',
             'is_active' => true,
         ]);
@@ -45,6 +47,8 @@ class PriceListController extends Controller
         $validated['user_id'] = $request->user()->id;
         $validated['show_prices'] = $request->boolean('show_prices');
         $validated['show_photos'] = $request->boolean('show_photos');
+        $validated['show_search'] = $request->boolean('show_search', true);
+        $validated['show_quick_access'] = $request->boolean('show_quick_access', true);
         $validated['show_cta'] = $request->boolean('show_cta');
         $validated['show_notes'] = $request->boolean('show_notes');
         $validated['show_social'] = $request->boolean('show_social');
@@ -88,6 +92,8 @@ class PriceListController extends Controller
         $validated = $request->validate($this->rules());
         $validated['show_prices'] = $request->boolean('show_prices');
         $validated['show_photos'] = $request->boolean('show_photos');
+        $validated['show_search'] = $request->boolean('show_search', true);
+        $validated['show_quick_access'] = $request->boolean('show_quick_access', true);
         $validated['show_cta'] = $request->boolean('show_cta');
         $validated['show_notes'] = $request->boolean('show_notes');
         $validated['show_social'] = $request->boolean('show_social');

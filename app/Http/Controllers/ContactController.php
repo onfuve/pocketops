@@ -17,6 +17,7 @@ class ContactController extends Controller
 {
     public function index(Request $request)
     {
+        abort_unless($request->user()->canModule('contacts', \App\Models\User::ABILITY_VIEW), 403, 'شما به این بخش دسترسی ندارید.');
         $q = $request->get('q');
         $balanceFilter = $request->get('balance'); // positive, negative, zero
         $sort = $request->get('sort', 'recent'); // name, balance, recent
@@ -54,7 +55,7 @@ class ContactController extends Controller
 
     public function bulkDelete(Request $request)
     {
-        abort_unless($request->user()->canDeleteContact(), 403, 'شما مجوز حذف مخاطب را ندارید.');
+        abort_unless($request->user()->canModule('contacts', \App\Models\User::ABILITY_DELETE), 403, 'شما مجوز حذف مخاطب را ندارید.');
 
         $ids = $request->input('ids', []);
         if (!is_array($ids)) {
@@ -78,6 +79,7 @@ class ContactController extends Controller
 
     public function create()
     {
+        abort_unless(request()->user()->canModule('contacts', \App\Models\User::ABILITY_CREATE), 403, 'شما مجوز ایجاد مخاطب را ندارید.');
         $contact = new Contact;
         $contact->setRelation('contactPhones', collect());
         $tags = Tag::forCurrentUser()->orderBy('name')->get();
@@ -86,6 +88,7 @@ class ContactController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless($request->user()->canModule('contacts', \App\Models\User::ABILITY_CREATE), 403, 'شما مجوز ایجاد مخاطب را ندارید.');
         $validated = $request->validate($this->rules());
         $validated['is_hamkar'] = $request->boolean('is_hamkar');
         $validated['linked_contact_id'] = $request->filled('linked_contact_id') ? $request->linked_contact_id : null;
@@ -133,6 +136,7 @@ class ContactController extends Controller
 
     public function show(Contact $contact)
     {
+        abort_unless(request()->user()->canModule('contacts', \App\Models\User::ABILITY_VIEW), 403, 'شما به این بخش دسترسی ندارید.');
         abort_unless($contact->isVisibleTo(request()->user()), 403, 'شما به این مخاطب دسترسی ندارید.');
 
         $contact->load('contactPhones', 'linkedContact', 'tags', 'tasks.assignedUsers');
@@ -190,6 +194,7 @@ class ContactController extends Controller
 
     public function edit(Contact $contact)
     {
+        abort_unless(request()->user()->canModule('contacts', \App\Models\User::ABILITY_EDIT), 403, 'شما مجوز ویرایش مخاطب را ندارید.');
         abort_unless($contact->isVisibleTo(request()->user()), 403, 'شما به این مخاطب دسترسی ندارید.');
 
         $contact->load('contactPhones', 'linkedContact', 'tags');
@@ -199,6 +204,7 @@ class ContactController extends Controller
 
     public function update(Request $request, Contact $contact)
     {
+        abort_unless($request->user()->canModule('contacts', \App\Models\User::ABILITY_EDIT), 403, 'شما مجوز ویرایش مخاطب را ندارید.');
         abort_unless($contact->isVisibleTo($request->user()), 403, 'شما به این مخاطب دسترسی ندارید.');
 
         $validated = $request->validate($this->rules());
@@ -216,7 +222,7 @@ class ContactController extends Controller
     public function destroy(Contact $contact)
     {
         abort_unless($contact->isVisibleTo(request()->user()), 403, 'شما به این مخاطب دسترسی ندارید.');
-        abort_unless(request()->user()->canDeleteContact(), 403, 'شما مجوز حذف مخاطب را ندارید.');
+        abort_unless(request()->user()->canModule('contacts', \App\Models\User::ABILITY_DELETE), 403, 'شما مجوز حذف مخاطب را ندارید.');
 
         $contact->delete();
 

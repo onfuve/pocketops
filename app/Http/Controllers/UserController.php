@@ -52,6 +52,7 @@ class UserController extends Controller
         $validated['can_delete_invoice'] = $request->boolean('can_delete_invoice');
         $validated['can_delete_contact'] = $request->boolean('can_delete_contact');
         $validated['can_delete_lead'] = $request->boolean('can_delete_lead');
+        $validated['permissions'] = $this->normalizePermissions($request->input('permissions', []));
 
         User::create($validated);
         return redirect()->route('users.index')->with('success', 'کاربر ایجاد شد.');
@@ -84,8 +85,26 @@ class UserController extends Controller
         $validated['can_delete_invoice'] = $request->boolean('can_delete_invoice');
         $validated['can_delete_contact'] = $request->boolean('can_delete_contact');
         $validated['can_delete_lead'] = $request->boolean('can_delete_lead');
+        $validated['permissions'] = $this->normalizePermissions($request->input('permissions', []));
 
         $user->update($validated);
         return redirect()->route('users.index')->with('success', 'کاربر به‌روزرسانی شد.');
+    }
+
+    /** Build permissions array from request: [ 'contacts' => ['view','edit'], ... ] */
+    private function normalizePermissions(array $input): array
+    {
+        $out = [];
+        foreach (array_keys(User::MODULES) as $module) {
+            $abilities = $input[$module] ?? [];
+            if (!is_array($abilities)) {
+                $abilities = [];
+            }
+            $out[$module] = array_values(array_intersect(
+                $abilities,
+                [User::ABILITY_VIEW, User::ABILITY_CREATE, User::ABILITY_EDIT, User::ABILITY_DELETE]
+            ));
+        }
+        return $out;
     }
 }

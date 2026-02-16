@@ -15,13 +15,14 @@ class CalendarController extends Controller
     /** Get all calendar events for a Shamsi month (Y/m). */
     public function index(Request $request)
     {
-        $shamsiMonth = $request->get('month', Verta::now()->format('Y/m'));
+        $tehran = new \DateTimeZone('Asia/Tehran');
+        $shamsiMonth = $request->get('month', Verta::now($tehran)->format('Y/m'));
         $view = $request->get('view', 'month'); // month | week
 
-        // Parse Shamsi month to get start/end dates
-        $v = Verta::parse($shamsiMonth . '/01');
-        $startDate = $v->datetime()->format('Y-m-d');
-        $endDate = $v->endMonth()->datetime()->format('Y-m-d');
+        // Parse Shamsi month to get start/end Gregorian dates (noon Tehran to avoid day boundary shift)
+        $v = Verta::parse($shamsiMonth . '/01 12:00:00', $tehran);
+        $startDate = $v->datetime()->setTimezone($tehran)->format('Y-m-d');
+        $endDate = $v->endMonth()->datetime()->setTimezone($tehran)->format('Y-m-d');
 
         $user = $request->user();
 
@@ -57,16 +58,23 @@ class CalendarController extends Controller
 
         $events = $this->buildEvents($reminders, $invoices);
 
-        $prevMonth = (new Verta($startDate))->subMonth()->format('Y/m');
-        $nextMonth = (new Verta($startDate))->addMonth()->format('Y/m');
+        $vStart = Verta::parse($startDate . ' 12:00:00', $tehran);
+        $prevMonth = (clone $vStart)->subMonth()->format('Y/m');
+        $nextMonth = (clone $vStart)->addMonth()->format('Y/m');
         $monthLabel = $v->format('F Y'); // Persian month name
         $monthLabelFa = $this->monthName($v->month) . ' ' . FormatHelper::englishToPersian((string) $v->year);
 
-        // Build calendar grid for month view
-        $grid = $this->buildMonthGrid($v, $events);
+        // Today in Tehran for grid highlight
+        $todayGregorian = (new \DateTimeImmutable('now', $tehran))->format('Y-m-d');
+
+        // Build calendar grid for month view (consistent Shamsi day → Gregorian date)
+        $grid = $this->buildMonthGrid($v, $events, $tehran);
+
+        // Sort events by Shamsi date for "همه رویدادهای این ماه" (display order 1..31)
+        $eventsSorted = collect($events)->sortBy(fn ($e) => FormatHelper::gregorianToShamsiSortKey($e['date']))->values()->all();
 
         return view('calendar.index', compact(
-            'events', 'grid', 'shamsiMonth', 'prevMonth', 'nextMonth', 'monthLabelFa', 'view', 'tags'
+            'events', 'eventsSorted', 'grid', 'shamsiMonth', 'prevMonth', 'nextMonth', 'monthLabelFa', 'view', 'tags', 'todayGregorian'
         ));
     }
 
@@ -117,7 +125,7 @@ class CalendarController extends Controller
         return $names[$m] ?? (string) $m;
     }
 
-    private function buildMonthGrid(Verta $v, array $events): array
+    private function buildMonthGrid(Verta $v, array $events, \DateTimeZone $tehran): array
     {
         $daysInMonth = $v->daysInMonth;
         $firstDayOfWeek = $v->dayOfWeek; // 0=Saturday (Verta week starts Saturday)
@@ -128,8 +136,8 @@ class CalendarController extends Controller
             $week[] = ['day' => null, 'date' => null, 'events' => []];
         }
         for ($d = 1; $d <= $daysInMonth; $d++) {
-            $dayVerta = Verta::parse($v->year . '/' . $v->month . '/' . $d);
-            $dateStr = $dayVerta->datetime()->format('Y-m-d'); // Gregorian for event matching
+            $dayVerta = Verta::parse($v->year . '/' . $v->month . '/' . $d . ' 12:00:00', $tehran);
+            $dateStr = $dayVerta->datetime()->setTimezone($tehran)->format('Y-m-d'); // Gregorian for event matching
             $dayEvents = array_filter($events, fn ($e) => $e['date'] === $dateStr);
             $week[] = ['day' => $d, 'date' => $dateStr, 'events' => array_values($dayEvents)];
             if (count($week) >= 7) {

@@ -486,7 +486,7 @@
         @endif
     </div>
 
-    {{-- Attachments --}}
+    {{-- Attachments / Images — for tracking customer requests --}}
     <div class="card-modern">
         <h2 class="card-title">
             <span class="card-title-icon" style="background: #f5f5f4; color: #57534e;">
@@ -494,32 +494,50 @@
             </span>
             تصاویر و پیوست‌ها
         </h2>
-        <form action="{{ route('leads.attachments.store', $lead) }}" method="post" enctype="multipart/form-data" style="margin-bottom: 1.5rem; padding: 1rem; background: #fafaf9; border-radius: 0.75rem; border: 2px dashed #d6d3d1;">
+        <p style="font-size: 0.8125rem; color: #78716c; margin: -0.5rem 0 1rem 0;">عکس درخواست مشتری، فاکتور پیشنهادی یا هر سند مرتبط را اینجا پیوست کنید.</p>
+
+        @if(auth()->user()->canModule('leads', \App\Models\User::ABILITY_EDIT))
+        <form id="lead-attachments-form" action="{{ route('leads.attachments.store', $lead) }}" method="post" enctype="multipart/form-data" style="margin-bottom: 1.5rem;">
             @csrf
-            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
-                <input type="file" name="file" accept="image/*,.pdf" required style="flex: 1; min-width: 200px; padding: 0.5rem; border: 1px solid #d6d3d1; border-radius: 0.5rem; font-size: 0.875rem;">
-                <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.8125rem;">افزودن</button>
+            <input type="file" name="files[]" id="lead-attachments-input" accept="image/*,.pdf" multiple style="position: absolute; width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden;">
+            <div id="lead-upload-zone" class="lead-upload-zone" style="padding: 2rem; background: #fafaf9; border-radius: 1rem; border: 2px dashed #d6d3d1; text-align: center; cursor: pointer; transition: all 0.2s;">
+                <div style="font-size: 2.5rem; margin-bottom: 0.75rem; color: #a8a29e;">📷</div>
+                <p style="font-size: 0.9375rem; font-weight: 600; color: #57534e; margin: 0 0 0.25rem 0;">عکس یا فایل را اینجا بکشید یا کلیک کنید</p>
+                <p style="font-size: 0.8125rem; color: #a8a29e; margin: 0;">عکس (JPG, PNG, WebP و…) یا PDF — حداکثر ۱۰ مگابایت برای هر فایل، چند فایل همزمان امکان‌پذیر است.</p>
+            </div>
+            <div id="lead-selected-files" style="display: none; margin-top: 1rem; padding: 1rem; background: #f5f5f4; border-radius: 0.75rem;">
+                <p style="font-size: 0.875rem; font-weight: 600; color: #44403c; margin: 0 0 0.5rem 0;">فایل‌های انتخاب‌شده:</p>
+                <ul id="lead-files-list" style="margin: 0; padding-right: 1.25rem; font-size: 0.8125rem; color: #57534e;"></ul>
+                <div style="display: flex; gap: 0.75rem; margin-top: 0.75rem; flex-wrap: wrap;">
+                    <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1.25rem; font-size: 0.875rem;">بارگذاری</button>
+                    <button type="button" id="lead-clear-files" style="padding: 0.5rem 1rem; font-size: 0.875rem; background: #fff; border: 2px solid #d6d3d1; border-radius: 0.5rem; cursor: pointer; font-weight: 600; color: #57534e;">پاک کردن انتخاب</button>
+                </div>
             </div>
         </form>
+        <style>.lead-upload-zone:hover,.lead-upload-zone.dragover{ border-color:#059669 !important; background:#f0fdf4 !important; }</style>
+        @endif
+
         @if ($lead->attachments->isEmpty())
-            <p style="font-size: 0.875rem; color: #a8a29e; margin: 0; text-align: center; padding: 2rem;">پیوستی ثبت نشده.</p>
+            <p style="font-size: 0.875rem; color: #a8a29e; margin: 0; text-align: center; padding: 2rem;">هنوز پیوستی ثبت نشده. با استفاده از کادر بالا عکس یا سند درخواست مشتری را اضافه کنید.</p>
         @else
             <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
                 @foreach ($lead->attachments as $att)
-                    <div style="padding: 0.75rem; border-radius: 0.75rem; background: #fafaf9; border: 1px solid #e7e5e4; transition: all 0.2s;" onmouseover="this.style.borderColor='#d6d3d1';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';" onmouseout="this.style.borderColor='#e7e5e4';this.style.boxShadow='none';">
+                    <div class="lead-attachment-card" style="padding: 0.75rem; border-radius: 0.75rem; background: #fafaf9; border: 1px solid #e7e5e4; transition: all 0.2s;">
                         @if ($att->isImage())
-                            <a href="{{ $att->url() }}" target="_blank" rel="noopener" style="display: block; aspect-ratio: 4/3; border-radius: 0.5rem; overflow: hidden; background: #e7e5e4; margin-bottom: 0.75rem;">
-                                <img src="{{ $att->url() }}" alt="{{ $att->original_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            <a href="{{ $att->url() }}" target="_blank" rel="noopener" class="lead-attachment-thumb" style="display: block; aspect-ratio: 4/3; border-radius: 0.5rem; overflow: hidden; background: #e7e5e4; margin-bottom: 0.75rem;">
+                                <img src="{{ $att->url() }}" alt="{{ $att->original_name }}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
                             </a>
                         @else
                             <a href="{{ $att->url() }}" target="_blank" rel="noopener" style="display: block; aspect-ratio: 4/3; border-radius: 0.5rem; background: linear-gradient(135deg, #e7e5e4, #d6d3d1); margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: center; color: #78716c; font-size: 2rem; font-weight: 700;">PDF</a>
                         @endif
-                        <p style="font-size: 0.75rem; color: #57534e; margin: 0 0 0.5rem 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600;">{{ $att->original_name }}</p>
-                        <form action="{{ route('leads.attachments.destroy', [$lead, $att]) }}" method="post" onsubmit="return confirm('حذف شود؟');">
+                        <p style="font-size: 0.75rem; color: #57534e; margin: 0 0 0.5rem 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600;" title="{{ $att->original_name }}">{{ $att->original_name }}</p>
+                        @if(auth()->user()->canModule('leads', \App\Models\User::ABILITY_EDIT))
+                        <form action="{{ route('leads.attachments.destroy', [$lead, $att]) }}" method="post" onsubmit="return confirm('این پیوست حذف شود؟');">
                             @csrf
                             @method('DELETE')
                             <button type="submit" style="font-size: 0.75rem; color: #b91c1c; background: none; border: none; cursor: pointer; font-weight: 600; padding: 0.25rem 0.5rem; border-radius: 0.375rem; transition: all 0.2s;" onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='none';">حذف</button>
                         </form>
+                        @endif
                     </div>
                 @endforeach
             </div>
@@ -541,7 +559,48 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    
+
+    (function() {
+        var zone = document.getElementById('lead-upload-zone');
+        var input = document.getElementById('lead-attachments-input');
+        var panel = document.getElementById('lead-selected-files');
+        var list = document.getElementById('lead-files-list');
+        var clearBtn = document.getElementById('lead-clear-files');
+        if (!zone || !input) return;
+        function updateFileList() {
+            var files = input.files;
+            if (!files || files.length === 0) {
+                panel.style.display = 'none';
+                list.innerHTML = '';
+                return;
+            }
+            list.innerHTML = '';
+            for (var i = 0; i < files.length; i++) {
+                var li = document.createElement('li');
+                li.textContent = files[i].name + ' (' + (files[i].size < 1024 ? files[i].size + ' B' : (files[i].size < 1024*1024 ? (files[i].size/1024).toFixed(1) + ' KB' : (files[i].size/1024/1024).toFixed(1) + ' MB') ) + ')';
+                list.appendChild(li);
+            }
+            panel.style.display = 'block';
+        }
+        zone.addEventListener('click', function(e) { e.preventDefault(); input.click(); });
+        input.addEventListener('change', updateFileList);
+        zone.addEventListener('dragover', function(e) { e.preventDefault(); e.stopPropagation(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', function(e) { e.preventDefault(); zone.classList.remove('dragover'); });
+        zone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            zone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                input.files = e.dataTransfer.files;
+                updateFileList();
+            }
+        });
+        if (clearBtn) clearBtn.addEventListener('click', function() {
+            input.value = '';
+            updateFileList();
+        });
+    })();
+
     var callDateBtn = document.getElementById('call_date_today_show');
     var callDateInput = document.getElementById('call_date_show');
     if (callDateBtn && callDateInput) {

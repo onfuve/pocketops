@@ -19,6 +19,7 @@ class LeadController extends Controller
 {
     public function index(Request $request)
     {
+        abort_unless($request->user()->canModule('leads', \App\Models\User::ABILITY_VIEW), 403, 'شما به این بخش دسترسی ندارید.');
         $leads = Lead::query()
             ->visibleToUser($request->user())
             ->with('contact', 'leadChannel', 'referrerContact', 'user', 'assignedTo', 'tags')
@@ -34,6 +35,7 @@ class LeadController extends Controller
 
     public function create()
     {
+        abort_unless(request()->user()->canModule('leads', \App\Models\User::ABILITY_CREATE), 403, 'شما مجوز ایجاد سرنخ را ندارید.');
         $lead = new Lead([
             'status' => Lead::STATUS_NEW,
             'lead_date' => now(),
@@ -46,8 +48,13 @@ class LeadController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless($request->user()->canModule('leads', \App\Models\User::ABILITY_CREATE), 403, 'شما مجوز ایجاد سرنخ را ندارید.');
         $this->normalizeLeadDate($request);
-        $validated = $request->validate($this->rules());
+        $rules = array_merge($this->rules(), [
+            'files' => 'nullable|array',
+            'files.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf',
+        ]);
+        $validated = $request->validate($rules);
         $this->validateReferrer($request);
         $validated['value'] = $this->numericValue($request->get('value'));
         $validated['lead_date'] = $validated['lead_date'] ?? now();
@@ -57,6 +64,9 @@ class LeadController extends Controller
 
         $lead = Lead::create($validated);
         $this->syncTags($lead, $request->input('tag_ids', []));
+
+        // Attachments (optional on create)
+        $this->storeAttachmentsFromRequest($request, $lead);
 
         // Log call if call fields provided
         $this->logCallIfProvided($lead, $request);
@@ -73,6 +83,7 @@ class LeadController extends Controller
 
     public function show(Lead $lead)
     {
+        abort_unless(request()->user()->canModule('leads', \App\Models\User::ABILITY_VIEW), 403, 'شما به این بخش دسترسی ندارید.');
         abort_unless($lead->isVisibleTo(request()->user()), 403, 'شما به این سرنخ دسترسی ندارید.');
 
         $lead->load('contact', 'leadChannel', 'referrerContact', 'tags', 'activities', 'comments.user', 'attachments', 'tasks.assignedUsers', 'user', 'assignedTo');
@@ -97,6 +108,7 @@ class LeadController extends Controller
 
     public function edit(Lead $lead)
     {
+        abort_unless(request()->user()->canModule('leads', \App\Models\User::ABILITY_EDIT), 403, 'شما مجوز ویرایش سرنخ را ندارید.');
         abort_unless($lead->isVisibleTo(request()->user()), 403, 'شما به این سرنخ دسترسی ندارید.');
 
         $leadChannels = LeadChannel::orderBy('sort')->get();
@@ -109,6 +121,7 @@ class LeadController extends Controller
 
     public function update(Request $request, Lead $lead)
     {
+        abort_unless($request->user()->canModule('leads', \App\Models\User::ABILITY_EDIT), 403, 'شما مجوز ویرایش سرنخ را ندارید.');
         abort_unless($lead->isVisibleTo($request->user()), 403, 'شما به این سرنخ دسترسی ندارید.');
 
         $this->normalizeLeadDate($request);
@@ -133,7 +146,7 @@ class LeadController extends Controller
     public function destroy(Lead $lead)
     {
         abort_unless($lead->isVisibleTo(request()->user()), 403, 'شما به این سرنخ دسترسی ندارید.');
-        abort_unless(request()->user()->canDeleteLead(), 403, 'شما مجوز حذف سرنخ را ندارید.');
+        abort_unless(request()->user()->canModule('leads', \App\Models\User::ABILITY_DELETE), 403, 'شما مجوز حذف سرنخ را ندارید.');
 
         $lead->delete();
 
@@ -351,23 +364,71 @@ class LeadController extends Controller
     public function storeAttachment(Request $request, Lead $lead)
     {
         abort_unless($lead->isVisibleTo($request->user()), 403, 'شما به این سرنخ دسترسی ندارید.');
+        abort_unless($request->user()->canModule('leads', \App\Models\User::ABILITY_EDIT), 403, 'برای افزودن پیوست مجوز ویرایش سرنخ را دارید.');
 
-        $request->validate(['file' => 'required|file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf']);
-        $file = $request->file('file');
+        $rules = [
+            'file' => 'required_without:files|nullable|file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf',
+            'files' => 'required_without:file|nullable|array',
+            'files.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf',
+        ];
+        $request->validate($rules);
+
+        $files = $request->file('files') ?? [];
+        if ($request->hasFile('file')) {
+            $files = array_merge(is_array($files) ? $files : [], [$request->file('file')]);
+        }
+        $files = array_filter($files);
+        if (empty($files)) {
+            return redirect()->route('leads.show', $lead)->withErrors(['file' => 'حداقل یک فایل (عکس یا PDF) انتخاب کنید.'])->withInput();
+        }
+
         $dir = 'attachments/leads/' . $lead->id;
-        $path = $file->store($dir, 'public');
-        $lead->attachments()->create([
-            'path' => $path,
-            'original_name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
-        ]);
-        return redirect()->route('leads.show', $lead)->with('success', 'فایل پیوست شد.');
+        $count = 0;
+        foreach ($files as $file) {
+            if (!$file->isValid()) {
+                continue;
+            }
+            $path = $file->store($dir, 'public');
+            $lead->attachments()->create([
+                'path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize(),
+            ]);
+            $count++;
+        }
+
+        $msg = $count === 1 ? 'فایل پیوست شد.' : "{$count} فایل پیوست شد.";
+        return redirect()->route('leads.show', $lead)->with('success', $msg);
+    }
+
+    /** Process optional file uploads from create form (validation already done in store()). */
+    private function storeAttachmentsFromRequest(Request $request, Lead $lead): void
+    {
+        $files = $request->file('files') ?? [];
+        if ($request->hasFile('file')) {
+            $files = array_merge(is_array($files) ? $files : [], [$request->file('file')]);
+        }
+        $files = array_filter($files);
+        $dir = 'attachments/leads/' . $lead->id;
+        foreach ($files as $file) {
+            if (!$file->isValid()) {
+                continue;
+            }
+            $path = $file->store($dir, 'public');
+            $lead->attachments()->create([
+                'path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize(),
+            ]);
+        }
     }
 
     public function destroyAttachment(Lead $lead, Attachment $attachment)
     {
         abort_unless($lead->isVisibleTo(request()->user()), 403, 'شما به این سرنخ دسترسی ندارید.');
+        abort_unless(request()->user()->canModule('leads', \App\Models\User::ABILITY_EDIT), 403, 'برای حذف پیوست مجوز ویرایش سرنخ را دارید.');
 
         if ($attachment->attachable_type !== Lead::class || (int) $attachment->attachable_id !== (int) $lead->id) {
             abort(404);

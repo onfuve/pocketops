@@ -76,7 +76,7 @@
         @foreach (['شنبه', 'یک‌شنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'] as $wd)
             <div class="calendar-day-header">{{ $wd }}</div>
         @endforeach
-        @php $today = now()->format('Y-m-d'); @endphp
+        @php $today = $todayGregorian ?? now()->format('Y-m-d'); @endphp
         @php $accordionLimit = 2; @endphp
         @foreach ($grid as $week)
             @foreach ($week as $cell)
@@ -177,16 +177,19 @@
         </form>
     </div>
 
-    {{-- Week view: list of upcoming events --}}
+    {{-- Week view: list of events this month (ordered by Shamsi day 1..31) --}}
     <div style="margin-top: 2rem;">
         <h2 style="border-bottom: 2px solid #d6d3d1; padding-bottom: 0.75rem; margin-bottom: 1rem; font-size: 1.125rem; font-weight: 600; color: #292524;">همه رویدادهای این ماه</h2>
-        @if (empty($events))
+        @if (empty($eventsSorted ?? $events))
             <p style="color: #78716c; font-size: 0.875rem;">رویدادی در این ماه ثبت نشده است.</p>
         @else
             @php
-                $byDate = collect($events)->groupBy('date')->sortKeys();
+                $listEvents = $eventsSorted ?? $events;
+                $byDate = collect($listEvents)->groupBy('date');
+                $sortedDates = $byDate->keys()->sortBy(fn ($date) => \App\Helpers\FormatHelper::gregorianToShamsiSortKey($date))->values();
             @endphp
-            @foreach ($byDate as $date => $evs)
+            @foreach ($sortedDates as $date)
+                @php $evs = $byDate[$date]; @endphp
                 <div class="week-row">
                     <span class="week-row-date">{{ FormatHelper::shamsi($date) }}</span>
                     <div class="week-row-events">

@@ -49,8 +49,8 @@
                     </select>
                     @error('role')<p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #b91c1c;">{{ $message }}</p>@enderror
                 </div>
-                <div style="border-top: 1px solid #e7e5e4; padding-top: 1rem;">
-                    <p style="font-size: 0.875rem; font-weight: 600; color: #44403c; margin-bottom: 0.75rem;">مجوز حذف (فقط برای عضو تیم)</p>
+                <div style="border-top: 1px solid #e7e5e4; padding-top: 1rem;" id="team-permissions-section">
+                    <p style="font-size: 0.875rem; font-weight: 600; color: #44403c; margin-bottom: 0.75rem;">مجوز حذف (سازگاری با قبل — در صورت تنظیم دسترسی ماژول زیر نادیده گرفته می‌شود)</p>
                     <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
                         <input type="hidden" name="can_delete_lead" value="0">
                         <input type="checkbox" name="can_delete_lead" value="1" {{ old('can_delete_lead', $user->can_delete_lead) ? 'checked' : '' }}>
@@ -66,6 +66,35 @@
                         <input type="checkbox" name="can_delete_invoice" value="1" {{ old('can_delete_invoice', $user->can_delete_invoice) ? 'checked' : '' }}>
                         <span>حذف فاکتور</span>
                     </label>
+                </div>
+                <div style="border-top: 1px solid #e7e5e4; padding-top: 1rem; margin-top: 1rem;">
+                    <p style="font-size: 0.875rem; font-weight: 600; color: #44403c; margin-bottom: 0.75rem;">دسترسی ماژول‌ها (فقط برای عضو تیم — مشاهده، ایجاد، ویرایش، حذف)</p>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8125rem;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #e7e5e4;">
+                                    <th style="text-align: right; padding: 0.5rem; color: #57534e;">ماژول</th>
+                                    <th style="text-align: center; padding: 0.5rem; color: #57534e;">مشاهده</th>
+                                    <th style="text-align: center; padding: 0.5rem; color: #57534e;">ایجاد</th>
+                                    <th style="text-align: center; padding: 0.5rem; color: #57534e;">ویرایش</th>
+                                    <th style="text-align: center; padding: 0.5rem; color: #57534e;">حذف</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php $effective = old('permissions') !== null ? array_map(fn($a) => $a ?? [], old('permissions')) : $user->getEffectivePermissions(); @endphp
+                                @foreach (\App\Models\User::MODULES as $moduleKey => $moduleLabel)
+                                    @php $allowed = $effective[$moduleKey] ?? []; if (!is_array($allowed)) $allowed = []; @endphp
+                                    <tr style="border-bottom: 1px solid #e7e5e4;">
+                                        <td style="padding: 0.5rem;">{{ $moduleLabel }}</td>
+                                        <td style="text-align: center; padding: 0.5rem;"><input type="checkbox" name="permissions[{{ $moduleKey }}][]" value="view" {{ in_array('view', $allowed, true) ? 'checked' : '' }}></td>
+                                        <td style="text-align: center; padding: 0.5rem;"><input type="checkbox" name="permissions[{{ $moduleKey }}][]" value="create" {{ in_array('create', $allowed, true) ? 'checked' : '' }}></td>
+                                        <td style="text-align: center; padding: 0.5rem;"><input type="checkbox" name="permissions[{{ $moduleKey }}][]" value="edit" {{ in_array('edit', $allowed, true) ? 'checked' : '' }}></td>
+                                        <td style="text-align: center; padding: 0.5rem;"><input type="checkbox" name="permissions[{{ $moduleKey }}][]" value="delete" {{ in_array('delete', $allowed, true) ? 'checked' : '' }}></td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem;">
                     <button type="submit" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border-radius: 0.5rem; background: #059669; color: #fff; font-size: 0.875rem; font-weight: 600; border: none; cursor: pointer;">

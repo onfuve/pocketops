@@ -21,7 +21,7 @@
 .lead-form .dropdown-results a:hover { background: var(--ds-bg-subtle); }
 </style>
 @endpush
-<form action="{{ $isEdit ? route('leads.update', $lead) : route('leads.store') }}" method="post" class="lead-form">
+<form action="{{ $isEdit ? route('leads.update', $lead) : route('leads.store') }}" method="post" class="lead-form" {{ $isEdit ? '' : 'enctype="multipart/form-data"' }}>
     @csrf
     @if ($isEdit)
         @method('PUT')
@@ -166,6 +166,26 @@
     @isset($tags)
     @include('components._tag-section', ['tags' => $tags, 'entity' => $lead ?? null, 'accentColor' => '#059669'])
     @endisset
+
+    {{-- Attachments (create only) --}}
+    @if (!$isEdit)
+    <div class="ds-form-card" style="border-color: #059669; background: linear-gradient(to bottom, #f0fdf4 0%, #fff 100%);">
+        <h2 class="ds-form-card-title" style="color: #047857;">📷 تصاویر و پیوست‌ها</h2>
+        <p style="font-size: 0.8125rem; color: #78716c; margin: 0 0 1rem 0;">عکس درخواست مشتری یا سند مرتبط را می‌توانید همین الان پیوست کنید (اختیاری).</p>
+        <input type="file" name="files[]" id="lead-create-files" accept="image/*,.pdf" multiple style="position: absolute; width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden;">
+        <div id="lead-create-upload-zone" style="padding: 1.75rem; background: #fafaf9; border-radius: 0.75rem; border: 2px dashed #a7f3d0; text-align: center; cursor: pointer; transition: all 0.2s;">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem; color: #6ee7b7;">📷</div>
+            <p style="font-size: 0.9375rem; font-weight: 600; color: #047857; margin: 0 0 0.25rem 0;">عکس یا فایل را اینجا بکشید یا کلیک کنید</p>
+            <p style="font-size: 0.8125rem; color: #a8a29e; margin: 0;">JPG, PNG, WebP یا PDF — حداکثر ۱۰ مگابایت برای هر فایل</p>
+        </div>
+        <div id="lead-create-files-list-wrap" style="display: none; margin-top: 1rem; padding: 1rem; background: #f5f5f4; border-radius: 0.75rem;">
+            <p style="font-size: 0.875rem; font-weight: 600; color: #44403c; margin: 0 0 0.5rem 0;">فایل‌های انتخاب‌شده:</p>
+            <ul id="lead-create-files-list" style="margin: 0; padding-right: 1.25rem; font-size: 0.8125rem; color: #57534e;"></ul>
+            <button type="button" id="lead-create-clear-files" style="margin-top: 0.5rem; padding: 0.375rem 0.75rem; font-size: 0.8125rem; background: #fff; border: 2px solid #d6d3d1; border-radius: 0.5rem; cursor: pointer; font-weight: 600; color: #57534e;">پاک کردن انتخاب</button>
+        </div>
+    </div>
+    <style>.lead-form #lead-create-upload-zone:hover,#lead-create-upload-zone.dragover{ border-color:#059669 !important; background:#ecfdf5 !important; }</style>
+    @endif
 
     <div class="form-actions">
         <button type="submit" class="ds-btn ds-btn-primary">
@@ -318,6 +338,46 @@
             setTimeout(function () { nameResults.classList.add('hidden'); }, 200);
         });
     }
+
+    (function () {
+        var zone = document.getElementById('lead-create-upload-zone');
+        var input = document.getElementById('lead-create-files');
+        var panel = document.getElementById('lead-create-files-list-wrap');
+        var list = document.getElementById('lead-create-files-list');
+        var clearBtn = document.getElementById('lead-create-clear-files');
+        if (!zone || !input) return;
+        function updateList() {
+            var files = input.files;
+            if (!files || files.length === 0) {
+                if (panel) panel.style.display = 'none';
+                if (list) list.innerHTML = '';
+                return;
+            }
+            if (list) {
+                list.innerHTML = '';
+                for (var i = 0; i < files.length; i++) {
+                    var li = document.createElement('li');
+                    li.textContent = files[i].name + ' (' + (files[i].size < 1024 ? files[i].size + ' B' : (files[i].size < 1024*1024 ? (files[i].size/1024).toFixed(1) + ' KB' : (files[i].size/1024/1024).toFixed(1) + ' MB') ) + ')';
+                    list.appendChild(li);
+                }
+            }
+            if (panel) panel.style.display = 'block';
+        }
+        zone.addEventListener('click', function (e) { e.preventDefault(); input.click(); });
+        input.addEventListener('change', updateList);
+        zone.addEventListener('dragover', function (e) { e.preventDefault(); e.stopPropagation(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', function (e) { e.preventDefault(); zone.classList.remove('dragover'); });
+        zone.addEventListener('drop', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            zone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                input.files = e.dataTransfer.files;
+                updateList();
+            }
+        });
+        if (clearBtn) clearBtn.addEventListener('click', function () { input.value = ''; updateList(); });
+    })();
 })();
 </script>
 @endpush

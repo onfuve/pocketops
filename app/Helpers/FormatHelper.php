@@ -6,6 +6,8 @@ use Hekmatinasser\Verta\Verta;
 
 class FormatHelper
 {
+    private const TEHRAN = 'Asia/Tehran';
+
     /** Persian (۰-۹) to English (0-9) for storage/calculation */
     public static function persianToEnglish(string $value): string
     {
@@ -59,20 +61,32 @@ class FormatHelper
         };
     }
 
-    /** Format Carbon/date to Shamsi string (e.g. ۱۴۰۳/۱۱/۱۳) */
+    /** Format Carbon/date to Shamsi string (e.g. ۱۴۰۳/۱۱/۱۳). Uses Asia/Tehran for date-only to avoid day shift. */
     public static function shamsi($date, string $format = 'Y/m/d'): string
     {
         if ($date === null) {
             return '';
         }
         try {
-            $datetime = $date instanceof \DateTimeInterface ? $date : new \DateTimeImmutable($date);
-            $v = Verta::instance($datetime);
+            if ($date instanceof \DateTimeInterface) {
+                $dateStr = $date->format('Y-m-d H:i:s');
+                $tz = $date->getTimezone()->getName();
+            } else {
+                $str = trim((string) $date);
+                if (preg_match('/^\d{4}-\d{2}-\d{2}( \d|$)/', $str)) {
+                    $dt = new \DateTimeImmutable($str . (str_contains($str, ' ') ? '' : ' 12:00:00'), new \DateTimeZone(self::TEHRAN));
+                    $dateStr = $dt->format('Y-m-d H:i:s');
+                    $tz = self::TEHRAN;
+                } else {
+                    $dateStr = $str;
+                    $tz = self::TEHRAN;
+                }
+            }
+            $v = Verta::instance($dateStr, $tz);
             $formatted = $v->format($format);
             return self::englishToPersian($formatted);
         } catch (\Throwable $e) {
-            $d = $date instanceof \DateTimeInterface ? $date->format('Y/m/d') : (string) $date;
-            return self::englishToPersian($d);
+            return '';
         }
     }
 
@@ -82,7 +96,7 @@ class FormatHelper
         return Verta::now()->format('YmdHis');
     }
 
-    /** Parse Shamsi date string (Y/m/d or Y-m-d, Persian or English digits) to Gregorian Y-m-d */
+    /** Parse Shamsi date string (Y/m/d or Y-m-d, Persian or English digits) to Gregorian Y-m-d. Uses noon Tehran to avoid day boundary shift. */
     public static function shamsiToGregorian(?string $shamsi): ?string
     {
         if ($shamsi === null || trim($shamsi) === '') {
@@ -93,10 +107,18 @@ class FormatHelper
             if (!preg_match('/^\d{4}\/\d{1,2}\/\d{1,2}$/', $normalized)) {
                 return null;
             }
-            $v = Verta::parse($normalized);
-            return $v->datetime()->format('Y-m-d');
+            $v = Verta::parse($normalized . ' 12:00:00', self::TEHRAN);
+            return $v->datetime()->setTimezone(new \DateTimeZone(self::TEHRAN))->format('Y-m-d');
         } catch (\Throwable $e) {
             return null;
         }
+    }
+
+    /** Gregorian Y-m-d to Shamsi Y-m-d for consistent sorting (e.g. "1403/11/15"). */
+    public static function gregorianToShamsiSortKey(string $gregorianYmd): string
+    {
+        $dateStr = $gregorianYmd . ' 12:00:00';
+        $v = Verta::instance($dateStr, self::TEHRAN);
+        return sprintf('%04d/%02d/%02d', $v->year, $v->month, $v->day);
     }
 }

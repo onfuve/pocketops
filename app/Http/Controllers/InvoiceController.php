@@ -20,6 +20,7 @@ class InvoiceController extends Controller
 {
     public function index(Request $request)
     {
+        abort_unless($request->user()->canModule('invoices', \App\Models\User::ABILITY_VIEW), 403, 'شما به این بخش دسترسی ندارید.');
         $invoices = Invoice::query()
             ->visibleToUser($request->user())
             ->with(['contact', 'payments', 'user', 'assignedTo'])
@@ -37,6 +38,7 @@ class InvoiceController extends Controller
 
     public function create(Request $request)
     {
+        abort_unless($request->user()->canModule('invoices', \App\Models\User::ABILITY_CREATE), 403, 'شما مجوز ایجاد فاکتور را ندارید.');
         $contact = null;
         $type = $request->get('type', Invoice::TYPE_SELL);
         if ($request->filled('contact_id')) {
@@ -57,6 +59,7 @@ class InvoiceController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless($request->user()->canModule('invoices', \App\Models\User::ABILITY_CREATE), 403, 'شما مجوز ایجاد فاکتور را ندارید.');
         $dateErrors = $this->normalizeShamsiDates($request);
         if (!empty($dateErrors)) {
             return back()->withErrors($dateErrors)->withInput();
@@ -100,6 +103,7 @@ class InvoiceController extends Controller
 
     public function show(Invoice $invoice)
     {
+        abort_unless(request()->user()->canModule('invoices', \App\Models\User::ABILITY_VIEW), 403, 'شما به این بخش دسترسی ندارید.');
         abort_unless($invoice->isVisibleTo(request()->user()), 403, 'شما به این فاکتور دسترسی ندارید.');
 
         $invoice->load('contact', 'items', 'user', 'assignedTo', 'tasks.assignedUsers');
@@ -139,6 +143,7 @@ class InvoiceController extends Controller
 
     public function edit(Invoice $invoice)
     {
+        abort_unless(request()->user()->canModule('invoices', \App\Models\User::ABILITY_EDIT), 403, 'شما مجوز ویرایش فاکتور را ندارید.');
         abort_unless($invoice->isVisibleTo(request()->user()), 403, 'شما به این فاکتور دسترسی ندارید.');
 
         if ($invoice->status === Invoice::STATUS_DRAFT) {
@@ -162,6 +167,7 @@ class InvoiceController extends Controller
 
     public function update(Request $request, Invoice $invoice)
     {
+        abort_unless($request->user()->canModule('invoices', \App\Models\User::ABILITY_EDIT), 403, 'شما مجوز ویرایش فاکتور را ندارید.');
         abort_unless($invoice->isVisibleTo($request->user()), 403, 'شما به این فاکتور دسترسی ندارید.');
 
         if ($invoice->status === Invoice::STATUS_DRAFT) {
@@ -233,7 +239,7 @@ class InvoiceController extends Controller
     public function destroy(Invoice $invoice)
     {
         abort_unless($invoice->isVisibleTo(request()->user()), 403, 'شما به این فاکتور دسترسی ندارید.');
-        abort_unless(request()->user()->canDeleteInvoice(), 403, 'شما مجوز حذف فاکتور را ندارید.');
+        abort_unless(request()->user()->canModule('invoices', \App\Models\User::ABILITY_DELETE), 403, 'شما مجوز حذف فاکتور را ندارید.');
 
         if ($invoice->status === Invoice::STATUS_DRAFT) {
             foreach ($invoice->payments as $payment) {
@@ -331,7 +337,7 @@ class InvoiceController extends Controller
             ini_set('memory_limit', '512M');
 
             $pdf = Pdf::loadView('invoices.print', compact('invoice', 'paymentOptions'))
-                ->setPaper('a4')
+                ->setPaper('a5')
                 ->setOption('isRemoteEnabled', true)
                 ->setOption('isFontSubsettingEnabled', true)
                 ->setOption('chroot', [public_path(), base_path('storage')]);

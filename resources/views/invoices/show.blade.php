@@ -1,10 +1,13 @@
 @php
     use App\Helpers\FormatHelper;
+    use Illuminate\Support\Facades\URL;
     $isBuy = $invoice->type === 'buy';
     $docLabel = $isBuy ? 'رسید خرید' : 'فاکتور';
-    $shareUrl = route('invoices.show', $invoice);
-    $shareText = $docLabel . ' ' . ($invoice->invoice_number ?: $invoice->id) . ' - ' . $invoice->contact->name . ' - مبلغ ' . FormatHelper::rial($invoice->total);
     $printUrl = route('invoices.print', $invoice);
+    $publicPrintUrl = $invoice->status !== \App\Models\Invoice::STATUS_DRAFT
+        ? URL::temporarySignedRoute('invoices.public.print', now()->addDays(30), ['invoice' => $invoice])
+        : null;
+    $shareText = $docLabel . ' ' . ($invoice->invoice_number ?: $invoice->id) . ' — ' . $invoice->contact->name . ' — مبلغ ' . FormatHelper::rial($invoice->total);
 @endphp
 @extends('layouts.app')
 
@@ -65,6 +68,15 @@
                 @endif
             @endif
             <a href="{{ $printUrl }}" target="_blank" class="btn-action btn-action-secondary">نسخه چاپ</a>
+            @if ($publicPrintUrl)
+            <span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8125rem; color: #78716c; margin: 0 0.25rem;">اشتراک‌گذاری</span>
+            <a href="https://wa.me/?text={{ rawurlencode($shareText . ' ' . $publicPrintUrl) }}" target="_blank" rel="noopener noreferrer" class="btn-action btn-action-secondary" style="min-width: 2.5rem; min-height: 2.5rem; padding: 0.5rem; color: #25D366 !important;" title="واتساپ" aria-label="اشتراک در واتساپ">
+                @include('components._icons', ['name' => 'whatsapp', 'class' => 'w-5 h-5'])
+            </a>
+            <a href="https://t.me/share/url?url={{ rawurlencode($publicPrintUrl) }}&text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener noreferrer" class="btn-action btn-action-secondary" style="min-width: 2.5rem; min-height: 2.5rem; padding: 0.5rem; color: #0088cc !important;" title="تلگرام" aria-label="اشتراک در تلگرام">
+                @include('components._icons', ['name' => 'telegram', 'class' => 'w-5 h-5'])
+            </a>
+            @endif
             @if (!$isDraft)
                 @php $totalPaid = $invoice->totalPaid(); $remaining = (float)$invoice->total - $totalPaid; @endphp
                 @if ($remaining > 0)
@@ -394,8 +406,10 @@
         <h2 class="invoice-section-title" style="font-family:'Vazirmatn',sans-serif;">اشتراک‌گذاری</h2>
         <p class="mb-4 text-sm text-stone-500">{{ $isBuy ? 'لینک رسید یا تصویر را برای بایگانی یا حسابدار به‌اشتراک بگذارید.' : 'لینک فاکتور یا تصویر را با مشتری به‌اشتراک بگذارید.' }}</p>
         <div class="flex flex-wrap items-center gap-3" style="gap:0.75rem;">
-            <a href="https://wa.me/?text={{ urlencode($shareText . ' ' . $shareUrl) }}" target="_blank" rel="noopener" class="btn-action" style="background:#22c55e;color:#fff!important;border-color:#16a34a;"><span style="color:#fff;">واتساپ</span></a>
-            <a href="https://t.me/share/url?url={{ urlencode($shareUrl) }}&text={{ urlencode($shareText) }}" target="_blank" rel="noopener" class="btn-action" style="background:#0ea5e9;color:#fff!important;border-color:#0284c7;"><span style="color:#fff;">تلگرام</span></a>
+            @if ($publicPrintUrl)
+            <a href="https://wa.me/?text={{ rawurlencode($shareText . ' ' . $publicPrintUrl) }}" target="_blank" rel="noopener" class="btn-action" style="background:#22c55e;color:#fff!important;border-color:#16a34a;" title="واتساپ" aria-label="اشتراک در واتساپ">@include('components._icons', ['name' => 'whatsapp', 'class' => 'w-5 h-5'])</a>
+            <a href="https://t.me/share/url?url={{ rawurlencode($publicPrintUrl) }}&text={{ rawurlencode($shareText) }}" target="_blank" rel="noopener" class="btn-action" style="background:#0ea5e9;color:#fff!important;border-color:#0284c7;" title="تلگرام" aria-label="اشتراک در تلگرام">@include('components._icons', ['name' => 'telegram', 'class' => 'w-5 h-5'])</a>
+            @endif
             <a href="{{ $printUrl }}" target="_blank" rel="noopener" class="btn-action btn-action-secondary">نسخه چاپ / تصویر</a>
         </div>
     </div>

@@ -41,18 +41,22 @@
         @media (min-width: 1024px) {
           .nav-link-new-lead span { display: inline; }
         }
-        /* Mobile: hamburger + drawer. JS adds body.mobile-nav when width <= 768 (see inline script). */
+        /* Mobile: hamburger + full-height drawer. Labels always visible for clarity. */
         .nav-hamburger { display: none; width: 44px; height: 44px; align-items: center; justify-content: center; border: none; border-radius: 0.75rem; background: transparent; cursor: pointer; color: #57534e; }
         body.mobile-nav .nav-hamburger { display: flex !important; }
         body.mobile-nav .main-nav { display: none !important; }
-        body.mobile-nav .main-nav.mobile-open { display: flex !important; flex-direction: row; align-items: stretch; position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,0.4); padding: 0; gap: 0; }
+        body.mobile-nav .main-nav.mobile-open { display: flex !important; flex-direction: row; align-items: stretch; position: fixed; inset: 0; z-index: 50; background: rgba(15,23,42,0.35); padding: 0; gap: 0; backdrop-filter: blur(4px); }
         body.mobile-nav .main-nav.mobile-open .nav-drawer-backdrop { display: block !important; flex: 1; min-width: 0; cursor: pointer; }
-        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel { display: flex !important; flex-direction: column; width: min(85%, 20rem); max-height: 100%; margin-right: auto; background: #fff; box-shadow: 4px 0 20px rgba(0,0,0,0.15); overflow-y: auto; padding: 1rem 0; gap: 0; }
-        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel a, body.mobile-nav .main-nav.mobile-open .nav-drawer-panel button { justify-content: flex-start; padding: 0.875rem 1.25rem; border-radius: 0; min-height: 48px; width: 100%; text-align: right; border-right: none; }
-        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-cta { margin: 0.5rem 1.25rem; border-radius: 0.75rem; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel { display: flex !important; flex-direction: column; width: min(88%, 22rem); max-height: 100%; margin-right: auto; background: #fff; box-shadow: -4px 0 24px rgba(0,0,0,0.12); overflow-y: auto; padding: 0; gap: 0; border-radius: 1rem 0 0 1rem; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel a, body.mobile-nav .main-nav.mobile-open .nav-drawer-panel button { justify-content: flex-start; padding: 0.875rem 1.25rem; min-height: 52px; width: 100%; text-align: right; border: none; border-radius: 0; font-size: 0.9375rem; font-weight: 500; color: #292524; gap: 0.75rem; display: inline-flex; align-items: center; border-right: 3px solid transparent; transition: background 0.2s, border-color 0.2s; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel a:hover, body.mobile-nav .main-nav.mobile-open .nav-drawer-panel button:hover { background: #f0fdf4; border-right-color: #059669; color: #047857; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel a span, body.mobile-nav .main-nav.mobile-open .nav-drawer-panel button span { display: inline !important; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-link svg, body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-link .w-4 { flex-shrink: 0; width: 1.25rem; height: 1.25rem; opacity: 0.9; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-cta { margin: 1rem 1.25rem; border-radius: 0.75rem; justify-content: center; min-height: 48px; background: #059669 !important; color: #fff !important; border-right: none !important; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-cta:hover { background: #047857 !important; }
         body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-group { flex-direction: column; align-items: stretch; padding: 0; margin: 0; border: none; gap: 0; }
-        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-group + .nav-group { padding-top: 0.5rem; margin-top: 0.5rem; border-top: 1px solid #e7e5e4; }
-        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-group-label { display: block !important; padding: 0.75rem 1.25rem 0.25rem; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #a8a29e; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-group + .nav-group { padding-top: 0.25rem; margin-top: 0.25rem; border-top: 1px solid #e7e5e4; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-group-label { display: block !important; padding: 0.5rem 1.25rem 0.15rem; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #78716c; }
         body.nav-drawer-open { overflow: hidden; }
     </style>
     @include('components._design-system')

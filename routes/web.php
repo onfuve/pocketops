@@ -31,6 +31,8 @@ Route::get('product/{code}', [CustomerProductController::class, 'show'])->name('
 Route::get('f/{code}', [App\Http\Controllers\PublicFormController::class, 'show'])->name('forms.public.show');
 Route::post('f/{code}', [App\Http\Controllers\PublicFormController::class, 'submit'])->name('forms.public.submit');
 
+Route::get('i/{invoice}/v', [InvoiceController::class, 'publicPrint'])->name('invoices.public.print')->middleware('signed');
+
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 

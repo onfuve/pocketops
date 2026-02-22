@@ -325,6 +325,19 @@ class InvoiceController extends Controller
         return view('invoices.print', compact('invoice', 'paymentOptions'));
     }
 
+    /** No-login printable invoice via signed URL (for sharing with customer). */
+    public function publicPrint(Invoice $invoice)
+    {
+        $invoice->load('contact', 'items');
+        $paymentOptions = $invoice->selectedPaymentOptions();
+
+        return view('invoices.print', [
+            'invoice' => $invoice,
+            'paymentOptions' => $paymentOptions,
+            'public' => true,
+        ]);
+    }
+
     public function pdf(Invoice $invoice)
     {
         abort_unless($invoice->isVisibleTo(request()->user()), 403, 'شما به این فاکتور دسترسی ندارید.');

@@ -43,6 +43,10 @@
 @media (min-width: 640px) { .inv-form .item-row .item-grid { grid-template-columns: repeat(12, 1fr); } }
 .inv-form .item-row .item-grid > div:first-child { grid-column: 1 / -1; }
 .inv-form .item-desc-wrap { position: relative; }
+@media (max-width: 767px) {
+  .inv-form .item-desc-wrap .item-desc-input { min-height: 48px; font-size: 1rem; padding: 0.75rem 1rem; width: 100%; box-sizing: border-box; }
+  .inv-form .item-row .item-desc { grid-column: 1 / -1; min-width: 0; }
+}
 .inv-form .item-product-results { position: absolute; left: 0; right: 0; top: 100%; margin-top: 0.25rem; z-index: 25; max-height: 12rem; overflow-y: auto; border-radius: var(--ds-radius); border: 2px solid var(--ds-border); background: var(--ds-bg); box-shadow: var(--ds-shadow-hover); }
 .inv-form .item-product-results a { display: block; padding: 0.625rem 1rem; font-size: 0.875rem; color: var(--ds-text); border-bottom: 1px solid var(--ds-bg-subtle); }
 .inv-form .item-product-results a:last-child { border-bottom: none; }

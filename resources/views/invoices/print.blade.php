@@ -52,10 +52,12 @@
     </style>
 </head>
 <body>
+    @if (empty($public))
     <div class="no-print">
         <button type="button" onclick="window.print()" style="padding: 10px 20px; background: #292524; color: #fff; border: 0; border-radius: 8px; font-family: Vazirmatn; cursor: pointer;">چاپ</button>
         <a href="{{ route('invoices.show', $invoice) }}" style="margin-right: 8px; padding: 10px 20px; background: #e7e5e4; color: #292524; border-radius: 8px; text-decoration: none; font-family: Vazirmatn;">بستن</a>
     </div>
+    @endif
 
     @php $isBuy = $invoice->type === 'buy'; @endphp
     <div class="invoice">

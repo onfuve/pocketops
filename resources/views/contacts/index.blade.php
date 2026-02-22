@@ -26,6 +26,11 @@
 .contacts-list .contact-card-body { min-width: 0; flex: 1; }
 .contacts-list .contact-card-actions { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .contacts-list .contact-card.is-select-all { background: var(--ds-bg-subtle); }
+@media (max-width: 767px) {
+  .ds-search-row .ds-search-form { max-width: none; width: 100%; flex: 1; min-width: 0; }
+  .contacts-search-wrap { flex: 1; min-width: 0; }
+  .contacts-search-wrap .ds-input { min-height: 48px; font-size: 1rem; padding: 0.75rem 1rem; padding-right: 2.75rem; }
+}
 </style>
 @endpush
 

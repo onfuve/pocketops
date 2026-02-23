@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name'))</title>
+    {{-- PWA: install on home screen (Android & iOS) --}}
+    <link rel="manifest" href="{{ url('manifest.json') }}">
+    <meta name="theme-color" content="#059669">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
+    <link rel="apple-touch-icon" href="{{ asset('pwa/icons/icon-192.png') }}">
     {{-- Non-blocking font: Safari (and others) won't wait for 21 @font-face rules before first paint --}}
     <link rel="preload" href="{{ asset('vendor/fonts/vazirmatn/vazirmatn-arabic.woff2') }}" as="font" type="font/woff2" crossorigin>
     <link href="{{ asset('vendor/fonts/vazirmatn/vazirmatn.css') }}" rel="stylesheet" media="print" onload="this.media='all'">
@@ -153,6 +160,9 @@
                             <div class="nav-dropdown-section">
                                 <div class="nav-dropdown-label">برنامه‌ریزی</div>
                                 <a href="{{ route('calendar.index') }}" role="menuitem">@include('components._icons', ['name' => 'calendar', 'class' => 'w-4 h-4 shrink-0']) تقویم</a>
+                                @if(auth()->user()?->canModule('subscriptions', \App\Models\User::ABILITY_VIEW))
+                                <a href="{{ route('subscriptions.index') }}" role="menuitem">@include('components._icons', ['name' => 'calendar', 'class' => 'w-4 h-4 shrink-0']) اشتراک‌ها</a>
+                                @endif
                                 <a href="{{ route('tasks.index') }}" role="menuitem">@include('components._icons', ['name' => 'check', 'class' => 'w-4 h-4 shrink-0']) وظایف</a>
                             </div>
                             <div class="nav-dropdown-section">
@@ -180,6 +190,12 @@
                             @include('components._icons', ['name' => 'calendar', 'class' => 'w-4 h-4 shrink-0'])
                             <span>تقویم</span>
                         </a>
+                        @if(auth()->user()?->canModule('subscriptions', \App\Models\User::ABILITY_VIEW))
+                        <a href="{{ route('subscriptions.index') }}" class="nav-link nav-link-icon-only" title="اشتراک‌ها" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                            @include('components._icons', ['name' => 'calendar', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>اشتراک‌ها</span>
+                        </a>
+                        @endif
                         <a href="{{ route('tasks.index') }}" class="nav-link nav-link-icon-only" title="وظایف" style="display: inline-flex; align-items: center; gap: 0.375rem;">
                             @include('components._icons', ['name' => 'check', 'class' => 'w-4 h-4 shrink-0'])
                             <span>وظایف</span>
@@ -275,6 +291,14 @@
         if (hamburger) hamburger.addEventListener('click', openNav);
         if (backdrop) backdrop.addEventListener('click', closeNav);
     })();
+    </script>
+    {{-- PWA: register service worker for "Add to Home Screen" (Android) --}}
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('{{ asset('sw.js') }}', { scope: '/' }).catch(function () {});
+        });
+    }
     </script>
     @stack('scripts')
 </body>

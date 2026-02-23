@@ -11,6 +11,7 @@ use App\Http\Controllers\LeadChannelController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\PaymentOptionController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\CustomerPriceListController;
 use App\Http\Controllers\CustomerProductController;
 use App\Http\Controllers\PriceListController;
@@ -20,6 +21,24 @@ use App\Http\Controllers\TagController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('manifest.json', function () {
+    $name = config('app.name');
+    $base = rtrim(config('app.url'), '/');
+    return response()->json([
+        'name' => $name,
+        'short_name' => $name,
+        'start_url' => $base . '/',
+        'display' => 'standalone',
+        'background_color' => '#ffffff',
+        'theme_color' => '#059669',
+        'orientation' => 'portrait-primary',
+        'icons' => [
+            ['src' => asset('pwa/icons/icon-192.png'), 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+            ['src' => asset('pwa/icons/icon-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any maskable'],
+        ],
+    ], 200, ['Content-Type' => 'application/manifest+json']);
+})->name('manifest');
 
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
@@ -78,6 +97,8 @@ Route::put('invoices/{invoice}/payment-options', [InvoiceController::class, 'upd
 Route::post('invoices/{invoice}/attachments', [InvoiceController::class, 'storeAttachment'])->name('invoices.attachments.store');
 Route::delete('invoices/{invoice}/attachments/{attachment}', [InvoiceController::class, 'destroyAttachment'])->name('invoices.attachments.destroy');
 
+Route::resource('subscriptions', SubscriptionController::class);
+
 Route::get('settings/payment-options', [PaymentOptionController::class, 'index'])->name('settings.payment-options');
 Route::post('settings/payment-options', [PaymentOptionController::class, 'store'])->name('settings.payment-options.store');
 Route::get('settings/payment-options/{payment_option}/edit', [PaymentOptionController::class, 'edit'])->name('settings.payment-options.edit');
@@ -90,6 +111,9 @@ Route::delete('settings/lead-channels/{lead_channel}', [LeadChannelController::c
 Route::get('settings/company', [SettingController::class, 'companyIndex'])->name('settings.company');
 Route::get('settings/company/address', [SettingController::class, 'companyAddress'])->name('settings.company.address');
 Route::post('settings/company/address', [SettingController::class, 'updateCompany'])->name('settings.company.update');
+Route::get('settings/company/stamp', [SettingController::class, 'companyStamp'])->name('settings.company.stamp');
+Route::post('settings/company/stamp', [SettingController::class, 'updateCompanyStamp'])->name('settings.company.stamp.update');
+Route::post('settings/company/stamp/remove', [SettingController::class, 'removeCompanyStamp'])->name('settings.company.stamp.remove');
 
 Route::get('products/import/form', [ProductController::class, 'importForm'])->name('products.import');
 Route::post('products/import', [ProductController::class, 'import'])->name('products.import.store');

@@ -11,6 +11,7 @@ class Form extends Model
     protected $fillable = [
         'user_id',
         'title',
+        'description',
         'status',
         'edit_period_minutes',
         'submission_mode',

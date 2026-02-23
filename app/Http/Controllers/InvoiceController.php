@@ -15,6 +15,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Setting;
 
 class InvoiceController extends Controller
 {
@@ -53,8 +54,9 @@ class InvoiceController extends Controller
         $paymentOptions = PaymentOption::printableInSettings()->orderBy('sort')->get();
         $selectedIds = [];
         $tags = Tag::forCurrentUser()->orderBy('name')->get();
+        $formLinks = $this->invoiceFormLinks();
 
-        return view('invoices.create', ['invoice' => $invoice, 'contact' => $contact, 'paymentOptions' => $paymentOptions, 'selectedIds' => $selectedIds, 'tags' => $tags]);
+        return view('invoices.create', ['invoice' => $invoice, 'contact' => $contact, 'paymentOptions' => $paymentOptions, 'selectedIds' => $selectedIds, 'tags' => $tags, 'formLinks' => $formLinks]);
     }
 
     public function store(Request $request)
@@ -93,6 +95,7 @@ class InvoiceController extends Controller
         );
 
         $validated['user_id'] = $request->user()->id;
+        $validated['form_link_id'] = $this->resolveFormLinkId($request->input('form_link_id'));
         $invoice = Invoice::create($validated);
         $this->syncItems($invoice, $items);
         $this->syncTags($invoice, $request->input('tag_ids', []));
@@ -161,8 +164,9 @@ class InvoiceController extends Controller
         $paymentOptionFields = $invoice->payment_option_fields ?? [];
         $tags = Tag::forCurrentUser()->orderBy('name')->get();
         $users = User::where('id', '!=', auth()->id())->orderBy('name')->get();
+        $formLinks = $this->invoiceFormLinks();
 
-        return view('invoices.edit', compact('invoice', 'contact', 'paymentOptions', 'selectedIds', 'paymentOptionFields', 'tags', 'users'));
+        return view('invoices.edit', compact('invoice', 'contact', 'paymentOptions', 'selectedIds', 'paymentOptionFields', 'tags', 'users', 'formLinks'));
     }
 
     public function update(Request $request, Invoice $invoice)
@@ -202,6 +206,7 @@ class InvoiceController extends Controller
         if ($invoice->user_id === $request->user()->id || $request->user()->isAdmin()) {
             $validated['assigned_to_id'] = $request->filled('assigned_to_id') ? $request->assigned_to_id : null;
         }
+        $validated['form_link_id'] = $this->resolveFormLinkId($request->input('form_link_id'));
         $items = $this->parseItemsFromRequest($request);
 
         $invoice->update($validated);
@@ -321,8 +326,9 @@ class InvoiceController extends Controller
 
         $invoice->load('contact', 'items');
         $paymentOptions = $invoice->selectedPaymentOptions();
+        $printExtras = $this->printExtras($invoice);
 
-        return view('invoices.print', compact('invoice', 'paymentOptions'));
+        return view('invoices.print', array_merge(compact('invoice', 'paymentOptions'), $printExtras));
     }
 
     /** No-login printable invoice via signed URL (for sharing with customer). */
@@ -330,12 +336,42 @@ class InvoiceController extends Controller
     {
         $invoice->load('contact', 'items');
         $paymentOptions = $invoice->selectedPaymentOptions();
+        $printExtras = $this->printExtras($invoice);
 
         return view('invoices.print', [
             'invoice' => $invoice,
             'paymentOptions' => $paymentOptions,
             'public' => true,
-        ]);
+        ] + $printExtras);
+    }
+
+    /** Stamp URL and form URL for invoice print view. */
+    private function printExtras(Invoice $invoice): array
+    {
+        $stampPath = Setting::get('company_stamp_path');
+        $companyStampUrl = $stampPath && Storage::disk('public')->exists($stampPath)
+            ? Storage::disk('public')->url($stampPath)
+            : null;
+
+        $invoiceFormUrl = null;
+        $invoiceFormDescription = null;
+        $link = $invoice->relationLoaded('formLink') ? $invoice->formLink : $invoice->formLink()->first();
+        if ($link) {
+            $link->load('form:id,title,description');
+            $invoiceFormUrl = url('/f/' . $link->code . '?' . http_build_query([
+                'invoice_id' => $invoice->id,
+                'invoice_number' => $invoice->invoice_number ?: $invoice->id,
+            ]));
+            $invoiceFormDescription = $link->form && trim((string) $link->form->description) !== ''
+                ? trim($link->form->description)
+                : ($link->form ? $link->form->title : null);
+        }
+
+        return [
+            'companyStampUrl' => $companyStampUrl,
+            'invoiceFormUrl' => $invoiceFormUrl,
+            'invoiceFormDescription' => $invoiceFormDescription,
+        ];
     }
 
     public function pdf(Invoice $invoice)
@@ -344,12 +380,13 @@ class InvoiceController extends Controller
 
         $invoice->load('contact', 'items');
         $paymentOptions = $invoice->selectedPaymentOptions();
+        $printExtras = $this->printExtras($invoice);
 
         try {
             $prevMemory = ini_get('memory_limit');
             ini_set('memory_limit', '512M');
 
-            $pdf = Pdf::loadView('invoices.print', compact('invoice', 'paymentOptions'))
+            $pdf = Pdf::loadView('invoices.print', array_merge(compact('invoice', 'paymentOptions'), $printExtras))
                 ->setPaper('a5')
                 ->setOption('isRemoteEnabled', true)
                 ->setOption('isFontSubsettingEnabled', true)
@@ -386,6 +423,7 @@ class InvoiceController extends Controller
             'contact_id' => 'required|exists:contacts,id',
             'type' => 'required|in:sell,buy',
             'assigned_to_id' => 'nullable|exists:users,id',
+            'form_link_id' => 'nullable|exists:form_links,id',
             'invoice_number' => 'nullable|string|max:50',
             'date' => 'required|date',
             'due_date' => 'nullable|date',
@@ -455,6 +493,28 @@ class InvoiceController extends Controller
             }
         }
         return $errors;
+    }
+
+    /** Generic form links (no contact/lead) for optional attach to invoice. */
+    private function invoiceFormLinks(): \Illuminate\Database\Eloquent\Collection
+    {
+        return \App\Models\FormLink::query()
+            ->whereNull('contact_id')
+            ->whereNull('lead_id')
+            ->with('form:id,title,status')
+            ->whereHas('form', fn ($q) => $q->where('status', \App\Models\Form::STATUS_ACTIVE))
+            ->orderBy('id')
+            ->get();
+    }
+
+    private function resolveFormLinkId($value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $id = (int) $value;
+        $exists = \App\Models\FormLink::where('id', $id)->whereNull('contact_id')->whereNull('lead_id')->exists();
+        return $exists ? $id : null;
     }
 
     private function syncTags(Invoice $invoice, array $tagIds): void

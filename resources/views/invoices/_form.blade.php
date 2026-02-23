@@ -59,6 +59,12 @@
 .inv-form .dropdown-results a:last-child { border-bottom: none; }
 .inv-form .dropdown-results a:hover { background: var(--ds-bg-subtle); }
 .inv-form .hidden { display: none !important; }
+.inv-form .form-link-cards { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.inv-form .form-link-card { display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1rem; border-radius: var(--ds-radius-lg); border: 2px solid var(--ds-border); background: var(--ds-bg); cursor: pointer; transition: border-color 0.2s, background 0.2s; font-size: 0.875rem; }
+.inv-form .form-link-card:hover { border-color: var(--ds-border-hover); background: var(--ds-bg-subtle); }
+.inv-form .form-link-card.selected { border-color: var(--ds-primary); background: #ecfdf5; color: #065f46; }
+.inv-form .form-link-card input { accent-color: var(--ds-primary); }
+.inv-form .form-link-card .form-link-title { font-weight: 500; }
 </style>
 @endpush
 <form action="{{ $isEdit ? route('invoices.update', $invoice) : route('invoices.store') }}" method="post" class="inv-form">
@@ -281,6 +287,41 @@
                 </script>
             @endif
         </div>
+        @if (!$isBuy && isset($formLinks))
+        @php $selectedFormLinkId = old('form_link_id', $invoice->form_link_id ?? ''); @endphp
+        <div class="inv-form-attach-section" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--ds-border);">
+            <h3 class="ds-label" style="margin-bottom: 0.35rem; font-size: 0.875rem;">فرم پیوست (QR روی چاپ)</h3>
+            <p style="margin: 0 0 0.75rem 0; font-size: 0.75rem; color: var(--ds-text-subtle);">در صورت انتخاب یک فرم، روی چاپ فاکتور یک QR و شماره فاکتور نمایش داده می‌شود (نظرسنجی، پرسشنامه و …).</p>
+            <div class="form-link-cards">
+                <label class="form-link-card {{ $selectedFormLinkId === '' ? 'selected' : '' }}" data-value="">
+                    <input type="radio" name="form_link_id" value="" {{ $selectedFormLinkId === '' ? 'checked' : '' }}>
+                    <span class="form-link-title">بدون فرم</span>
+                </label>
+                @foreach ($formLinks as $link)
+                    <label class="form-link-card {{ (string)$selectedFormLinkId === (string)$link->id ? 'selected' : '' }}" data-value="{{ $link->id }}">
+                        <input type="radio" name="form_link_id" value="{{ $link->id }}" {{ (string)$selectedFormLinkId === (string)$link->id ? 'checked' : '' }}>
+                        <span class="form-link-title">{{ $link->form->title ?? 'فرم' }}</span>
+                    </label>
+                @endforeach
+            </div>
+            @if ($formLinks->isEmpty())
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.8125rem; color: var(--ds-text-subtle);">فرم عمومی فعالی وجود ندارد. از <a href="{{ route('forms.index') }}" style="color: var(--ds-primary); font-weight: 500;">فرم‌ها</a> یک فرم فعال بسازید و برای آن لینک بدون مخاطب ایجاد کنید.</p>
+            @endif
+        </div>
+        <script>
+        (function(){
+            var section = document.querySelector('.inv-form-attach-section');
+            if (!section) return;
+            section.querySelectorAll('.form-link-card').forEach(function(card){
+                card.addEventListener('click', function(){
+                    section.querySelectorAll('.form-link-card').forEach(function(c){ c.classList.remove('selected'); });
+                    this.classList.add('selected');
+                    this.querySelector('input[type="radio"]').checked = true;
+                });
+            });
+        })();
+        </script>
+        @endif
         @endif
     </div>
 

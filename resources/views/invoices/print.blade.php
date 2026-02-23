@@ -10,26 +10,57 @@
     <link href="{{ asset('vendor/fonts/vazirmatn/vazirmatn.css') }}" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
-        /* A5: 148mm × 210mm — optimized for print */
-        @page { size: A5; margin: 8mm; }
-        @media print {
-            html, body { width: 148mm; min-height: 210mm; margin: 0; padding: 0; background: #fff; }
-            .no-print { display: none !important; }
-            .invoice { width: 100%; max-width: none; }
+        /* A5: 148mm × 210mm. Content area = 128mm wide (148 - 10*2) so right/left fit inside page. */
+        @page {
+            size: 148mm 210mm;
+            margin: 10mm;
         }
-        body { font-family: 'Vazirmatn', 'DejaVu Sans', sans-serif; font-size: 11px; line-height: 1.45; color: #1c1917; background: #fff; margin: 0; padding: 12px; max-width: 148mm; min-height: 210mm; }
+        @media print {
+            html {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 148mm !important;
+                min-height: 210mm !important;
+                background: #fff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            body {
+                margin: 0 auto !important;
+                padding: 0 2mm !important;
+                width: 124mm !important;
+                max-width: 124mm !important;
+                min-height: 190mm !important;
+                background: #fff !important;
+                font-size: 11px !important;
+            }
+            .no-print { display: none !important; }
+            .invoice {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden;
+            }
+        }
+        body { font-family: 'Vazirmatn', 'DejaVu Sans', sans-serif; font-size: 11px; line-height: 1.45; color: #1c1917; background: #f5f5f4; margin: 0; padding: 12px; }
         .no-print { margin-bottom: 12px; }
-        .invoice { max-width: 132mm; margin: 0 auto; }
+        .invoice { max-width: 128mm; margin: 0 auto; padding: 0; }
         .top-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #1c1917; }
         .top-row .right { text-align: right; }
         .top-row .left { text-align: left; }
         .customer-name { font-size: 13px; font-weight: 700; color: #1c1917; margin: 0; }
         .inv-meta { font-size: 10px; color: #44403c; margin-top: 2px; }
         .inv-meta strong { color: #1c1917; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; border: 1px solid #1c1917; }
-        th, td { padding: 5px 6px; text-align: right; border: 1px solid #78716c; }
+        table { width: 100%; max-width: 100%; border-collapse: collapse; margin-bottom: 10px; border: 1px solid #1c1917; table-layout: fixed; }
+        th, td { padding: 4px 5px; text-align: right; border: 1px solid #78716c; overflow: hidden; word-break: break-word; font-size: 9px; }
         th { background: #292524; color: #fff; font-size: 9px; font-weight: 700; }
-        td { font-size: 10px; color: #1c1917; }
+        td { font-size: 9px; color: #1c1917; }
+        thead th:nth-child(1) { width: 8%; }
+        thead th:nth-child(2) { width: 38%; }
+        thead th:nth-child(3) { width: 12%; }
+        thead th:nth-child(4) { width: 20%; }
+        thead th:nth-child(5) { width: 22%; }
         tr:nth-child(even) td { background: #fafaf9; }
         .totals { border: 1px solid #1c1917; padding: 8px 10px; margin-top: 4px; background: #f5f5f4; }
         .totals dl { max-width: 100%; margin: 0; }
@@ -49,6 +80,11 @@
         .signature-field { display: flex; align-items: center; gap: 10px; }
         .signature-field .label { font-size: 10px; font-weight: 600; color: #44403c; white-space: nowrap; }
         .signature-field .box { width: 80px; height: 36px; border: 1px solid #78716c; border-radius: 3px; background: #fafaf9; }
+        .invoice-stamp { position: absolute; bottom: 8px; right: 0; max-width: 52px; max-height: 52px; object-fit: contain; opacity: 0.85; pointer-events: none; }
+        .invoice-qr-block { margin-top: 10px; padding: 6px 8px; border: 1px solid #d6d3d1; background: #fafaf9; border-radius: 4px; display: inline-flex; align-items: center; gap: 8px; }
+        .invoice-qr-block img { width: 48px; height: 48px; display: block; }
+        .invoice-qr-block .qr-label { font-size: 8px; color: #78716c; }
+        .invoice-qr-block .qr-cta { font-size: 10px; font-weight: 700; color: #047857; }
     </style>
 </head>
 <body>
@@ -139,10 +175,23 @@
         @endif
 
         @if ($invoice->type === 'sell')
-            <div class="signature-section">
+            <div class="signature-section" style="position: relative;">
                 <div class="signature-field">
                     <span class="label">نام و امضا:</span>
                     <span class="box"></span>
+                </div>
+                @if (!empty($companyStampUrl))
+                    <img src="{{ $companyStampUrl }}" alt="" class="invoice-stamp">
+                @endif
+            </div>
+        @endif
+
+        @if (!empty($invoiceFormUrl))
+            <div class="invoice-qr-block">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=96x96&data={{ urlencode($invoiceFormUrl) }}" alt="QR فرم" width="48" height="48">
+                <div>
+                    <div class="qr-label">{{ !empty($invoiceFormDescription) ? $invoiceFormDescription : 'فرم پیوست' }}</div>
+                    <div class="qr-cta">اسکن کنید!</div>
                 </div>
             </div>
         @endif

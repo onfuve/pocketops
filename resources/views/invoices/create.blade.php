@@ -29,6 +29,6 @@
             لیست فاکتورها
         </a>
     </div>
-    @include('invoices._form', ['invoice' => $invoice, 'contact' => $contact, 'paymentOptions' => $paymentOptions ?? collect(), 'selectedIds' => $selectedIds ?? [], 'paymentOptionFields' => $paymentOptionFields ?? []])
+    @include('invoices._form', ['invoice' => $invoice, 'contact' => $contact, 'paymentOptions' => $paymentOptions ?? collect(), 'selectedIds' => $selectedIds ?? [], 'paymentOptionFields' => $paymentOptionFields ?? [], 'formLinks' => $formLinks ?? collect()])
 </div>
 @endsection

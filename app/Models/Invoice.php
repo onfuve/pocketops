@@ -26,6 +26,7 @@ class Invoice extends Model
         'payment_option_fields',
         'user_id',
         'assigned_to_id',
+        'form_link_id',
     ];
 
     protected $casts = [
@@ -70,6 +71,11 @@ class Invoice extends Model
     public function assignedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to_id');
+    }
+
+    public function formLink(): BelongsTo
+    {
+        return $this->belongsTo(FormLink::class);
     }
 
     /** Invoices visible to the given user: own, assigned to them, or all for admin. */

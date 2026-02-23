@@ -25,6 +25,7 @@ class User extends Authenticatable
         'contacts' => 'مخاطبین',
         'leads' => 'سرنخ‌ها',
         'invoices' => 'فاکتورها',
+        'subscriptions' => 'اشتراک‌ها',
         'products' => 'محصولات',
         'price_lists' => 'لیست قیمت',
         'product_landing_pages' => 'صفحات محصول',
@@ -82,6 +83,11 @@ class User extends Authenticatable
     public function canDeleteLead(): bool
     {
         return $this->isAdmin() || $this->canModule('leads', self::ABILITY_DELETE);
+    }
+
+    public function canDeleteSubscription(): bool
+    {
+        return $this->isAdmin() || $this->canModule('subscriptions', self::ABILITY_DELETE);
     }
 
     /**

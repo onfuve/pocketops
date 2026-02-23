@@ -37,6 +37,11 @@
                 <label for="title" class="ds-label">عنوان</label>
                 <input type="text" name="title" id="title" value="{{ old('title', $form->title) }}" class="ds-input" required>
             </div>
+            <div>
+                <label for="description" class="ds-label">توضیح (نمایش کنار QR در فاکتور)</label>
+                <input type="text" name="description" id="description" value="{{ old('description', $form->description) }}" class="ds-input" placeholder="مثال: نظر شما درباره خدمات ما" maxlength="500">
+                <p style="margin: 0.25rem 0 0 0; font-size: 0.75rem; color: var(--ds-text-subtle);">اگر این فرم به فاکتور پیوست شود، این متن زیر QR چاپ می‌شود. خالی = عنوان فرم.</p>
+            </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div>
                     <label for="status" class="ds-label">وضعیت</label>

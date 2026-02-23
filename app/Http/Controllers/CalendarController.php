@@ -6,6 +6,7 @@ use App\Helpers\FormatHelper;
 use App\Models\Invoice;
 use App\Models\Lead;
 use App\Models\Reminder;
+use App\Models\Subscription;
 use App\Models\Tag;
 use Hekmatinasser\Verta\Verta;
 use Illuminate\Http\Request;
@@ -34,6 +35,9 @@ class CalendarController extends Controller
             $reminderQuery->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)
                     ->orWhereHasMorph('remindable', [Lead::class], fn ($q2) => $q2->where(function ($q3) use ($user) {
+                        $q3->where('user_id', $user->id)->orWhere('assigned_to_id', $user->id);
+                    }))
+                    ->orWhereHasMorph('remindable', [Subscription::class], fn ($q2) => $q2->where(function ($q3) use ($user) {
                         $q3->where('user_id', $user->id)->orWhere('assigned_to_id', $user->id);
                     }));
             });
@@ -83,6 +87,18 @@ class CalendarController extends Controller
     {
         $events = [];
         foreach ($reminders as $r) {
+            $url = null;
+            $color = '#059669';
+            $icon = 'check';
+            if ($r->remindable_type === Lead::class && $r->remindable_id) {
+                $url = route('leads.show', $r->remindable_id);
+                $color = $r->type === Reminder::TYPE_LEAD_TASK ? '#f59e0b' : '#059669';
+                $icon = $r->type === Reminder::TYPE_LEAD_TASK ? 'lightbulb' : 'check';
+            } elseif ($r->remindable_type === Subscription::class && $r->remindable_id) {
+                $url = route('subscriptions.show', $r->remindable_id);
+                $color = $r->type === Reminder::TYPE_SUBSCRIPTION_EXPIRY ? '#b91c1c' : '#1d4ed8';
+                $icon = 'calendar';
+            }
             $events[] = [
                 'type' => $r->type,
                 'id' => 'r' . $r->id,
@@ -91,11 +107,9 @@ class CalendarController extends Controller
                 'tags' => $r->tags,
                 'date' => $r->due_date->format('Y-m-d'),
                 'time' => is_string($r->due_time) ? $r->due_time : ($r->due_time ? substr((string) $r->due_time, 0, 5) : null),
-                'url' => $r->remindable_type === Lead::class && $r->remindable_id
-                    ? route('leads.show', $r->remindable_id)
-                    : null,
-                'color' => $r->type === Reminder::TYPE_LEAD_TASK ? '#f59e0b' : '#059669',
-                'icon' => $r->type === Reminder::TYPE_LEAD_TASK ? 'lightbulb' : 'check',
+                'url' => $url,
+                'color' => $color,
+                'icon' => $icon,
             ];
         }
         foreach ($invoices as $inv) {

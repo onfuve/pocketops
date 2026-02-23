@@ -32,6 +32,6 @@
             <a href="{{ route('invoices.show', $invoice) }}" class="ds-btn ds-btn-outline">بازگشت به {{ $docLabel }}</a>
         </div>
     </div>
-    @include('invoices._form', ['invoice' => $invoice, 'contact' => $contact, 'paymentOptions' => $paymentOptions ?? collect(), 'selectedIds' => $selectedIds ?? [], 'paymentOptionFields' => $paymentOptionFields ?? []])
+    @include('invoices._form', ['invoice' => $invoice, 'contact' => $contact, 'paymentOptions' => $paymentOptions ?? collect(), 'selectedIds' => $selectedIds ?? [], 'paymentOptionFields' => $paymentOptionFields ?? [], 'formLinks' => $formLinks ?? collect(), 'users' => $users ?? collect()])
 </div>
 @endsection

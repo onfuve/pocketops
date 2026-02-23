@@ -26,12 +26,16 @@ class PublicFormController extends Controller
         $submission = $link->submission;
 
         if (!$submission) {
+            $invoiceData = array_filter([
+                'invoice_id' => request()->input('invoice_id'),
+                'invoice_number' => request()->input('invoice_number'),
+            ], fn ($v) => $v !== null && $v !== '');
             $submission = FormSubmission::create([
                 'form_id' => $form->id,
                 'form_link_id' => $link->id,
                 'first_accessed_at' => now(),
                 'last_activity_at' => now(),
-                'data' => [],
+                'data' => $invoiceData,
                 'contact_id' => $link->contact_id,
                 'lead_id' => $link->lead_id,
                 'task_id' => $link->task_id,

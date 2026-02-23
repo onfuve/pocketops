@@ -80,12 +80,14 @@ class FormController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
             'status' => 'required|in:draft,active,closed',
             'edit_period_minutes' => 'nullable|integer|min:0|max:10080',
         ]);
 
         $form->update([
             'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
             'status' => $validated['status'],
             'edit_period_minutes' => (int) ($validated['edit_period_minutes'] ?? 15),
         ]);

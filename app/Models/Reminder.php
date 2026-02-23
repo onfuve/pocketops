@@ -29,6 +29,8 @@ class Reminder extends Model
     public const TYPE_REMINDER = 'reminder';
     public const TYPE_LEAD_TASK = 'lead_task';
     public const TYPE_INVOICE_DUE = 'invoice_due';
+    public const TYPE_SUBSCRIPTION_EXPIRY = 'subscription_expiry';
+    public const TYPE_SUBSCRIPTION_REMINDER = 'subscription_reminder';
 
     public function remindable(): MorphTo
     {

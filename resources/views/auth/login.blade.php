@@ -4,7 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>ورود — {{ config('app.name') }}</title>
-    <link href="{{ asset('vendor/fonts/vazirmatn/vazirmatn.css') }}" rel="stylesheet">
+    <link rel="preload" href="{{ asset('vendor/fonts/vazirmatn/vazirmatn-arabic.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link href="{{ asset('vendor/fonts/vazirmatn/vazirmatn.css') }}" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="{{ asset('vendor/fonts/vazirmatn/vazirmatn.css') }}" rel="stylesheet"></noscript>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         :root {

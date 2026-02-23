@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name'))</title>
-    <link href="{{ asset('vendor/fonts/vazirmatn/vazirmatn.css') }}" rel="stylesheet">
+    {{-- Non-blocking font: Safari (and others) won't wait for 21 @font-face rules before first paint --}}
+    <link rel="preload" href="{{ asset('vendor/fonts/vazirmatn/vazirmatn-arabic.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link href="{{ asset('vendor/fonts/vazirmatn/vazirmatn.css') }}" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="{{ asset('vendor/fonts/vazirmatn/vazirmatn.css') }}" rel="stylesheet"></noscript>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     {{-- Fallback: ensure key colors and navigation always work --}}
     <style>
@@ -90,7 +93,7 @@
     @include('components._design-system')
     @stack('styles')
 </head>
-<body class="font-vazir min-h-screen text-stone-800 antialiased pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]" style="background: linear-gradient(to bottom, #fafaf9 0%, #f5f5f4 100%);">
+<body class="font-vazir min-h-screen text-stone-800 antialiased pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]" style="background: linear-gradient(to bottom, #fafaf9 0%, #f5f5f4 100%); font-family: 'Vazirmatn', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
     <script>
     (function(){var w=document.documentElement.clientWidth||window.innerWidth;document.body.classList.toggle('mobile-nav',w<=768);window.addEventListener('resize',function(){var w=document.documentElement.clientWidth||window.innerWidth;document.body.classList.toggle('mobile-nav',w<=768);});})();
     </script>

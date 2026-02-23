@@ -39,6 +39,9 @@ class CalendarController extends Controller
                     }))
                     ->orWhereHasMorph('remindable', [Subscription::class], fn ($q2) => $q2->where(function ($q3) use ($user) {
                         $q3->where('user_id', $user->id)->orWhere('assigned_to_id', $user->id);
+                    }))
+                    ->orWhereHasMorph('remindable', [Invoice::class], fn ($q2) => $q2->where(function ($q3) use ($user) {
+                        $q3->where('user_id', $user->id)->orWhere('assigned_to_id', $user->id);
                     }));
             });
         }
@@ -98,6 +101,10 @@ class CalendarController extends Controller
                 $url = route('subscriptions.show', $r->remindable_id);
                 $color = $r->type === Reminder::TYPE_SUBSCRIPTION_EXPIRY ? '#b91c1c' : '#1d4ed8';
                 $icon = 'calendar';
+            } elseif ($r->remindable_type === Invoice::class && $r->remindable_id) {
+                $url = route('invoices.show', $r->remindable_id);
+                $color = '#047857';
+                $icon = 'check';
             }
             $events[] = [
                 'type' => $r->type,
@@ -183,6 +190,12 @@ class CalendarController extends Controller
         if ($reminder->remindable_type === Lead::class && $reminder->remindable_id) {
             $lead = Lead::find($reminder->remindable_id);
             if ($lead && $lead->isVisibleTo($user)) {
+                return;
+            }
+        }
+        if ($reminder->remindable_type === Invoice::class && $reminder->remindable_id) {
+            $invoice = Invoice::find($reminder->remindable_id);
+            if ($invoice && $invoice->isVisibleTo($user)) {
                 return;
             }
         }

@@ -9,7 +9,9 @@ use App\Models\Product;
 use App\Models\Contact;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
+use App\Models\Reminder;
 use App\Models\Tag;
+use App\Models\Task;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -55,8 +57,9 @@ class InvoiceController extends Controller
         $selectedIds = [];
         $tags = Tag::forCurrentUser()->orderBy('name')->get();
         $formLinks = $this->invoiceFormLinks();
+        $users = User::where('id', '!=', auth()->id())->orderBy('name')->get();
 
-        return view('invoices.create', ['invoice' => $invoice, 'contact' => $contact, 'paymentOptions' => $paymentOptions, 'selectedIds' => $selectedIds, 'tags' => $tags, 'formLinks' => $formLinks]);
+        return view('invoices.create', ['invoice' => $invoice, 'contact' => $contact, 'paymentOptions' => $paymentOptions, 'selectedIds' => $selectedIds, 'tags' => $tags, 'formLinks' => $formLinks, 'users' => $users]);
     }
 
     public function store(Request $request)
@@ -95,11 +98,17 @@ class InvoiceController extends Controller
         );
 
         $validated['user_id'] = $request->user()->id;
+        $validated['assigned_to_id'] = $request->filled('assigned_to_id') ? $request->assigned_to_id : null;
         $validated['form_link_id'] = $this->resolveFormLinkId($request->input('form_link_id'));
         $invoice = Invoice::create($validated);
         $this->syncItems($invoice, $items);
         $this->syncTags($invoice, $request->input('tag_ids', []));
         $invoice->recalculateTotals();
+
+        $followUp = $request->input('follow_up', 'none');
+        if (in_array($followUp, ['24h', '72h', '1_week', '1_month'], true)) {
+            $this->createInvoiceFollowUp($invoice, $followUp, $request->user());
+        }
 
         return redirect()->route('invoices.show', $invoice)->with('success', 'فاکتور ذخیره شد.');
     }
@@ -553,5 +562,47 @@ class InvoiceController extends Controller
         Storage::disk('public')->delete($attachment->path);
         $attachment->delete();
         return redirect()->route('invoices.show', $invoice)->with('success', 'پیوست حذف شد.');
+    }
+
+    /** Create calendar reminder and task for invoice follow-up (24h, 72h, 1 week, 1 month). */
+    private function createInvoiceFollowUp(Invoice $invoice, string $followUp, User $user): void
+    {
+        $baseDate = $invoice->date ? \Carbon\Carbon::parse($invoice->date) : now();
+        $dueDate = match ($followUp) {
+            '24h' => $baseDate->copy()->addDay(),
+            '72h' => $baseDate->copy()->addDays(3),
+            '1_week' => $baseDate->copy()->addWeek(),
+            '1_month' => $baseDate->copy()->addMonth(),
+            default => $baseDate->copy()->addDay(),
+        };
+
+        $label = $invoice->type === Invoice::TYPE_BUY ? 'رسید' : 'فاکتور';
+        $titleBase = $label . ' ' . ($invoice->invoice_number ?? '#' . $invoice->id) . ' — ' . ($invoice->contact->name ?? '');
+        $reminderTitle = 'پیگیری ' . $titleBase;
+
+        $reminder = Reminder::create([
+            'title' => $reminderTitle,
+            'body' => null,
+            'due_date' => $dueDate,
+            'due_time' => null,
+            'type' => Reminder::TYPE_INVOICE_FOLLOWUP,
+            'remindable_type' => Invoice::class,
+            'remindable_id' => $invoice->id,
+            'user_id' => $user->id,
+        ]);
+
+        $task = Task::create([
+            'title' => $reminderTitle,
+            'notes' => null,
+            'status' => Task::STATUS_TODO,
+            'due_date' => $dueDate,
+            'due_time' => null,
+            'taskable_type' => Invoice::class,
+            'taskable_id' => $invoice->id,
+            'user_id' => $user->id,
+        ]);
+        $assigneeId = $invoice->assigned_to_id ?? $user->id;
+        $task->assignedUsers()->sync($assigneeId ? [$assigneeId] : []);
+        $task->log('created', null, null, 'وظیفه پیگیری فاکتور ایجاد شد');
     }
 }

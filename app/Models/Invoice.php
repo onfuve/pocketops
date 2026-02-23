@@ -161,6 +161,11 @@ class Invoice extends Model
         return $this->morphMany(Task::class, 'taskable')->latest();
     }
 
+    public function reminders(): MorphMany
+    {
+        return $this->morphMany(Reminder::class, 'remindable')->latest();
+    }
+
     public function tags(): MorphToMany
     {
         return $this->morphToMany(Tag::class, 'taggable');

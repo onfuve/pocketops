@@ -156,6 +156,19 @@
                 <p style="margin-top: 0.25rem; font-size: 0.75rem; color: var(--ds-text-subtle);">با واگذاری، این عضو تیم نیز فاکتور را می‌بیند.</p>
             </div>
             @endisset
+            @if(!$isEdit)
+            <div class="col-span-2">
+                <label for="follow_up" class="ds-label">پیگیری (اختیاری)</label>
+                <select name="follow_up" id="follow_up" class="ds-select">
+                    <option value="none" {{ old('follow_up', 'none') === 'none' ? 'selected' : '' }}>— بدون پیگیری —</option>
+                    <option value="24h" {{ old('follow_up') === '24h' ? 'selected' : '' }}>۲۴ ساعت</option>
+                    <option value="72h" {{ old('follow_up') === '72h' ? 'selected' : '' }}>۷۲ ساعت</option>
+                    <option value="1_week" {{ old('follow_up') === '1_week' ? 'selected' : '' }}>۱ هفته</option>
+                    <option value="1_month" {{ old('follow_up') === '1_month' ? 'selected' : '' }}>۱ ماه</option>
+                </select>
+                <p style="margin-top: 0.25rem; font-size: 0.75rem; color: var(--ds-text-subtle);">با انتخاب، رویداد تقویم و وظیفهٔ مرتبط با این فاکتور ساخته می‌شود.</p>
+            </div>
+            @endif
         </div>
     </div>
 

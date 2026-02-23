@@ -76,7 +76,7 @@
                     @if(!empty($questions))
                         <div style="font-size: 0.875rem;">
                             @foreach($questions as $q)
-                                @php $ans = is_array($value) ? ($value[$q['id'] ?? '') : ''; @endphp
+                                @php $qId = $q['id'] ?? null; $ans = is_array($value) ? ($value[$qId] ?? '') : ''; @endphp
                                 <div style="margin-bottom: 0.75rem;">
                                     <div style="color: var(--ds-text-subtle); margin-bottom: 0.15rem;">{{ $q['text'] ?? 'سؤال' }}</div>
                                     <div style="font-weight: 500;">

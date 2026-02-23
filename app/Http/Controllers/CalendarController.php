@@ -128,9 +128,10 @@ class CalendarController extends Controller
     private function buildMonthGrid(Verta $v, array $events, \DateTimeZone $tehran): array
     {
         $daysInMonth = $v->daysInMonth;
-        // Verta/Jalali dayOfWeek: 1=Saturday .. 7=Friday (1-based). Grid column 0=Saturday, so leading blanks = dayOfWeek - 1.
-        $dow = $v->dayOfWeek;
-        $firstDayOfWeek = ($dow >= 1 && $dow <= 7) ? $dow - 1 : $dow;
+        // Grid columns: 0=Saturday, 1=Sunday, ... 6=Friday (Iranian week). Compute from Gregorian first day to avoid Verta dayOfWeek quirks.
+        $firstGregorian = $v->datetime()->setTimezone($tehran);
+        $phpW = (int) $firstGregorian->format('w'); // PHP: 0=Sun, 1=Mon, ..., 6=Sat
+        $firstDayOfWeek = ($phpW + 1) % 7; // 0=Sat, 1=Sun, ..., 6=Fri
 
         $grid = [];
         $week = [];

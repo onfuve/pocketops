@@ -199,7 +199,7 @@ return [
     |
     */
 
-    'same_site' => env('SESSION_SAME_SITE', 'lax'),
+    'same_site' => env('SESSION_SAME_SITE', 'lax'), // lax: allows cookie on top-level GET then POST (login); strict can block in some browsers
 
     /*
     |--------------------------------------------------------------------------

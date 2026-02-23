@@ -5,7 +5,7 @@
     $docLabel = $isBuy ? 'رسید خرید' : 'فاکتور';
     $printUrl = route('invoices.print', $invoice);
     $publicPrintUrl = $invoice->status !== \App\Models\Invoice::STATUS_DRAFT
-        ? URL::temporarySignedRoute('invoices.public.print', now()->addDays(30), ['invoice' => $invoice])
+        ? URL::temporarySignedRoute('invoices.public.print', now()->addHours(48), ['invoice' => $invoice])
         : null;
     $shareText = $docLabel . ' ' . ($invoice->invoice_number ?: $invoice->id) . ' — ' . $invoice->contact->name . ' — مبلغ ' . FormatHelper::rial($invoice->total);
 @endphp

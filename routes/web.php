@@ -18,6 +18,7 @@ use App\Http\Controllers\PriceListController;
 use App\Http\Controllers\ProductLandingPageController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TagController;
+use App\Http\Controllers\ServqualQuestionBankController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
@@ -114,6 +115,9 @@ Route::post('settings/company/address', [SettingController::class, 'updateCompan
 Route::get('settings/company/stamp', [SettingController::class, 'companyStamp'])->name('settings.company.stamp');
 Route::post('settings/company/stamp', [SettingController::class, 'updateCompanyStamp'])->name('settings.company.stamp.update');
 Route::post('settings/company/stamp/remove', [SettingController::class, 'removeCompanyStamp'])->name('settings.company.stamp.remove');
+Route::get('settings/servqual-question-bank', [ServqualQuestionBankController::class, 'index'])->name('settings.servqual-question-bank.index');
+Route::get('settings/servqual-question-bank/{question}/edit', [ServqualQuestionBankController::class, 'edit'])->name('settings.servqual-question-bank.edit');
+Route::put('settings/servqual-question-bank/{question}', [ServqualQuestionBankController::class, 'update'])->name('settings.servqual-question-bank.update');
 
 Route::get('products/import/form', [ProductController::class, 'importForm'])->name('products.import');
 Route::post('products/import', [ProductController::class, 'import'])->name('products.import.store');

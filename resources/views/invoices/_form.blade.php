@@ -301,7 +301,7 @@
             @endif
         </div>
         @if (!$isBuy && isset($formLinks))
-        @php $selectedFormLinkId = old('form_link_id', $invoice->form_link_id ?? ''); @endphp
+        @php $selectedFormLinkId = old('form_link_id', isset($selectedFormLinkId) ? $selectedFormLinkId : ($invoice->form_link_id ?? '')); @endphp
         <div class="inv-form-attach-section" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--ds-border);">
             <h3 class="ds-label" style="margin-bottom: 0.35rem; font-size: 0.875rem;">فرم پیوست (QR روی چاپ)</h3>
             <p style="margin: 0 0 0.75rem 0; font-size: 0.75rem; color: var(--ds-text-subtle);">در صورت انتخاب یک فرم، روی چاپ فاکتور یک QR و شماره فاکتور نمایش داده می‌شود (نظرسنجی، پرسشنامه و …).</p>

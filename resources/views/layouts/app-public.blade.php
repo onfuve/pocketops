@@ -14,8 +14,8 @@
     @include('components._design-system')
     @stack('styles')
 </head>
-<body class="min-h-screen antialiased pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]" style="font-family: var(--ds-font); color: var(--ds-text); background: linear-gradient(to bottom, #fafaf9 0%, #f5f5f4 100%);">
-    <main style="padding: 1.5rem 0 2.5rem; box-sizing: border-box;">
+<body class="min-h-screen antialiased pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]" style="font-family: var(--ds-font); color: var(--ds-text); background: #f8faf8;">
+    <main style="padding: 1rem 0.75rem 1.5rem; box-sizing: border-box; max-width: 28rem; margin: 0 auto;">
         @yield('content')
     </main>
     @stack('scripts')

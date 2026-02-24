@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
@@ -83,6 +84,11 @@ class Contact extends Model
     public function tasks(): MorphMany
     {
         return $this->morphMany(Task::class, 'taskable')->latest();
+    }
+
+    public function qualityIndex(): HasOne
+    {
+        return $this->hasOne(CustomerQualityIndex::class);
     }
 
     /** Balance we owe (positive) or they owe us (negative). */

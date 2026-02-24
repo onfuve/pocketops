@@ -15,10 +15,12 @@ class Form extends Model
         'status',
         'edit_period_minutes',
         'submission_mode',
+        'is_servqual_micro',
     ];
 
     protected $casts = [
         'edit_period_minutes' => 'integer',
+        'is_servqual_micro' => 'boolean',
     ];
 
     public const STATUS_DRAFT = 'draft';

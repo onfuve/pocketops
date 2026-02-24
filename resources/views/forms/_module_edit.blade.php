@@ -15,7 +15,9 @@
     @csrf
     @method('PUT')
 
-    @if(in_array($module->type, ['custom_text', 'file_upload', 'postal_address', 'consent', 'survey', 'custom_fields']))
+    @if($module->type === 'servqual_micro')
+        <p style="font-size: 0.875rem; color: var(--ds-text-subtle); margin: 0;">این ماژول دو سؤال تصادفی از بانک سوالات SERVQUAL نمایش می‌دهد و امتیاز کیفیت مشتری را به‌روز می‌کند. برای تغییر متن سوالات از <a href="{{ route('settings.servqual-question-bank.index') }}" class="ds-link">تنظیمات شرکت → بانک سوالات SERVQUAL</a> استفاده کنید.</p>
+    @elseif(in_array($module->type, ['custom_text', 'file_upload', 'postal_address', 'consent', 'survey', 'custom_fields']))
         <div style="margin-bottom: 0.75rem;">
             <label class="ds-label" style="font-size: 0.8125rem;">برچسب / عنوان</label>
             <input type="text" name="config[label]" value="{{ $label }}" class="ds-input" placeholder="برچسب ماژول">
@@ -139,7 +141,9 @@
         </label>
     @endif
 
+    @if($module->type !== 'servqual_micro')
     <div style="margin-top: 1rem;">
         <button type="submit" class="ds-btn ds-btn-primary" style="padding: 0.5rem 1rem;">ذخیره ماژول</button>
     </div>
+    @endif
 </form>

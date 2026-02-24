@@ -139,7 +139,7 @@ class ContactController extends Controller
         abort_unless(request()->user()->canModule('contacts', \App\Models\User::ABILITY_VIEW), 403, 'شما به این بخش دسترسی ندارید.');
         abort_unless($contact->isVisibleTo(request()->user()), 403, 'شما به این مخاطب دسترسی ندارید.');
 
-        $contact->load('contactPhones', 'linkedContact', 'tags', 'tasks.assignedUsers');
+        $contact->load('contactPhones', 'linkedContact', 'tags', 'tasks.assignedUsers', 'qualityIndex');
         return view('contacts.show', compact('contact'));
     }
 

@@ -78,13 +78,13 @@ class Invoice extends Model
         return $this->belongsTo(FormLink::class);
     }
 
-    /** Invoices visible to the given user: own, assigned to them, or all for admin. */
+    /** Invoices visible to the given user: own, assigned to them, or all for admin / can_see_all_invoices. */
     public function scopeVisibleToUser($query, $user)
     {
         if (!$user) {
             return $query->whereRaw('1 = 0');
         }
-        if ($user->isAdmin()) {
+        if ($user->canSeeAllInvoices()) {
             return $query;
         }
         return $query->where(function ($q) use ($user) {
@@ -98,7 +98,7 @@ class Invoice extends Model
         if (!$user) {
             return false;
         }
-        if ($user->isAdmin()) {
+        if ($user->canSeeAllInvoices()) {
             return true;
         }
         return $this->user_id === $user->id || $this->assigned_to_id === $user->id;

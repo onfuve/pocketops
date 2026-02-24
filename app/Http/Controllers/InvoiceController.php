@@ -7,6 +7,7 @@ use App\Models\Attachment;
 use App\Models\PaymentOption;
 use App\Models\Product;
 use App\Models\Contact;
+use App\Models\FormLink;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use App\Models\Reminder;
@@ -99,11 +100,16 @@ class InvoiceController extends Controller
 
         $validated['user_id'] = $request->user()->id;
         $validated['assigned_to_id'] = $request->filled('assigned_to_id') ? $request->assigned_to_id : null;
-        $validated['form_link_id'] = $this->resolveFormLinkId($request->input('form_link_id'));
+        $validated['form_link_id'] = null;
+        $templateFormLinkId = $this->resolveFormLinkId($request->input('form_link_id'));
         $invoice = Invoice::create($validated);
         $this->syncItems($invoice, $items);
         $this->syncTags($invoice, $request->input('tag_ids', []));
         $invoice->recalculateTotals();
+
+        if ($templateFormLinkId) {
+            $this->assignInvoiceFormLink($invoice, $templateFormLinkId);
+        }
 
         $followUp = $request->input('follow_up', 'none');
         if (in_array($followUp, ['24h', '72h', '1_week', '1_month'], true)) {
@@ -166,7 +172,7 @@ class InvoiceController extends Controller
         } else {
             return redirect()->route('invoices.show', $invoice)->with('error', 'این فاکتور قابل ویرایش نیست. فقط فاکتور پیش‌نویس یا فاکتور نهایی‌شده بدون هیچ پرداختی قابل ویرایش است.');
         }
-        $invoice->load('items', 'tags');
+        $invoice->load('items', 'tags', 'formLink.form');
         $contact = $invoice->contact;
         $paymentOptions = PaymentOption::printableInSettings()->orderBy('sort')->get();
         $selectedIds = $invoice->payment_option_ids ?? [];
@@ -174,8 +180,17 @@ class InvoiceController extends Controller
         $tags = Tag::forCurrentUser()->orderBy('name')->get();
         $users = User::where('id', '!=', auth()->id())->orderBy('name')->get();
         $formLinks = $this->invoiceFormLinks();
+        $selectedFormLinkId = null;
+        if ($invoice->form_link_id && $invoice->formLink) {
+            foreach ($formLinks as $fl) {
+                if ($fl->form_id === $invoice->formLink->form_id) {
+                    $selectedFormLinkId = $fl->id;
+                    break;
+                }
+            }
+        }
 
-        return view('invoices.edit', compact('invoice', 'contact', 'paymentOptions', 'selectedIds', 'paymentOptionFields', 'tags', 'users', 'formLinks'));
+        return view('invoices.edit', compact('invoice', 'contact', 'paymentOptions', 'selectedIds', 'paymentOptionFields', 'tags', 'users', 'formLinks', 'selectedFormLinkId'));
     }
 
     public function update(Request $request, Invoice $invoice)
@@ -215,7 +230,8 @@ class InvoiceController extends Controller
         if ($invoice->user_id === $request->user()->id || $request->user()->isAdmin()) {
             $validated['assigned_to_id'] = $request->filled('assigned_to_id') ? $request->assigned_to_id : null;
         }
-        $validated['form_link_id'] = $this->resolveFormLinkId($request->input('form_link_id'));
+        $templateFormLinkId = $this->resolveFormLinkId($request->input('form_link_id'));
+        $validated['form_link_id'] = $this->resolveInvoiceFormLinkId($invoice, $templateFormLinkId);
         $items = $this->parseItemsFromRequest($request);
 
         $invoice->update($validated);
@@ -504,16 +520,18 @@ class InvoiceController extends Controller
         return $errors;
     }
 
-    /** Generic form links (no contact/lead) for optional attach to invoice. */
+    /** One generic form link per form (no contact/lead) for optional attach to invoice. */
     private function invoiceFormLinks(): \Illuminate\Database\Eloquent\Collection
     {
-        return \App\Models\FormLink::query()
+        $links = \App\Models\FormLink::query()
             ->whereNull('contact_id')
             ->whereNull('lead_id')
             ->with('form:id,title,status')
             ->whereHas('form', fn ($q) => $q->where('status', \App\Models\Form::STATUS_ACTIVE))
+            ->orderBy('form_id')
             ->orderBy('id')
             ->get();
+        return $links->unique('form_id')->values();
     }
 
     private function resolveFormLinkId($value): ?int
@@ -524,6 +542,52 @@ class InvoiceController extends Controller
         $id = (int) $value;
         $exists = \App\Models\FormLink::where('id', $id)->whereNull('contact_id')->whereNull('lead_id')->exists();
         return $exists ? $id : null;
+    }
+
+    /**
+     * One form link per invoice (QR level): one submission per invoice.
+     * Create a dedicated FormLink for this invoice from the template, or keep existing if same form.
+     */
+    private function assignInvoiceFormLink(Invoice $invoice, int $templateFormLinkId): void
+    {
+        $template = FormLink::find($templateFormLinkId);
+        if (!$template) {
+            return;
+        }
+        $newLink = FormLink::create([
+            'form_id' => $template->form_id,
+            'code' => FormLink::generateCode(),
+            'contact_id' => null,
+            'lead_id' => null,
+            'task_id' => null,
+        ]);
+        $invoice->update(['form_link_id' => $newLink->id]);
+    }
+
+    /**
+     * Resolve form_link_id for update: keep current link if same form, else create new dedicated link.
+     */
+    private function resolveInvoiceFormLinkId(Invoice $invoice, ?int $templateFormLinkId): ?int
+    {
+        if (!$templateFormLinkId) {
+            return null;
+        }
+        $template = FormLink::find($templateFormLinkId);
+        if (!$template) {
+            return null;
+        }
+        $current = $invoice->formLink()->first();
+        if ($current && $current->form_id === $template->form_id) {
+            return $current->id;
+        }
+        $newLink = FormLink::create([
+            'form_id' => $template->form_id,
+            'code' => FormLink::generateCode(),
+            'contact_id' => null,
+            'lead_id' => null,
+            'task_id' => null,
+        ]);
+        return $newLink->id;
     }
 
     private function syncTags(Invoice $invoice, array $tagIds): void

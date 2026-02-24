@@ -4,37 +4,48 @@
 
 @push('styles')
 <style>
-.form-public { max-width: 40rem; margin: 0 auto; padding: 0 1.25rem; }
-.form-public h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--ds-text); letter-spacing: -0.02em; }
-.form-module { margin-bottom: 1.25rem; padding: 1.25rem 1.5rem; border-radius: 1rem; border: 2px solid var(--ds-border); background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: box-shadow 0.15s; }
-.form-module:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-.form-module.form-module-text { border: none; background: transparent; box-shadow: none; padding: 0.5rem 0; }
-.form-module.form-module-text.form-module-heading { padding: 0.75rem 0; }
-.form-module.form-module-heading .text-content { font-size: 1.125rem; font-weight: 600; color: var(--ds-text); }
-.form-module label { display: block; font-weight: 500; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--ds-text); }
-.form-module .help { font-size: 0.8125rem; color: var(--ds-text-subtle); margin-top: 0.35rem; line-height: 1.4; }
-.form-module .field-error { font-size: 0.8125rem; color: #b91c1c; margin-top: 0.35rem; }
-.form-module .ds-input, .form-module .ds-textarea { border-radius: 0.5rem; }
-.form-module.is-invalid .ds-input, .form-module.is-invalid .ds-textarea { border-color: #b91c1c; }
-.form-public .form-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.75rem; padding-top: 1rem; border-top: 2px solid var(--ds-border); }
-.form-public .form-actions .ds-btn { min-height: 44px; padding: 0.625rem 1.25rem; }
+.public-form-wrap { padding: 0 0.25rem; }
+.public-form-wrap .form-hero { margin-bottom: 1.75rem; }
+.public-form-wrap .form-hero h1 { font-size: 1.5rem; font-weight: 700; color: var(--ds-text); margin: 0 0 0.35rem; letter-spacing: -0.02em; line-height: 1.3; }
+.public-form-wrap .form-hero .subtitle { font-size: 0.9375rem; color: var(--ds-text-subtle); line-height: 1.5; }
+.public-form-wrap .alert { padding: 0.875rem 1rem; border-radius: var(--ds-radius); margin-bottom: 1.25rem; font-size: 0.875rem; line-height: 1.4; }
+.public-form-wrap .alert-success { background: var(--ds-success-bg); border: 1px solid #a7f3d0; color: var(--ds-success); }
+.public-form-wrap .alert-error { background: var(--ds-danger-bg); border: 1px solid var(--ds-danger-border); color: var(--ds-danger); }
+.public-form-wrap .alert ul { margin: 0.5rem 0 0 1rem; padding: 0; }
+.public-form-wrap .form-module { background: #fff; border: 2px solid var(--ds-border); border-radius: var(--ds-radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow 0.2s, border-color 0.2s; }
+.public-form-wrap .form-module:hover { border-color: #e0f2fe; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.public-form-wrap .form-module.form-module-text { border: none; background: transparent; box-shadow: none; padding: 0.5rem 0; }
+.public-form-wrap .form-module.form-module-text.form-module-heading { padding: 0.75rem 0; }
+.public-form-wrap .form-module.form-module-heading .text-content { font-size: 1.125rem; font-weight: 600; color: var(--ds-text); }
+.public-form-wrap .form-module label { display: block; font-weight: 500; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--ds-text); }
+.public-form-wrap .form-module .help { font-size: 0.8125rem; color: var(--ds-text-subtle); margin-top: 0.35rem; line-height: 1.4; }
+.public-form-wrap .form-module .field-error { font-size: 0.8125rem; color: var(--ds-danger); margin-top: 0.35rem; }
+.public-form-wrap .form-module .ds-input, .public-form-wrap .form-module .ds-textarea { border-radius: var(--ds-radius-sm); min-height: 44px; }
+.public-form-wrap .form-module.is-invalid .ds-input, .public-form-wrap .form-module.is-invalid .ds-textarea { border-color: var(--ds-danger); }
+.public-form-wrap .form-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.75rem; padding-top: 1.25rem; border-top: 2px solid var(--ds-border); }
+.public-form-wrap .form-actions .ds-btn { min-height: 52px; padding: 0.75rem 1.25rem; flex: 1; min-width: 140px; justify-content: center; border-radius: var(--ds-radius); font-weight: 600; }
 </style>
 @endpush
 
 @section('content')
-<div class="form-public">
-    <h1>{{ $form->title }}</h1>
+<div class="public-form-wrap">
+    <div class="form-hero">
+        <h1>{{ $form->title }}</h1>
+        @if($form->description ?? null)
+            <p class="subtitle">{{ $form->description }}</p>
+        @endif
+    </div>
 
     @if (session('success'))
-        <div class="ds-alert-success" style="margin-bottom: 1rem;">{{ session('success') }}</div>
+        <div class="alert alert-success">{{ session('success') }}</div>
     @endif
     @if (session('error'))
-        <div style="margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: 0.75rem; background: #fef2f2; border: 2px solid #fecaca; color: #b91c1c; font-size: 0.875rem;">{{ session('error') }}</div>
+        <div class="alert alert-error">{{ session('error') }}</div>
     @endif
     @if ($errors->any())
-        <div style="margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: 0.75rem; background: #fef2f2; border: 2px solid #fecaca; color: #b91c1c; font-size: 0.875rem;">
+        <div class="alert alert-error">
             <strong>لطفاً موارد زیر را تکمیل کنید:</strong>
-            <ul style="margin: 0.5rem 0 0 1rem; padding: 0;">
+            <ul>
                 @foreach ($errors->all() as $err)
                     <li>{{ $err }}</li>
                 @endforeach
@@ -58,7 +69,7 @@
                 @if($module->type === 'custom_text')
                     <div class="{{ $textStyle === 'heading' ? 'text-content' : '' }}" style="white-space: pre-wrap; {{ $textStyle === 'heading' ? '' : 'color: var(--ds-text-subtle); font-size: 0.9375rem;' }}">{!! nl2br(e($module->getConfig('content', ''))) !!}</div>
                 @elseif($module->type === 'file_upload')
-                    <label for="data_{{ $key }}">{{ $module->getConfig('label', 'فایل') }} @if($module->getConfig('required'))<span style="color: #b91c1c;">*</span>@endif</label>
+                    <label for="data_{{ $key }}">{{ $module->getConfig('label', 'فایل') }} @if($module->getConfig('required'))<span style="color: var(--ds-danger);">*</span>@endif</label>
                     <input type="file" name="data[{{ $key }}]" id="data_{{ $key }}" class="ds-input" accept="{{ $module->getConfig('accept', 'image/*,.pdf') }}">
                     @if($module->getConfig('help'))
                         <p class="help">{{ $module->getConfig('help') }}</p>
@@ -79,7 +90,7 @@
                     @foreach($items as $i => $item)
                         <label style="display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer;">
                             <input type="checkbox" name="data[{{ $key }}][{{ $i }}]" value="1" {{ is_array($value) && !empty($value[$i]) ? 'checked' : '' }} style="margin-top: 0.25rem;">
-                            <span>{{ $item['text'] ?? 'تأیید می‌کنم' }} @if(!empty($item['required']))<span style="color: #b91c1c;">*</span>@endif</span>
+                            <span>{{ $item['text'] ?? 'تأیید می‌کنم' }} @if(!empty($item['required']))<span style="color: var(--ds-danger);">*</span>@endif</span>
                         </label>
                     @endforeach
                 @elseif($module->type === 'survey')
@@ -97,7 +108,7 @@
                         @if(($q['type'] ?? 'text') === 'nps')
                             <input type="number" name="data[{{ $key }}][{{ $q['id'] }}]" value="{{ is_array($value) ? ($value[$q['id']] ?? '') : '' }}" class="ds-input" min="0" max="10" placeholder="۰ تا ۱۰">
                         @else
-                            <input type="text" name="data[{{ $key }}][{{ $q['id'] }}]" value="{{ is_array($value) ? ($value[$q['id']] ?? '') : '' }}" class="ds-input">
+                            <input type="text" name="data[{{ $key }}][{{ $q['id'] }}]" value="{{ is_array($value) ? ($value[$q['id']] ?? '') : '' }}" class="ds-input" placeholder="پاسخ شما">
                         @endif
                     @endforeach
                 @elseif($module->type === 'postal_address')
@@ -119,7 +130,7 @@
                         $placeholder = $module->getConfig('placeholder', '');
                         $fieldRequired = $module->getConfig('required', false);
                     @endphp
-                    <label for="data_{{ $key }}">{{ $module->getConfig('label', 'مقدار') }} @if($fieldRequired)<span style="color: #b91c1c;">*</span>@endif</label>
+                    <label for="data_{{ $key }}">{{ $module->getConfig('label', 'مقدار') }} @if($fieldRequired)<span style="color: var(--ds-danger);">*</span>@endif</label>
                     @if($fieldType === 'textarea')
                         <textarea name="data[{{ $key }}]" id="data_{{ $key }}" rows="3" class="ds-textarea" placeholder="{{ $placeholder }}">{{ is_scalar($value) ? $value : '' }}</textarea>
                     @else

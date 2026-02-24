@@ -25,6 +25,7 @@ class FormModule extends Model
     public const TYPE_CONSENT = 'consent';
     public const TYPE_SURVEY = 'survey';
     public const TYPE_CUSTOM_FIELDS = 'custom_fields';
+    public const TYPE_SERVQUAL_MICRO = 'servqual_micro';
 
     public static function typeLabels(): array
     {
@@ -35,6 +36,7 @@ class FormModule extends Model
             self::TYPE_CONSENT => 'رضایت / تأیید',
             self::TYPE_SURVEY => 'نظرسنجی',
             self::TYPE_CUSTOM_FIELDS => 'فیلدهای سفارشی',
+            self::TYPE_SERVQUAL_MICRO => 'نظرسنجی میکرو SERVQUAL',
         ];
     }
 

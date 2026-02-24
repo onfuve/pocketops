@@ -73,6 +73,40 @@
         </div>
     </div>
 
+    {{-- SERVQUAL Quality Index --}}
+    @if($contact->relationLoaded('qualityIndex') && $contact->qualityIndex)
+        @php
+            $q = $contact->qualityIndex;
+            $band = \App\Models\CustomerQualityIndex::bandForScore($q->overall_score);
+            $bandLabel = $band ? (config('servqual.bands.' . $band . '.label_fa') ?? $band) : '—';
+        @endphp
+        <div class="card mb-6" style="border: 2px solid #e7e5e4; border-radius: 1rem; padding: 1.5rem;">
+            <h2 class="mb-3 text-base font-semibold text-stone-800" style="display: flex; align-items: center; gap: 0.5rem;">
+                @include('components._icons', ['name' => 'check', 'class' => 'w-4 h-4'])
+                شاخص کیفیت خدمات (SERVQUAL)
+            </h2>
+            <div class="flex flex-wrap gap-4 items-center">
+                <div>
+                    <span class="text-sm text-stone-500">امتیاز کلی</span>
+                    <p class="text-xl font-bold" style="color: #047857;">{{ $q->overall_score !== null ? round($q->overall_score, 1) : '—' }}</p>
+                </div>
+                <div>
+                    <span class="text-sm text-stone-500">دسته</span>
+                    <p class="font-medium">{{ $bandLabel }}</p>
+                </div>
+                @if(!empty($q->risk_flags))
+                    <div>
+                        <span class="text-sm text-stone-500">هشدار</span>
+                        <p class="text-amber-600 font-medium">{{ implode('، ', array_map(fn ($f) => $f === 'account_risk' ? 'خطر از دست دادن مشتری' : ($f === 'reputation_risk' ? 'ریسک اعتبار' : $f), $q->risk_flags)) }}</p>
+                    </div>
+                @endif
+            </div>
+            @if($q->last_calculated_at)
+                <p class="mt-2 text-xs text-stone-400">آخرین به‌روزرسانی: {{ $q->last_calculated_at->diffForHumans() }}</p>
+            @endif
+        </div>
+    @endif
+
     {{-- Tasks --}}
     <div class="card mb-6" style="border: 2px solid #e7e5e4; border-radius: 1rem; padding: 1.5rem;">
         <h2 class="mb-4 border-b pb-3 text-base font-semibold text-stone-800" style="border-color: #e7e5e4; display: flex; align-items: center; gap: 0.5rem;">

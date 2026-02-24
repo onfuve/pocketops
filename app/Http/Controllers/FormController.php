@@ -109,9 +109,24 @@ class FormController extends Controller
         $this->authorizeForm($form);
 
         $validated = $request->validate([
-            'type' => 'required|in:custom_text,file_upload,postal_address,consent,survey,custom_fields',
+            'type' => 'required|in:custom_text,file_upload,postal_address,consent,survey,custom_fields,servqual_micro',
             'config' => 'nullable|array',
         ]);
+
+        if ($validated['type'] === FormModule::TYPE_SERVQUAL_MICRO) {
+            if ($form->modules()->where('type', FormModule::TYPE_SERVQUAL_MICRO)->exists()) {
+                return redirect()->route('forms.edit', $form)->with('error', 'این فرم از قبل ماژول نظرسنجی میکرو SERVQUAL دارد.');
+            }
+            $maxOrder = $form->modules()->max('sort_order') ?? 0;
+            $form->modules()->create([
+                'type' => FormModule::TYPE_SERVQUAL_MICRO,
+                'config' => [],
+                'sort_order' => $maxOrder + 1,
+            ]);
+            $form->update(['is_servqual_micro' => true]);
+
+            return redirect()->route('forms.edit', $form)->with('success', 'ماژول نظرسنجی میکرو SERVQUAL اضافه شد.');
+        }
 
         $defaults = [
             'custom_text' => ['content' => 'متن توضیحات را اینجا بنویسید.'],
@@ -163,7 +178,11 @@ class FormController extends Controller
             abort(404);
         }
 
+        $wasServqualMicro = $module->type === FormModule::TYPE_SERVQUAL_MICRO;
         $module->delete();
+        if ($wasServqualMicro) {
+            $form->update(['is_servqual_micro' => false]);
+        }
 
         return back()->with('success', 'ماژول حذف شد.');
     }

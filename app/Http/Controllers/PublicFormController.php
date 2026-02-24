@@ -6,11 +6,17 @@ use App\Models\Attachment;
 use App\Models\Form;
 use App\Models\FormLink;
 use App\Models\FormSubmission;
+use App\Models\Invoice;
+use App\Services\ServqualService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class PublicFormController extends Controller
 {
+    public function __construct(
+        private ServqualService $servqualService
+    ) {}
+
     /**
      * Show form by link code (customer-facing). Create submission on first access for single mode.
      */
@@ -47,6 +53,32 @@ class PublicFormController extends Controller
             $submission->touchActivity();
         }
 
+        if ($form->is_servqual_micro ?? false) {
+            $data = $submission->data ?? [];
+            $questionIds = $data['servqual_question_ids'] ?? null;
+            if (!is_array($questionIds) || empty($questionIds)) {
+                $questions = $this->servqualService->pickOneQuestionPerDimension();
+                $questionIds = array_map(fn ($q) => $q->id, $questions);
+                $submission->update(['data' => array_merge($data, ['servqual_question_ids' => $questionIds])]);
+                $submission->refresh();
+            }
+            $questions = collect();
+            if (!empty($questionIds)) {
+                $byId = \App\Models\ServqualQuestionBank::with('dimension')->whereIn('id', $questionIds)->get()->keyBy('id');
+                foreach ($questionIds as $id) {
+                    if (isset($byId[$id])) {
+                        $questions->push($byId[$id]);
+                    }
+                }
+            }
+            return view('forms.public-servqual-micro', [
+                'form' => $form,
+                'link' => $link,
+                'submission' => $submission,
+                'questions' => $questions,
+            ]);
+        }
+
         $data = array_merge($submission->data ?? [], old('data', []));
         return view('forms.public-fill', [
             'form' => $form,
@@ -75,6 +107,10 @@ class PublicFormController extends Controller
 
         if ($submission->isEditPeriodExpired()) {
             return back()->with('error', 'مهلت ویرایش تمام شده است.');
+        }
+
+        if ($form->is_servqual_micro ?? false) {
+            return $this->submitServqualMicro($request, $link, $submission);
         }
 
         $data = array_merge($submission->data ?? [], $request->input('data', []));
@@ -160,5 +196,48 @@ class PublicFormController extends Controller
             }
         }
         return $errors;
+    }
+
+    private function submitServqualMicro(Request $request, FormLink $link, FormSubmission $submission)
+    {
+        $data = $submission->data ?? [];
+        $questionIds = $data['servqual_question_ids'] ?? [];
+        if (!is_array($questionIds) || empty($questionIds)) {
+            return back()->with('error', 'لطفاً لینک را دوباره باز کنید.');
+        }
+
+        $invoiceId = (int) ($data['invoice_id'] ?? 0);
+        $invoice = $invoiceId ? Invoice::find($invoiceId) : null;
+        if (!$invoice) {
+            return back()->with('error', 'فاکتور مرتبط یافت نشد.');
+        }
+
+        $rules = [];
+        foreach ($questionIds as $qid) {
+            $rules['servqual_' . $qid] = 'required|integer|min:1|max:5';
+        }
+        $validated = $request->validate($rules, [], array_combine(array_map(fn ($id) => 'servqual_' . $id, $questionIds), array_fill(0, count($questionIds), 'پاسخ')));
+
+        $responses = [];
+        foreach ($questionIds as $qid) {
+            $key = 'servqual_' . $qid;
+            if (isset($validated[$key])) {
+                $responses[$qid] = (int) $validated[$key];
+            }
+        }
+        if (empty($responses)) {
+            return back()->with('error', 'لطفاً سؤال‌ها را پاسخ دهید.')->withInput();
+        }
+
+        $this->servqualService->storeMicroResponses($invoice, $responses, $submission, $link->code);
+
+        $submission->update([
+            'data' => array_merge($data, ['servqual_submitted_at' => now()->toIso8601String()]),
+            'last_activity_at' => now(),
+            'submitted_at' => now(),
+        ]);
+
+        return redirect()->route('forms.public.show', $link->code)
+            ->with('success', 'نظرسنجی با موفقیت ثبت شد. از شما متشکریم.');
     }
 }

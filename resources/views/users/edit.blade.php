@@ -66,6 +66,11 @@
                         <input type="checkbox" name="can_delete_invoice" value="1" {{ old('can_delete_invoice', $user->can_delete_invoice) ? 'checked' : '' }}>
                         <span>حذف فاکتور</span>
                     </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                        <input type="hidden" name="can_see_all_invoices" value="0">
+                        <input type="checkbox" name="can_see_all_invoices" value="1" {{ old('can_see_all_invoices', $user->can_see_all_invoices) ? 'checked' : '' }}>
+                        <span>مشاهدهٔ همهٔ فاکتورها و رسیدها (غیر از ایجادشده توسط خودش)</span>
+                    </label>
                 </div>
                 <div style="border-top: 1px solid #e7e5e4; padding-top: 1rem; margin-top: 1rem;">
                     <p style="font-size: 0.875rem; font-weight: 600; color: #44403c; margin-bottom: 0.75rem;">دسترسی ماژول‌ها (فقط برای عضو تیم — مشاهده، ایجاد، ویرایش، حذف)</p>

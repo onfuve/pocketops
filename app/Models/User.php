@@ -50,6 +50,7 @@ class User extends Authenticatable
         'can_delete_invoice',
         'can_delete_contact',
         'can_delete_lead',
+        'can_see_all_invoices',
         'permissions',
     ];
 
@@ -61,6 +62,7 @@ class User extends Authenticatable
             'can_delete_invoice' => 'boolean',
             'can_delete_contact' => 'boolean',
             'can_delete_lead' => 'boolean',
+            'can_see_all_invoices' => 'boolean',
             'permissions' => 'array',
         ];
     }
@@ -88,6 +90,12 @@ class User extends Authenticatable
     public function canDeleteSubscription(): bool
     {
         return $this->isAdmin() || $this->canModule('subscriptions', self::ABILITY_DELETE);
+    }
+
+    /** When true, user can see all invoices/receipts (not only own or assigned). */
+    public function canSeeAllInvoices(): bool
+    {
+        return $this->isAdmin() || (bool) $this->can_see_all_invoices;
     }
 
     /**

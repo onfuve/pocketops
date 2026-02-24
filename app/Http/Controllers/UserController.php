@@ -32,6 +32,7 @@ class UserController extends Controller
             'can_delete_invoice' => false,
             'can_delete_contact' => false,
             'can_delete_lead' => false,
+            'can_see_all_invoices' => false,
         ]);
         return view('users.create', compact('user'));
     }
@@ -46,12 +47,14 @@ class UserController extends Controller
             'can_delete_invoice' => 'boolean',
             'can_delete_contact' => 'boolean',
             'can_delete_lead' => 'boolean',
+            'can_see_all_invoices' => 'boolean',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
         $validated['can_delete_invoice'] = $request->boolean('can_delete_invoice');
         $validated['can_delete_contact'] = $request->boolean('can_delete_contact');
         $validated['can_delete_lead'] = $request->boolean('can_delete_lead');
+        $validated['can_see_all_invoices'] = $request->boolean('can_see_all_invoices');
         $validated['permissions'] = $this->normalizePermissions($request->input('permissions', []));
 
         User::create($validated);
@@ -72,6 +75,7 @@ class UserController extends Controller
             'can_delete_invoice' => 'boolean',
             'can_delete_contact' => 'boolean',
             'can_delete_lead' => 'boolean',
+            'can_see_all_invoices' => 'boolean',
         ];
         if ($request->filled('password')) {
             $rules['password'] = ['required', 'confirmed', Password::defaults()];
@@ -85,6 +89,7 @@ class UserController extends Controller
         $validated['can_delete_invoice'] = $request->boolean('can_delete_invoice');
         $validated['can_delete_contact'] = $request->boolean('can_delete_contact');
         $validated['can_delete_lead'] = $request->boolean('can_delete_lead');
+        $validated['can_see_all_invoices'] = $request->boolean('can_see_all_invoices');
         $validated['permissions'] = $this->normalizePermissions($request->input('permissions', []));
 
         $user->update($validated);

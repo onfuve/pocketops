@@ -12,7 +12,10 @@ class CustomerQualityIndex extends Model
     protected $fillable = [
         'contact_id',
         'overall_score',
+        'overall_gap',
         'dimension_scores',
+        'dimension_gaps',
+        'ewma_per_dimension',
         'recency_weighted_score',
         'confidence_ratio',
         'risk_flags',
@@ -21,9 +24,12 @@ class CustomerQualityIndex extends Model
 
     protected $casts = [
         'overall_score' => 'decimal:2',
+        'overall_gap' => 'decimal:2',
         'recency_weighted_score' => 'decimal:2',
         'confidence_ratio' => 'decimal:4',
         'dimension_scores' => 'array',
+        'dimension_gaps' => 'array',
+        'ewma_per_dimension' => 'array',
         'risk_flags' => 'array',
         'last_calculated_at' => 'datetime',
     ];

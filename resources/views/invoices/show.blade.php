@@ -87,6 +87,20 @@
         </div>
     </div>
 
+    @if (!$isBuy && $invoice->formLink)
+        @php
+            $formLinkUrl = url('/f/' . $invoice->formLink->code . '?' . http_build_query(['invoice_id' => $invoice->id, 'invoice_number' => $invoice->invoice_number ?: $invoice->id]));
+        @endphp
+        <div class="invoice-section mb-6" style="border-color:#a7f3d0;background:#ecfdf5;">
+            <h2 class="invoice-section-title" style="font-family:'Vazirmatn',sans-serif;">لینک فرم پیوست</h2>
+            <p style="font-size:0.875rem;color:#065f46;margin:0 0 0.5rem 0;">این لینک را می‌توانید برای مشتری بفرستید (واتساپ، پیامک و غیره) تا بدون اسکن QR فرم را پر کند:</p>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;">
+                <input type="text" readonly value="{{ $formLinkUrl }}" id="invoice-form-url" style="flex:1;min-width:0;padding:0.5rem 0.75rem;border:2px solid #a7f3d0;border-radius:0.5rem;font-size:0.8125rem;font-family:monospace;background:#fff;">
+                <button type="button" class="btn-action btn-action-secondary" style="flex-shrink:0;" onclick="var u=document.getElementById('invoice-form-url'); var b=this; if(u){navigator.clipboard.writeText(u.value); b.textContent='کپی شد!'; setTimeout(function(){b.textContent='کپی لینک';},1500);}">کپی لینک</button>
+            </div>
+        </div>
+    @endif
+
     @if ($isDraft)
         <div class="invoice-section mb-6" style="border-color:#f59e0b;background:#fffbeb;">
             <p class="mb-4 font-medium" style="font-family:'Vazirmatn',sans-serif;color:#92400e;font-size:1rem;">این {{ $isBuy ? 'رسید' : 'فاکتور' }} در وضعیت <strong>پیش‌نویس</strong> است. برای ثبت پرداخت، ابتدا آن را نهایی کنید.</p>

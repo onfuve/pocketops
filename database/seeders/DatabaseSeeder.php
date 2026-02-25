@@ -28,5 +28,7 @@ class DatabaseSeeder extends Seeder
                 'can_delete_lead' => true,
             ]);
         }
+
+        $this->call(ServqualQuestionBankSeeder::class);
     }
 }

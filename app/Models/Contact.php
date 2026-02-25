@@ -91,6 +91,11 @@ class Contact extends Model
         return $this->hasOne(CustomerQualityIndex::class);
     }
 
+    public function servqualExpectations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\ServqualCustomerExpectation::class);
+    }
+
     /** Balance we owe (positive) or they owe us (negative). */
     public function getBalanceAttribute($value): float
     {

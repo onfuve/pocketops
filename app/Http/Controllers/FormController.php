@@ -231,9 +231,14 @@ class FormController extends Controller
             abort(403);
         }
 
-        $submission->load('form.modules', 'contact', 'lead', 'task', 'attachments');
+        $submission->load('form.modules', 'formLink', 'contact', 'lead', 'task', 'attachments', 'servqualMicroResponses.dimension');
+        $invoice = null;
+        $data = $submission->data ?? [];
+        if (!empty($data['invoice_id'])) {
+            $invoice = \App\Models\Invoice::with('contact')->find($data['invoice_id']);
+        }
 
-        return view('forms.submission-show', compact('submission', 'form'));
+        return view('forms.submission-show', compact('submission', 'form', 'invoice'));
     }
 
     private function authorizeForm(Form $form): void

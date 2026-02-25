@@ -58,6 +58,11 @@ class FormSubmission extends Model
         return $this->morphMany(Attachment::class, 'attachable');
     }
 
+    public function servqualMicroResponses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\ServqualMicroResponse::class);
+    }
+
     public function isSubmitted(): bool
     {
         return $this->submitted_at !== null;

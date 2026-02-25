@@ -79,6 +79,13 @@
             $q = $contact->qualityIndex;
             $band = \App\Models\CustomerQualityIndex::bandForScore($q->overall_score);
             $bandLabel = $band ? (config('servqual.bands.' . $band . '.label_fa') ?? $band) : '—';
+            $dimLabels = [
+                'tangibles' => 'ملموسات',
+                'reliability' => 'قابلیت اطمینان',
+                'responsiveness' => 'پاسخگویی',
+                'assurance' => 'اطمینان',
+                'empathy' => 'همدلی',
+            ];
         @endphp
         <div class="card mb-6" style="border: 2px solid #e7e5e4; border-radius: 1rem; padding: 1.5rem;">
             <h2 class="mb-3 text-base font-semibold text-stone-800" style="display: flex; align-items: center; gap: 0.5rem;">
@@ -87,9 +94,16 @@
             </h2>
             <div class="flex flex-wrap gap-4 items-center">
                 <div>
-                    <span class="text-sm text-stone-500">امتیاز کلی</span>
+                    <span class="text-sm text-stone-500">امتیاز درک (P)</span>
                     <p class="text-xl font-bold" style="color: #047857;">{{ $q->overall_score !== null ? round($q->overall_score, 1) : '—' }}</p>
                 </div>
+                @if($q->overall_gap !== null)
+                    <div>
+                        <span class="text-sm text-stone-500">فاصله (Gap = P − E)</span>
+                        <p class="text-xl font-bold" style="color: {{ $q->overall_gap >= 0 ? '#047857' : '#b91c1c' }};">{{ round($q->overall_gap, 1) }}</p>
+                        <p class="text-xs text-stone-400">مثبت = فراتر از انتظار</p>
+                    </div>
+                @endif
                 <div>
                     <span class="text-sm text-stone-500">دسته</span>
                     <p class="font-medium">{{ $bandLabel }}</p>
@@ -101,6 +115,26 @@
                     </div>
                 @endif
             </div>
+            @if(is_array($q->dimension_scores) && count($q->dimension_scores) > 0)
+                <div class="mt-4 pt-3 border-t border-stone-200">
+                    <p class="text-xs font-medium text-stone-500 mb-2">امتیاز و فاصله به تفکیک بعد</p>
+                    <div class="flex flex-wrap gap-3">
+                        @foreach($q->dimension_scores as $code => $score)
+                            <div style="padding: 0.35rem 0.6rem; border-radius: 0.5rem; background: #f5f5f4; font-size: 0.8125rem;">
+                                <span class="font-medium text-stone-700">{{ $dimLabels[$code] ?? $code }}</span>
+                                <span class="text-stone-600"> {{ round($score, 0) }}</span>
+                                @if(is_array($q->dimension_gaps) && isset($q->dimension_gaps[$code]))
+                                    @php $g = $q->dimension_gaps[$code]; @endphp
+                                    <span style="color: {{ $g >= 0 ? '#047857' : '#b91c1c' }};"> (Gap {{ $g >= 0 ? '+' : '' }}{{ round($g, 0) }})</span>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+            @if($q->confidence_ratio !== null && $q->confidence_ratio < 1)
+                <p class="mt-2 text-xs text-amber-600">نمونهٔ محدود — برای نتیجهٔ پایدارتر حداقل ۵ بعد و ترجیحاً ۳۰ پاسخ توصیه می‌شود.</p>
+            @endif
             @if($q->last_calculated_at)
                 <p class="mt-2 text-xs text-stone-400">آخرین به‌روزرسانی: {{ $q->last_calculated_at->diffForHumans() }}</p>
             @endif

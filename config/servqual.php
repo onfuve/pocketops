@@ -8,6 +8,11 @@ return [
     'reputation_risk_threshold' => 50,
     'days_for_scoring' => 90,
 
+    // Avoid repeating same question for same customer within last N invoice surveys
+    'avoid_question_repeat_last_n' => 3,
+    // EWMA alpha (0.2–0.3 for service); higher = more weight to latest
+    'ewma_alpha' => 0.25,
+
     'bands' => [
         'exceptional' => ['min' => 90, 'max' => 100, 'label_fa' => 'استثنایی'],
         'strong' => ['min' => 75, 'max' => 89, 'label_fa' => 'قوی'],

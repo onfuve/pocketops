@@ -22,9 +22,51 @@
         <a href="{{ route('forms.inbox') }}" class="ds-btn ds-btn-outline">صندوق ورودی</a>
     </div>
 
+    @if(isset($invoice) || $submission->contact || $submission->lead || $submission->task)
+        <div class="ds-form-card" style="margin-bottom: 1rem;">
+            <h2 class="ds-form-card-title">مرتبط با</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                @if(isset($invoice))
+                    <a href="{{ route('invoices.show', $invoice) }}" class="ds-btn ds-btn-ghost">فاکتور #{{ $invoice->invoice_number ?: $invoice->id }}</a>
+                @endif
+                @if($submission->contact)
+                    <a href="{{ route('contacts.show', $submission->contact) }}" class="ds-btn ds-btn-ghost">مخاطب: {{ $submission->contact->name }}</a>
+                @elseif(isset($invoice) && $invoice->contact)
+                    <a href="{{ route('contacts.show', $invoice->contact) }}" class="ds-btn ds-btn-ghost">مخاطب: {{ $invoice->contact->name }}</a>
+                @endif
+                @if($submission->lead)
+                    <a href="{{ route('leads.show', $submission->lead) }}" class="ds-btn ds-btn-ghost">سرنخ: {{ $submission->lead->name }}</a>
+                @endif
+                @if($submission->task)
+                    <a href="{{ route('tasks.show', $submission->task) }}" class="ds-btn ds-btn-ghost">وظیفه</a>
+                @endif
+            </div>
+        </div>
+    @endif
+
+    @if($form->is_servqual_micro && $submission->servqualMicroResponses->isNotEmpty())
+        <div class="ds-form-card" style="margin-bottom: 1rem;">
+            <h2 class="ds-form-card-title">نظرسنجی SERVQUAL</h2>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                @foreach($submission->servqualMicroResponses as $r)
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--ds-border); font-size: 0.875rem;">
+                        <span style="color: var(--ds-text);">{{ $r->dimension ? ($r->dimension->name_fa ?: $r->dimension->name) : '—' }}</span>
+                        <span style="font-weight: 600; color: var(--ds-primary);">{{ $r->value }}/۵</span>
+                    </div>
+                @endforeach
+            </div>
+            @if(isset($invoice))
+                <p style="margin: 0.75rem 0 0 0; font-size: 0.8125rem; color: var(--ds-text-subtle);">مرتبط با فاکتور #{{ $invoice->invoice_number ?: $invoice->id }} — {{ $invoice->contact->name ?? '' }}</p>
+            @endif
+        </div>
+    @endif
+
     <div class="ds-form-card">
         @php $data = $submission->data ?? []; @endphp
         @foreach($form->modules as $module)
+            @if($module->type === 'servqual_micro')
+                @continue
+            @endif
             @php $key = 'm' . $module->id; $value = $data[$key] ?? null; @endphp
             <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--ds-border);">
                 <div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9375rem; color: var(--ds-text);">{{ $module->getConfig('label') ?: (\App\Models\FormModule::typeLabels()[$module->type] ?? $module->type) }}</div>
@@ -105,21 +147,5 @@
         @endforeach
     </div>
 
-    @if($submission->contact || $submission->lead || $submission->task)
-        <div class="ds-form-card" style="margin-top: 1rem;">
-            <h2 class="ds-form-card-title">مرتبط با</h2>
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                @if($submission->contact)
-                    <a href="{{ route('contacts.show', $submission->contact) }}" class="ds-btn ds-btn-ghost">مخاطب: {{ $submission->contact->name }}</a>
-                @endif
-                @if($submission->lead)
-                    <a href="{{ route('leads.show', $submission->lead) }}" class="ds-btn ds-btn-ghost">سرنخ: {{ $submission->lead->name }}</a>
-                @endif
-                @if($submission->task)
-                    <a href="{{ route('tasks.show', $submission->task) }}" class="ds-btn ds-btn-ghost">وظیفه</a>
-                @endif
-            </div>
-        </div>
-    @endif
 </div>
 @endsection

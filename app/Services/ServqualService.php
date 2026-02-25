@@ -6,6 +6,7 @@ use App\Models\Contact;
 use App\Models\CustomerQualityIndex;
 use App\Models\FormSubmission;
 use App\Models\Invoice;
+use App\Models\ServqualCustomerExpectation;
 use App\Models\ServqualDimension;
 use App\Models\ServqualMicroResponse;
 use App\Models\ServqualQuestionBank;
@@ -26,24 +27,90 @@ class ServqualService
     /** Threshold: flag account if two dimensions below this. */
     public const DIMENSION_RISK_THRESHOLD = 55;
 
+    /** Max gap range (P and E 1–5 so gap in [-4, 4]). Normalized to 0–100 scale: (gap/4)*100. */
+    public const GAP_RANGE = 4;
+
     /** Normalized score 0–100 from Likert value 1–5. */
     public static function normalizedScore(int $value): float
     {
         return max(0, min(100, (($value - 1) / 4) * 100));
     }
 
+    /** Check if contact has full baseline expectation (all 5 dimensions). */
+    public function hasBaselineExpectation(int $contactId): bool
+    {
+        return ServqualCustomerExpectation::where('contact_id', $contactId)->count() >= self::DIMENSION_COUNT;
+    }
+
+    /** Get baseline expectation per dimension (dimension_id => value 1–5). */
+    public function getBaselineExpectation(int $contactId): array
+    {
+        $rows = ServqualCustomerExpectation::where('contact_id', $contactId)->get();
+        $map = [];
+        foreach ($rows as $r) {
+            $map[$r->dimension_id] = (int) $r->value;
+        }
+        return $map;
+    }
+
+    /** Save or update baseline expectations. Keys: dimension_id, values: 1–5. */
+    public function saveBaselineExpectation(int $contactId, array $dimensionValues): void
+    {
+        foreach ($dimensionValues as $dimensionId => $value) {
+            $value = max(1, min(self::LIKERT_MAX, (int) $value));
+            ServqualCustomerExpectation::updateOrCreate(
+                ['contact_id' => $contactId, 'dimension_id' => $dimensionId],
+                ['value' => $value, 'captured_at' => now()]
+            );
+        }
+    }
+
+    /** Question IDs used for this contact in last N invoice surveys (to avoid repetition). */
+    public function getExcludedQuestionIdsForContact(int $contactId): array
+    {
+        $n = (int) config('servqual.avoid_question_repeat_last_n', 3);
+        $responses = ServqualMicroResponse::query()
+            ->join('invoices', 'servqual_micro_responses.invoice_id', '=', 'invoices.id')
+            ->where('invoices.contact_id', $contactId)
+            ->whereNotNull('servqual_micro_responses.form_submission_id')
+            ->select('servqual_micro_responses.form_submission_id')
+            ->orderBy('servqual_micro_responses.created_at', 'desc')
+            ->get();
+        $seen = [];
+        foreach ($responses as $r) {
+            $sid = $r->form_submission_id;
+            if ($sid && !in_array($sid, $seen, true)) {
+                $seen[] = $sid;
+                if (count($seen) >= $n) {
+                    break;
+                }
+            }
+        }
+        if (empty($seen)) {
+            return [];
+        }
+        $ids = FormSubmission::whereIn('id', $seen)->get()->pluck('data')->filter()->map(function ($d) {
+            return $d['servqual_question_ids'] ?? [];
+        })->flatten()->unique()->values()->all();
+        return $ids;
+    }
+
     /**
-     * Select one random question per dimension for the micro survey (5 questions total).
-     * Gives balanced coverage across SERVQUAL dimensions.
+     * Select one random question per dimension. Optionally exclude question IDs recently used for this contact.
      */
-    public function pickOneQuestionPerDimension(): array
+    public function pickOneQuestionPerDimension(?Invoice $invoice = null): array
     {
         $dimensions = ServqualDimension::with('questions')->orderBy('sort')->get();
+        $excludedIds = [];
+        if ($invoice && $invoice->contact_id) {
+            $excludedIds = $this->getExcludedQuestionIdsForContact($invoice->contact_id);
+        }
         $questions = [];
         foreach ($dimensions as $dimension) {
-            $q = $dimension->questions->isEmpty()
-                ? null
-                : $dimension->questions->random();
+            $pool = $dimension->questions->isEmpty()
+                ? collect()
+                : $dimension->questions->reject(fn ($q) => in_array($q->id, $excludedIds, true));
+            $q = $pool->isEmpty() ? $dimension->questions->random() : $pool->random();
             if ($q) {
                 $questions[] = $q;
             }
@@ -84,6 +151,7 @@ class ServqualService
                 'invoice_id' => $invoice->id,
                 'form_submission_id' => $submission?->id,
                 'dimension_id' => $question->dimension_id,
+                'question_id' => $question->id,
                 'value' => $adjusted,
                 'form_link_code' => $formLinkCode,
             ]);
@@ -119,7 +187,59 @@ class ServqualService
     }
 
     /**
-     * Overall SERVQUAL index (average of dimension scores).
+     * Perception averages per dimension (1–5) for contact over period. Keys: dimension_id.
+     */
+    public function perceptionAveragesForContact(int $contactId, int $days = 90): array
+    {
+        $since = Carbon::now()->subDays($days);
+        $rows = ServqualMicroResponse::query()
+            ->join('invoices', 'servqual_micro_responses.invoice_id', '=', 'invoices.id')
+            ->where('invoices.contact_id', $contactId)
+            ->where('servqual_micro_responses.created_at', '>=', $since)
+            ->select('servqual_micro_responses.dimension_id', DB::raw('AVG(servqual_micro_responses.value) as avg_value'))
+            ->groupBy('servqual_micro_responses.dimension_id')
+            ->get();
+        $out = [];
+        foreach ($rows as $r) {
+            $out[$r->dimension_id] = round((float) $r->avg_value, 4);
+        }
+        return $out;
+    }
+
+    /**
+     * Gap per dimension: P - E. Normalized to 0–100 scale: (gap/4)*100. Keys: dimension code.
+     * Returns [ 'gaps' => code => normalized_gap, 'overall_gap' => weighted avg ].
+     */
+    public function computeGapsForContact(int $contactId, int $days = 90): array
+    {
+        $baseline = $this->getBaselineExpectation($contactId);
+        if (count($baseline) < self::DIMENSION_COUNT) {
+            return ['gaps' => [], 'overall_gap' => null];
+        }
+        $perception = $this->perceptionAveragesForContact($contactId, $days);
+        $dimensions = ServqualDimension::orderBy('sort')->get()->keyBy('id');
+        $gaps = [];
+        $weightedSum = 0;
+        $weightTotal = 0;
+        foreach ($dimensions as $id => $dim) {
+            $p = $perception[$id] ?? null;
+            $e = $baseline[$id] ?? null;
+            if ($p === null || $e === null) {
+                continue;
+            }
+            $gapRaw = $p - $e;
+            $normalizedGap = ($gapRaw / self::GAP_RANGE) * 100; // -100 to +100
+            $gaps[$dim->code] = round($normalizedGap, 2);
+            $w = (float) ($dim->weight ?? 1);
+            $weightedSum += $normalizedGap * $w;
+            $weightTotal += $w;
+        }
+        $overallGap = $weightTotal > 0 ? round($weightedSum / $weightTotal, 2) : null;
+        return ['gaps' => $gaps, 'overall_gap' => $overallGap];
+    }
+
+    /**
+     * Overall SERVQUAL index (weighted average of dimension scores). Reliability + Assurance weighted 1.2.
      */
     public function overallScoreForContact(int $contactId, int $days = 90): ?float
     {
@@ -127,7 +247,16 @@ class ServqualService
         if (empty($scores)) {
             return null;
         }
-        return round(array_sum($scores) / count($scores), 2);
+        $dimensions = ServqualDimension::orderBy('sort')->get()->keyBy('code');
+        $weightedSum = 0;
+        $weightTotal = 0;
+        foreach ($scores as $code => $score) {
+            $dim = $dimensions->get($code);
+            $w = $dim ? (float) ($dim->weight ?? 1) : 1;
+            $weightedSum += $score * $w;
+            $weightTotal += $w;
+        }
+        return $weightTotal > 0 ? round($weightedSum / $weightTotal, 2) : null;
     }
 
     /**
@@ -190,21 +319,42 @@ class ServqualService
     }
 
     /**
-     * Update or create CustomerQualityIndex for contact.
+     * Update or create CustomerQualityIndex for contact. Includes gap and EWMA when baseline exists.
      */
     public function updateCustomerQualityIndex(int $contactId): void
     {
-        $overall = $this->overallScoreForContact($contactId);
-        $dimensionScores = $this->dimensionScoresForContact($contactId);
-        $recency = $this->recencyWeightedScoreForContact($contactId);
-        $confidence = $this->confidenceRatioForContact($contactId);
-        $riskFlags = $this->riskFlagsForContact($contactId);
+        $days = (int) config('servqual.days_for_scoring', 90);
+        $overall = $this->overallScoreForContact($contactId, $days);
+        $dimensionScores = $this->dimensionScoresForContact($contactId, $days);
+        $recency = $this->recencyWeightedScoreForContact($contactId, $days);
+        $confidence = $this->confidenceRatioForContact($contactId, $days);
+        $riskFlags = $this->riskFlagsForContact($contactId, $days);
+
+        $dimensionGaps = null;
+        $overallGap = null;
+        $ewma = null;
+        if ($this->hasBaselineExpectation($contactId)) {
+            $gapResult = $this->computeGapsForContact($contactId, $days);
+            $dimensionGaps = $gapResult['gaps'];
+            $overallGap = $gapResult['overall_gap'];
+            $alpha = (float) config('servqual.ewma_alpha', 0.25);
+            $index = CustomerQualityIndex::where('contact_id', $contactId)->first();
+            $previousEwma = $index && is_array($index->ewma_per_dimension) ? $index->ewma_per_dimension : [];
+            $ewma = [];
+            foreach ($dimensionGaps as $code => $currentGap) {
+                $prev = $previousEwma[$code] ?? $currentGap;
+                $ewma[$code] = round($alpha * $currentGap + (1 - $alpha) * $prev, 2);
+            }
+        }
 
         CustomerQualityIndex::updateOrCreate(
             ['contact_id' => $contactId],
             [
                 'overall_score' => $overall,
+                'overall_gap' => $overallGap,
                 'dimension_scores' => $dimensionScores,
+                'dimension_gaps' => $dimensionGaps,
+                'ewma_per_dimension' => $ewma,
                 'recency_weighted_score' => $recency,
                 'confidence_ratio' => $confidence,
                 'risk_flags' => array_values($riskFlags),

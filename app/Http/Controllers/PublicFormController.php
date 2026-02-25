@@ -55,9 +55,28 @@ class PublicFormController extends Controller
 
         if ($form->is_servqual_micro ?? false) {
             $data = $submission->data ?? [];
+            $contactId = $submission->contact_id;
+            if (!$contactId && !empty($data['invoice_id'])) {
+                $inv = Invoice::find($data['invoice_id']);
+                $contactId = $inv ? $inv->contact_id : null;
+            }
+            // First-time: collect baseline expectation (one per dimension) then show perception
+            if ($contactId && !$this->servqualService->hasBaselineExpectation($contactId)) {
+                $dimensions = \App\Models\ServqualDimension::orderBy('sort')->get();
+                return view('forms.public-servqual-expectation', [
+                    'form' => $form,
+                    'link' => $link,
+                    'submission' => $submission,
+                    'dimensions' => $dimensions,
+                ]);
+            }
+            $invoice = null;
+            if (!empty($data['invoice_id'])) {
+                $invoice = Invoice::find($data['invoice_id']);
+            }
             $questionIds = $data['servqual_question_ids'] ?? null;
             if (!is_array($questionIds) || empty($questionIds)) {
-                $questions = $this->servqualService->pickOneQuestionPerDimension();
+                $questions = $this->servqualService->pickOneQuestionPerDimension($invoice);
                 $questionIds = array_map(fn ($q) => $q->id, $questions);
                 $submission->update(['data' => array_merge($data, ['servqual_question_ids' => $questionIds])]);
                 $submission->refresh();
@@ -110,6 +129,9 @@ class PublicFormController extends Controller
         }
 
         if ($form->is_servqual_micro ?? false) {
+            if ($request->boolean('servqual_expectation')) {
+                return $this->submitServqualExpectation($request, $link, $submission);
+            }
             return $this->submitServqualMicro($request, $link, $submission);
         }
 
@@ -196,6 +218,38 @@ class PublicFormController extends Controller
             }
         }
         return $errors;
+    }
+
+    private function submitServqualExpectation(Request $request, FormLink $link, FormSubmission $submission)
+    {
+        $data = $submission->data ?? [];
+        $contactId = $submission->contact_id;
+        if (!$contactId && !empty($data['invoice_id'])) {
+            $inv = Invoice::find($data['invoice_id']);
+            $contactId = $inv ? $inv->contact_id : null;
+        }
+        if (!$contactId) {
+            return back()->with('error', 'مخاطب مشخص نیست.')->withInput();
+        }
+        $dimensions = \App\Models\ServqualDimension::orderBy('sort')->get();
+        $rules = [];
+        foreach ($dimensions as $d) {
+            $rules['expect.' . $d->id] = 'required|integer|min:1|max:5';
+        }
+        $validated = $request->validate($rules, [], array_combine(
+            array_map(fn ($d) => 'expect.' . $d->id, $dimensions->all()),
+            array_fill(0, $dimensions->count(), 'انتظار')
+        ));
+        $expect = $validated['expect'] ?? [];
+        $this->servqualService->saveBaselineExpectation($contactId, $expect);
+        $url = route('forms.public.show', $link->code);
+        if (!empty($data['invoice_id'])) {
+            $url .= '?invoice_id=' . (int) $data['invoice_id'];
+            if (!empty($data['invoice_number'])) {
+                $url .= '&invoice_number=' . rawurlencode($data['invoice_number']);
+            }
+        }
+        return redirect($url)->with('success', 'انتظارات شما ثبت شد. لطفاً اکنون نظر خود را دربارهٔ این بار به ما بگویید.');
     }
 
     private function submitServqualMicro(Request $request, FormLink $link, FormSubmission $submission)

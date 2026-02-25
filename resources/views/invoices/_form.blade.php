@@ -317,6 +317,16 @@
                     </label>
                 @endforeach
             </div>
+            @if ($isEdit && $invoice->form_link_id && $invoice->formLink)
+                @php $formLinkUrl = url('/f/' . $invoice->formLink->code . '?' . http_build_query(['invoice_id' => $invoice->id, 'invoice_number' => $invoice->invoice_number ?: $invoice->id])); @endphp
+                <div style="margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--ds-radius); background: var(--ds-primary-bg); border: 1px solid var(--ds-primary-border);">
+                    <p style="margin: 0 0 0.5rem 0; font-size: 0.8125rem; font-weight: 500; color: var(--ds-primary-dark);">لینک فرم برای ارسال به مشتری (غیر از QR):</p>
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
+                        <input type="text" readonly value="{{ $formLinkUrl }}" id="invoice-form-url-edit" class="ds-input" style="flex: 1; min-width: 0; font-size: 0.8125rem;">
+                        <button type="button" class="ds-btn ds-btn-secondary" style="flex-shrink: 0;" onclick="var el=document.getElementById('invoice-form-url-edit'); navigator.clipboard.writeText(el.value); this.textContent='کپی شد!'; setTimeout(function(){ this.textContent='کپی لینک'; }, 1500);">کپی لینک</button>
+                    </div>
+                </div>
+            @endif
             @if ($formLinks->isEmpty())
                 <p style="margin: 0.5rem 0 0 0; font-size: 0.8125rem; color: var(--ds-text-subtle);">فرم عمومی فعالی وجود ندارد. از <a href="{{ route('forms.index') }}" style="color: var(--ds-primary); font-weight: 500;">فرم‌ها</a> یک فرم فعال بسازید و برای آن لینک بدون مخاطب ایجاد کنید.</p>
             @endif

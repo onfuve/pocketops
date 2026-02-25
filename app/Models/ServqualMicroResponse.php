@@ -13,9 +13,15 @@ class ServqualMicroResponse extends Model
         'invoice_id',
         'form_submission_id',
         'dimension_id',
+        'question_id',
         'value',
         'form_link_code',
     ];
+
+    public function question(): BelongsTo
+    {
+        return $this->belongsTo(ServqualQuestionBank::class, 'question_id');
+    }
 
     protected $casts = [
         'value' => 'integer',

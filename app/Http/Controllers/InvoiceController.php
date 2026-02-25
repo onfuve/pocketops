@@ -124,7 +124,7 @@ class InvoiceController extends Controller
         abort_unless(request()->user()->canModule('invoices', \App\Models\User::ABILITY_VIEW), 403, 'شما به این بخش دسترسی ندارید.');
         abort_unless($invoice->isVisibleTo(request()->user()), 403, 'شما به این فاکتور دسترسی ندارید.');
 
-        $invoice->load('contact', 'items', 'user', 'assignedTo', 'tasks.assignedUsers');
+        $invoice->load('contact', 'items', 'user', 'assignedTo', 'tasks.assignedUsers', 'formLink.form');
         try {
             $invoice->load('tags', 'attachments', 'payments.bankAccount', 'payments.contact');
         } catch (\Illuminate\Database\QueryException $e) {

@@ -24,12 +24,16 @@
     @else
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
             @foreach ($submissions as $sub)
+                @php $data = $sub->data ?? []; $invId = $data['invoice_id'] ?? null; $invNum = $data['invoice_number'] ?? $invId; @endphp
                 <a href="{{ route('forms.submissions.show', $sub) }}" class="ds-card" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem;">
                     <div>
                         <span style="font-weight: 600;">{{ $sub->form->title }}</span>
                         <span style="font-size: 0.8125rem; color: var(--ds-text-subtle); margin-right: 0.5rem;">— ارسال #{{ $sub->id }}</span>
                         @if($sub->contact)
                             <span style="font-size: 0.875rem;">· {{ $sub->contact->name }}</span>
+                        @endif
+                        @if($invId)
+                            <span style="font-size: 0.8125rem; color: var(--ds-primary); margin-right: 0.35rem;">· فاکتور #{{ $invNum }}</span>
                         @endif
                         <div style="font-size: 0.8125rem; color: var(--ds-text-subtle); margin-top: 0.25rem;">
                             {{ $sub->submitted_at ? $sub->submitted_at->format('Y/m/d H:i') : 'پیش‌نویس' }}

@@ -15,10 +15,12 @@ class ServqualDimension extends Model
         'name_fa',
         'description',
         'sort',
+        'weight',
     ];
 
     protected $casts = [
         'sort' => 'integer',
+        'weight' => 'float',
     ];
 
     public const CODE_TANGIBLES = 'tangibles';

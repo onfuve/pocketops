@@ -250,7 +250,7 @@ class PublicFormController extends Controller
                 $url .= '&invoice_number=' . rawurlencode($data['invoice_number']);
             }
         }
-        return redirect($url)->with('success', 'انتظارات شما ثبت شد. لطفاً اکنون نظر خود را دربارهٔ این بار به ما بگویید.');
+        return redirect($url)->with('success', 'فرم ثبت شد. از وقتی که گذاشتید متشکریم.');
     }
 
     private function submitServqualMicro(Request $request, FormLink $link, FormSubmission $submission)

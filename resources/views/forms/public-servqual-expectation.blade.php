@@ -48,17 +48,21 @@
         </div>
     @endif
 
+    @if(empty($questions))
+        <p class="sq-alert" style="background:#fef2f2;color:#b91c1c;">سؤالی در بانک سوالات تعریف نشده. لطفاً با مدیر تماس بگیرید.</p>
+    @else
     <form action="{{ route('forms.public.submit', $link->code) }}" method="post">
         @csrf
         <input type="hidden" name="servqual_expectation" value="1">
 
-        @foreach($dimensions as $dim)
+        @foreach($questions as $q)
             <div class="sq-q">
-                <p class="q-text" id="exp-{{ $dim->id }}">{{ $dim->name_fa ?: $dim->name }} — چه انتظاری دارید؟</p>
-                <div class="sq-scale" role="group" aria-labelledby="exp-{{ $dim->id }}">
+                {{-- Only question text from the bank; do not show dimension name --}}
+                <p class="q-text" id="exp-{{ $q->id }}">{{ $q->text_fa ?: $q->text }}</p>
+                <div class="sq-scale" role="group" aria-labelledby="exp-{{ $q->id }}">
                     @for($v = 1; $v <= 5; $v++)
                         <label class="sq-scale-opt">
-                            <input type="radio" name="expect[{{ $dim->id }}]" value="{{ $v }}" {{ old('expect.'.$dim->id) == $v ? 'checked' : '' }} required>
+                            <input type="radio" name="expect[{{ $q->dimension_id }}]" value="{{ $v }}" {{ old('expect.'.$q->dimension_id) == $v ? 'checked' : '' }} required>
                             <span>{{ $v }}</span>
                         </label>
                     @endfor
@@ -74,5 +78,6 @@
             <button type="submit" class="sq-btn">ثبت و ادامه</button>
         </div>
     </form>
+    @endif
 </div>
 @endsection

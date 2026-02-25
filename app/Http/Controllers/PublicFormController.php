@@ -60,14 +60,14 @@ class PublicFormController extends Controller
                 $inv = Invoice::find($data['invoice_id']);
                 $contactId = $inv ? $inv->contact_id : null;
             }
-            // First-time: collect baseline expectation (one per dimension) then show perception
+            // First-time: collect baseline expectation using one question per dimension from the bank (no dimension names shown)
             if ($contactId && !$this->servqualService->hasBaselineExpectation($contactId)) {
-                $dimensions = \App\Models\ServqualDimension::orderBy('sort')->get();
+                $questions = $this->servqualService->pickOneQuestionPerDimension(null);
                 return view('forms.public-servqual-expectation', [
                     'form' => $form,
                     'link' => $link,
                     'submission' => $submission,
-                    'dimensions' => $dimensions,
+                    'questions' => $questions,
                 ]);
             }
             $invoice = null;

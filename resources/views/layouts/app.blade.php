@@ -172,6 +172,10 @@
                                 <a href="{{ route('product-landing-pages.index') }}" role="menuitem">@include('components._icons', ['name' => 'sell', 'class' => 'w-4 h-4 shrink-0']) فرود</a>
                             </div>
                             <div class="nav-dropdown-section">
+                                <div class="nav-dropdown-label">گزارش‌ها</div>
+                                <a href="{{ route('reports.servqual') }}" role="menuitem">@include('components._icons', ['name' => 'check', 'class' => 'w-4 h-4 shrink-0']) کیفیت خدمات (SERVQUAL)</a>
+                            </div>
+                            <div class="nav-dropdown-section">
                                 <div class="nav-dropdown-label">تنظیمات</div>
                                 <a href="{{ route('tags.index') }}" role="menuitem">@include('components._icons', ['name' => 'tag', 'class' => 'w-4 h-4 shrink-0']) برچسب</a>
                                 <a href="{{ route('contacts.import') }}" role="menuitem">@include('components._icons', ['name' => 'file-import', 'class' => 'w-4 h-4 shrink-0']) CSV</a>
@@ -217,7 +221,11 @@
                         </a>
                     </div>
                     <div class="nav-group nav-group-settings">
-                        <span class="nav-group-label">تنظیمات</span>
+                        <span class="nav-group-label">گزارش و تنظیمات</span>
+                        <a href="{{ route('reports.servqual') }}" class="nav-link nav-link-icon-only" title="گزارش کیفیت خدمات" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                            @include('components._icons', ['name' => 'check', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>کیفیت خدمات (SERVQUAL)</span>
+                        </a>
                         <a href="{{ route('tags.index') }}" class="nav-link nav-link-icon-only" title="برچسب‌ها" style="display: inline-flex; align-items: center; gap: 0.375rem;">
                             @include('components._icons', ['name' => 'tag', 'class' => 'w-4 h-4 shrink-0'])
                             <span>برچسب</span>

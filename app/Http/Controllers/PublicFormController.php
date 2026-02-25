@@ -74,10 +74,11 @@ class PublicFormController extends Controller
             if (!empty($data['invoice_id'])) {
                 $invoice = Invoice::find($data['invoice_id']);
             }
+            // Use question bank: one random question per dimension (avoid recent repeats for this contact)
             $questionIds = $data['servqual_question_ids'] ?? null;
             if (!is_array($questionIds) || empty($questionIds)) {
-                $questions = $this->servqualService->pickOneQuestionPerDimension($invoice);
-                $questionIds = array_map(fn ($q) => $q->id, $questions);
+                $picked = $this->servqualService->pickOneQuestionPerDimension($invoice);
+                $questionIds = array_map(fn ($q) => $q->id, $picked);
                 $submission->update(['data' => array_merge($data, ['servqual_question_ids' => $questionIds])]);
                 $submission->refresh();
             }

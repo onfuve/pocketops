@@ -63,6 +63,10 @@
             <div class="stat-value">{{ FormatHelper::englishToPersian((string) $invoicesUnpaid->count()) }}</div>
             <div class="stat-label">فاکتورهای پرداخت‌نشده {{ $invoicesOverdue > 0 ? '· ' . FormatHelper::englishToPersian((string) $invoicesOverdue) . ' سررسید گذشته' : '' }}</div>
         </a>
+        <a href="{{ route('reports.servqual') }}" class="dash-stat-card" style="border-color: #a7f3d0;">
+            <div class="stat-value" style="color: #047857;">SERVQUAL</div>
+            <div class="stat-label">گزارش کیفیت خدمات</div>
+        </a>
     </div>
 
     <div style="display: grid; gap: 1.5rem; grid-template-columns: 1fr;">

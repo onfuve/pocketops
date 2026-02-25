@@ -96,7 +96,8 @@ class ServqualService
     }
 
     /**
-     * Select one random question per dimension. Optionally exclude question IDs recently used for this contact.
+     * Select one random question per dimension from the question bank.
+     * Excludes question IDs recently used for this contact (last N surveys) to avoid repetition.
      */
     public function pickOneQuestionPerDimension(?Invoice $invoice = null): array
     {
@@ -107,13 +108,12 @@ class ServqualService
         }
         $questions = [];
         foreach ($dimensions as $dimension) {
-            $pool = $dimension->questions->isEmpty()
-                ? collect()
-                : $dimension->questions->reject(fn ($q) => in_array($q->id, $excludedIds, true));
-            $q = $pool->isEmpty() ? $dimension->questions->random() : $pool->random();
-            if ($q) {
-                $questions[] = $q;
+            if ($dimension->questions->isEmpty()) {
+                continue;
             }
+            $pool = $dimension->questions->reject(fn ($q) => in_array($q->id, $excludedIds, true));
+            $q = $pool->isEmpty() ? $dimension->questions->random() : $pool->random();
+            $questions[] = $q;
         }
         return $questions;
     }
@@ -369,5 +369,70 @@ class ServqualService
     public static function bandForScore(?float $score): ?string
     {
         return CustomerQualityIndex::bandForScore($score);
+    }
+
+    /**
+     * Company-wide SERVQUAL stats for the overall report. Uses last $days for dimension/response counts.
+     *
+     * @return array{ dimension_scores: array<string, float>, overall_score_avg: float|null, overall_gap_avg: float|null, contacts_with_index: int, total_responses: int, responses_last_30_days: int, submissions_count: int }
+     */
+    public function companyWideStats(int $days = 90): array
+    {
+        $since = Carbon::now()->subDays($days);
+        $since30 = Carbon::now()->subDays(30);
+
+        // Dimension averages (0–100) from all micro responses in period
+        $dimRows = ServqualMicroResponse::query()
+            ->where('servqual_micro_responses.created_at', '>=', $since)
+            ->join('servqual_dimensions', 'servqual_micro_responses.dimension_id', '=', 'servqual_dimensions.id')
+            ->select('servqual_dimensions.code as dimension_code', DB::raw('AVG((servqual_micro_responses.value - 1) / 4 * 100) as score'))
+            ->groupBy('servqual_dimensions.id', 'servqual_dimensions.code')
+            ->get()
+            ->keyBy('dimension_code');
+
+        $dimensionScores = [];
+        foreach ($dimRows as $code => $r) {
+            $dimensionScores[$code] = round((float) $r->score, 2);
+        }
+
+        // Weighted overall score from dimension averages
+        $dimensions = ServqualDimension::orderBy('sort')->get()->keyBy('code');
+        $overallScoreAvg = null;
+        if (!empty($dimensionScores)) {
+            $weightedSum = 0;
+            $weightTotal = 0;
+            foreach ($dimensionScores as $code => $score) {
+                $dim = $dimensions->get($code);
+                $w = $dim ? (float) ($dim->weight ?? 1) : 1;
+                $weightedSum += $score * $w;
+                $weightTotal += $w;
+            }
+            $overallScoreAvg = $weightTotal > 0 ? round($weightedSum / $weightTotal, 2) : null;
+        }
+
+        // From customer_quality_index: contacts count and average gap
+        $indexAgg = CustomerQualityIndex::query()
+            ->selectRaw('COUNT(*) as cnt, AVG(overall_score) as avg_score, AVG(overall_gap) as avg_gap')
+            ->first();
+        $contactsWithIndex = (int) ($indexAgg->cnt ?? 0);
+        $overallGapAvg = $indexAgg && $indexAgg->avg_gap !== null ? round((float) $indexAgg->avg_gap, 2) : null;
+
+        // Response counts
+        $totalResponses = ServqualMicroResponse::query()->count();
+        $responsesLast30Days = ServqualMicroResponse::query()->where('created_at', '>=', $since30)->count();
+        $submissionsCount = (int) ServqualMicroResponse::query()
+            ->whereNotNull('form_submission_id')
+            ->distinct()
+            ->count('form_submission_id');
+
+        return [
+            'dimension_scores' => $dimensionScores,
+            'overall_score_avg' => $overallScoreAvg,
+            'overall_gap_avg' => $overallGapAvg,
+            'contacts_with_index' => $contactsWithIndex,
+            'total_responses' => $totalResponses,
+            'responses_last_30_days' => $responsesLast30Days,
+            'submissions_count' => $submissionsCount,
+        ];
     }
 }

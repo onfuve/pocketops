@@ -19,6 +19,7 @@ use App\Http\Controllers\ProductLandingPageController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\ServqualQuestionBankController;
+use App\Http\Controllers\ServqualReportController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
@@ -55,6 +56,7 @@ Route::get('i/{invoice}/v', [InvoiceController::class, 'publicPrint'])->name('in
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('reports/servqual', [ServqualReportController::class, 'index'])->name('reports.servqual');
 
 Route::get('attachments/{attachment}', [AttachmentController::class, 'show'])->name('attachments.show');
 

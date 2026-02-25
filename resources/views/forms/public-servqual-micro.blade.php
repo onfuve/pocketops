@@ -71,6 +71,7 @@
 
             @foreach($questions as $q)
                 <div class="sq-q">
+                    {{-- Only question text from the bank; do not show dimension name --}}
                     <p class="q-text" id="q-{{ $q->id }}">{{ $q->text_fa ?: $q->text }}</p>
                     <div class="sq-scale" role="group" aria-labelledby="q-{{ $q->id }}" aria-label="۱ تا ۵">
                         @for($v = 1; $v <= 5; $v++)

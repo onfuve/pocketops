@@ -116,7 +116,59 @@
                 @endif
             </div>
             @if(is_array($q->dimension_scores) && count($q->dimension_scores) > 0)
+                @php
+                    $dimOrder = ['tangibles', 'reliability', 'responsiveness', 'assurance', 'empathy'];
+                    $radarCx = 100;
+                    $radarCy = 100;
+                    $radarR = 82;
+                    $radarPoints = [];
+                    $radarLabels = [];
+                    foreach ($dimOrder as $i => $code) {
+                        $score = isset($q->dimension_scores[$code]) ? (float) $q->dimension_scores[$code] : 0;
+                        $angleDeg = -90 + $i * 72;
+                        $rad = deg2rad($angleDeg);
+                        $radarPoints[] = round($radarCx + ($score / 100) * $radarR * cos($rad), 2) . ',' . round($radarCy - ($score / 100) * $radarR * sin($rad), 2);
+                        $labelR = $radarR + 14;
+                        $radarLabels[] = [
+                            'x' => round($radarCx + $labelR * cos($rad), 2),
+                            'y' => round($radarCy - $labelR * sin($rad), 2),
+                            'text' => $dimLabels[$code] ?? $code,
+                        ];
+                    }
+                    $radarPath = implode(' ', $radarPoints);
+                @endphp
                 <div class="mt-4 pt-3 border-t border-stone-200">
+                    <p class="text-xs font-medium text-stone-500 mb-2">نمودار راداری ابعاد</p>
+                    <figure class="flex justify-center my-3" style="min-height: 220px;" aria-hidden="true">
+                        <svg viewBox="0 0 200 200" role="img" aria-label="نمودار راداری ابعاد SERVQUAL" style="max-width: 220px; height: auto;" class="mx-auto">
+                            <defs>
+                                <linearGradient id="servqual-radar-fill" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#059669;stop-opacity:0.35" />
+                                    <stop offset="100%" style="stop-color:#047857;stop-opacity:0.12" />
+                                </linearGradient>
+                            </defs>
+                            {{-- Grid: concentric circles at 25, 50, 75, 100 --}}
+                            @foreach([25, 50, 75, 100] as $pct)
+                                <circle cx="{{ $radarCx }}" cy="{{ $radarCy }}" r="{{ ($pct/100) * $radarR }}" fill="none" stroke="#e7e5e4" stroke-width="0.5" />
+                            @endforeach
+                            {{-- Grid: 5 axes --}}
+                            @foreach($dimOrder as $i => $code)
+                                @php
+                                    $angleDeg = -90 + $i * 72;
+                                    $rad = deg2rad($angleDeg);
+                                    $ax = $radarCx + $radarR * cos($rad);
+                                    $ay = $radarCy - $radarR * sin($rad);
+                                @endphp
+                                <line x1="{{ $radarCx }}" y1="{{ $radarCy }}" x2="{{ round($ax, 2) }}" y2="{{ round($ay, 2) }}" stroke="#d6d3d1" stroke-width="0.8" />
+                            @endforeach
+                            {{-- Data polygon --}}
+                            <polygon points="{{ $radarPath }}" fill="url(#servqual-radar-fill)" stroke="#047857" stroke-width="1.8" stroke-linejoin="round" />
+                            {{-- Axis labels --}}
+                            @foreach($radarLabels as $l)
+                                <text x="{{ $l['x'] }}" y="{{ $l['y'] }}" text-anchor="middle" dominant-baseline="middle" fill="#57534e" font-size="9" font-weight="500" direction="rtl">{{ $l['text'] }}</text>
+                            @endforeach
+                        </svg>
+                    </figure>
                     <p class="text-xs font-medium text-stone-500 mb-2">امتیاز و فاصله به تفکیک بعد</p>
                     <div class="flex flex-wrap gap-3">
                         @foreach($q->dimension_scores as $code => $score)

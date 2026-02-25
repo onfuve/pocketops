@@ -3,6 +3,16 @@
 
 @section('title', $contact->name . ' — ' . config('app.name'))
 
+@push('styles')
+<style>
+.servqual-details summary { list-style: none; }
+.servqual-details summary::-webkit-details-marker { display: none; }
+.servqual-details[open] .servqual-details-chevron { transform: rotate(180deg); }
+.servqual-details-chevron { margin-inline-start: auto; display: inline-block; }
+.servqual-radar-label { font-size: 10px !important; font-weight: 500; font-family: inherit; }
+</style>
+@endpush
+
 @section('content')
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div class="min-w-0">
@@ -87,34 +97,40 @@
                 'empathy' => 'همدلی',
             ];
         @endphp
-        <div class="card mb-6" style="border: 2px solid #e7e5e4; border-radius: 1rem; padding: 1.5rem;">
-            <h2 class="mb-3 text-base font-semibold text-stone-800" style="display: flex; align-items: center; gap: 0.5rem;">
-                @include('components._icons', ['name' => 'check', 'class' => 'w-4 h-4'])
-                شاخص کیفیت خدمات (SERVQUAL)
-            </h2>
-            <div class="flex flex-wrap gap-4 items-center">
-                <div>
-                    <span class="text-sm text-stone-500">امتیاز درک (P)</span>
-                    <p class="text-xl font-bold" style="color: #047857;">{{ $q->overall_score !== null ? round($q->overall_score, 1) : '—' }}</p>
-                </div>
-                @if($q->overall_gap !== null)
-                    <div>
-                        <span class="text-sm text-stone-500">فاصله (Gap = P − E)</span>
-                        <p class="text-xl font-bold" style="color: {{ $q->overall_gap >= 0 ? '#047857' : '#b91c1c' }};">{{ round($q->overall_gap, 1) }}</p>
-                        <p class="text-xs text-stone-400">مثبت = فراتر از انتظار</p>
+        <div class="card mb-6" style="border: 2px solid #e7e5e4; border-radius: 1rem; overflow: hidden;">
+            <details class="servqual-details" open>
+                <summary class="cursor-pointer list-none select-none px-4 py-3 hover:bg-stone-50/80 transition-colors" style="border-radius: 1rem;">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <h2 class="text-base font-semibold text-stone-800 m-0" style="display: flex; align-items: center; gap: 0.5rem;">
+                            @include('components._icons', ['name' => 'check', 'class' => 'w-4 h-4'])
+                            شاخص کیفیت خدمات (SERVQUAL)
+                        </h2>
+                        <div class="flex flex-wrap gap-4 items-center">
+                            <div>
+                                <span class="text-sm text-stone-500">امتیاز درک (P)</span>
+                                <p class="text-xl font-bold m-0" style="color: #047857;">{{ $q->overall_score !== null ? round($q->overall_score, 1) : '—' }}</p>
+                            </div>
+                            @if($q->overall_gap !== null)
+                                <div>
+                                    <span class="text-sm text-stone-500">فاصله (Gap)</span>
+                                    <p class="text-xl font-bold m-0" style="color: {{ $q->overall_gap >= 0 ? '#047857' : '#b91c1c' }};">{{ round($q->overall_gap, 1) }}</p>
+                                </div>
+                            @endif
+                            <div>
+                                <span class="text-sm text-stone-500">دسته</span>
+                                <p class="font-medium m-0">{{ $bandLabel }}</p>
+                            </div>
+                            @if(!empty($q->risk_flags))
+                                <div>
+                                    <span class="text-sm text-stone-500">هشدار</span>
+                                    <p class="text-amber-600 font-medium m-0">{{ implode('، ', array_map(fn ($f) => $f === 'account_risk' ? 'خطر از دست دادن مشتری' : ($f === 'reputation_risk' ? 'ریسک اعتبار' : $f), $q->risk_flags)) }}</p>
+                                </div>
+                            @endif
+                        </div>
+                        <span class="servqual-details-chevron ml-auto text-stone-400 transition-transform" style="font-size: 1.25rem;" aria-hidden="true">▼</span>
                     </div>
-                @endif
-                <div>
-                    <span class="text-sm text-stone-500">دسته</span>
-                    <p class="font-medium">{{ $bandLabel }}</p>
-                </div>
-                @if(!empty($q->risk_flags))
-                    <div>
-                        <span class="text-sm text-stone-500">هشدار</span>
-                        <p class="text-amber-600 font-medium">{{ implode('، ', array_map(fn ($f) => $f === 'account_risk' ? 'خطر از دست دادن مشتری' : ($f === 'reputation_risk' ? 'ریسک اعتبار' : $f), $q->risk_flags)) }}</p>
-                    </div>
-                @endif
-            </div>
+                </summary>
+                <div style="padding: 0 1.5rem 1.5rem; border-top: 1px solid #e7e5e4;">
             @if(is_array($q->dimension_scores) && count($q->dimension_scores) > 0)
                 @php
                     $dimOrder = ['tangibles', 'reliability', 'responsiveness', 'assurance', 'empathy'];
@@ -165,7 +181,7 @@
                             <polygon points="{{ $radarPath }}" fill="url(#servqual-radar-fill)" stroke="#047857" stroke-width="1.8" stroke-linejoin="round" />
                             {{-- Axis labels --}}
                             @foreach($radarLabels as $l)
-                                <text x="{{ $l['x'] }}" y="{{ $l['y'] }}" text-anchor="middle" dominant-baseline="middle" fill="#57534e" font-size="9" font-weight="500" direction="rtl">{{ $l['text'] }}</text>
+                                <text x="{{ $l['x'] }}" y="{{ $l['y'] }}" text-anchor="middle" dominant-baseline="middle" fill="#57534e" direction="rtl" class="servqual-radar-label">{{ $l['text'] }}</text>
                             @endforeach
                         </svg>
                     </figure>
@@ -190,6 +206,8 @@
             @if($q->last_calculated_at)
                 <p class="mt-2 text-xs text-stone-400">آخرین به‌روزرسانی: {{ $q->last_calculated_at->diffForHumans() }}</p>
             @endif
+                </div>
+            </details>
         </div>
     @endif
 

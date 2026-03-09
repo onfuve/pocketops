@@ -1,4 +1,4 @@
-@php use App\Helpers\FormatHelper; use App\Models\Invoice; @endphp
+@php use App\Helpers\FormatHelper; use App\Models\Invoice; use App\Models\ContactTransaction; use Illuminate\Support\Str; @endphp
 @extends('layouts.app')
 
 @section('title', 'تراکنش‌های ' . $contact->name . ' — ' . config('app.name'))
@@ -81,6 +81,64 @@
                                     @else
                                         <span class="badge badge-accent">خرید</span>
                                     @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
+
+    {{-- Contact transactions (receive/pay without invoice) --}}
+    <div class="card mb-6">
+        <h2 class="mb-4 border-b pb-3 text-base font-semibold text-stone-800" style="border-color: #e7e5e4;">دریافت / پرداخت (بدون فاکتور)</h2>
+        <p class="mb-4 text-sm text-stone-500">تراکنش‌های مستقیم با این مخاطب یا از طریق مخاطب دیگر — بدون ارتباط به فاکتور.</p>
+        @if (!isset($contactTransactions) || $contactTransactions->isEmpty())
+            <div class="empty-state">
+                <p class="mb-3" style="color: #57534e;">تراکنش بدون فاکتور ثبت نشده است.</p>
+                <a href="{{ route('contacts.receive-pay', $contact) }}" class="font-semibold underline" style="color: #059669;">ثبت دریافت / پرداخت</a>
+            </div>
+        @else
+            <div class="overflow-x-auto -mx-5 sm:mx-0">
+                <table class="min-w-full text-right text-sm border-collapse">
+                    <thead>
+                        <tr class="bg-stone-100 border-b-2 border-stone-300">
+                            <th class="px-4 py-3 text-xs font-semibold text-stone-700 border-l border-stone-200">تاریخ</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-stone-700 border-l border-stone-200">مبلغ</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-stone-700 border-l border-stone-200">نوع</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-stone-700 border-l border-stone-200">طرف معامله / حساب</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-stone-700 border-l border-stone-200">یادداشت</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-stone-700">عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-stone-200">
+                        @foreach($contactTransactions as $t)
+                            <tr class="hover:bg-stone-50 transition">
+                                <td class="px-4 py-3 text-stone-700 border-l border-stone-200">{{ FormatHelper::shamsi($t->paid_at) }}</td>
+                                <td class="px-4 py-3 font-medium text-stone-800 border-l border-stone-200 font-vazir">{{ FormatHelper::rial($t->amount) }}</td>
+                                <td class="px-4 py-3 border-l border-stone-200">
+                                    @if($t->type === ContactTransaction::TYPE_RECEIVE)
+                                        <span class="badge badge-primary">دریافت</span>
+                                    @else
+                                        <span class="badge badge-accent">پرداخت</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 border-l border-stone-200">
+                                    @if($t->paymentOption)
+                                        {{ $t->paymentOption->label ?: ($t->paymentOption->holder_name ?? $t->paymentOption->bank_name ?? '—') }}
+                                    @elseif($t->counterpartyContact)
+                                        <a href="{{ route('contacts.show', $t->counterpartyContact) }}" class="font-medium hover:underline" style="color: #047857;">{{ $t->counterpartyContact->name }}</a>
+                                    @else — @endif
+                                </td>
+                                <td class="px-4 py-3 text-stone-600 border-l border-stone-200">{{ $t->notes ? Str::limit($t->notes, 40) : '—' }}</td>
+                                <td class="px-4 py-3">
+                                    <a href="{{ route('contacts.transactions.edit', [$contact, $t]) }}" class="btn-secondary text-sm py-1.5 px-3" style="display: inline-flex; align-items: center; gap: 0.375rem;">ویرایش</a>
+                                    <form method="post" action="{{ route('contacts.transactions.destroy', [$contact, $t]) }}" class="inline" onsubmit="return confirm('حذف این تراکنش؟');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn-secondary text-sm py-1.5 px-3" style="display: inline-flex; align-items: center; gap: 0.375rem; color: #b91c1c; border-color: #fecaca;">حذف</button>
+                                    </form>
                                 </td>
                             </tr>
                         @endforeach

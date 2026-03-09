@@ -71,6 +71,9 @@ Route::post('contacts/bulk-delete', [ContactController::class, 'bulkDelete'])->n
 Route::get('contacts/{contact}/address-label', [ContactController::class, 'addressLabel'])->name('contacts.address-label');
 Route::get('contacts/{contact}/receive-pay', [ContactController::class, 'showReceivePay'])->name('contacts.receive-pay');
 Route::post('contacts/{contact}/receive-pay', [ContactController::class, 'submitReceivePay'])->name('contacts.receive-pay.submit');
+Route::get('contacts/{contact}/transactions/{transaction}/edit', [ContactController::class, 'editContactTransaction'])->name('contacts.transactions.edit')->where(['contact' => '[0-9]+', 'transaction' => '[0-9]+']);
+Route::put('contacts/{contact}/transactions/{transaction}', [ContactController::class, 'updateContactTransaction'])->name('contacts.transactions.update')->where(['contact' => '[0-9]+', 'transaction' => '[0-9]+']);
+Route::delete('contacts/{contact}/transactions/{transaction}', [ContactController::class, 'destroyContactTransaction'])->name('contacts.transactions.destroy')->where(['contact' => '[0-9]+', 'transaction' => '[0-9]+']);
 Route::post('leads/{lead}/convert-to-contact', [LeadController::class, 'convertToContact'])->name('leads.convert-to-contact');
 Route::get('leads/{lead}/create-invoice', [LeadController::class, 'createInvoiceFromLead'])->name('leads.create-invoice');
 Route::post('leads/{lead}/assign', [LeadController::class, 'assignLead'])->name('leads.assign');

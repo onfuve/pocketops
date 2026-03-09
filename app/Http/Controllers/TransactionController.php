@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contact;
+use App\Models\ContactTransaction;
 use App\Models\InvoicePayment;
 use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
-    /** Date-based: all payments (transactions) ordered by date */
+    /** Date-based: all payments (transactions) ordered by date — invoice payments and contact receive/pay */
     public function byDate(Request $request)
     {
         $user = $request->user();
@@ -22,7 +23,20 @@ class TransactionController extends Controller
             $query->whereDate('paid_at', '<=', $request->to);
         }
         $transactions = $query->paginate(30)->withQueryString();
-        return view('transactions.by-date', compact('transactions'));
+
+        // Contact transactions (receive/pay without invoice) — same date filter, visible contacts
+        $contactTxQuery = ContactTransaction::with(['contact', 'counterpartyContact', 'paymentOption'])
+            ->whereHas('contact', fn ($q) => $q->visibleToUser($user))
+            ->orderByDesc('paid_at')->orderByDesc('id');
+        if ($request->filled('from')) {
+            $contactTxQuery->whereDate('paid_at', '>=', $request->from);
+        }
+        if ($request->filled('to')) {
+            $contactTxQuery->whereDate('paid_at', '<=', $request->to);
+        }
+        $contactTransactions = $contactTxQuery->paginate(30)->withQueryString();
+
+        return view('transactions.by-date', compact('transactions', 'contactTransactions'));
     }
 
     /** Contact-based: list contacts with balance and their transactions */
@@ -48,12 +62,18 @@ class TransactionController extends Controller
     {
         abort_unless($contact->isVisibleTo(request()->user()), 403, 'شما به این مخاطب دسترسی ندارید.');
 
-        $contact->load(['invoices.payments', 'invoicePaymentsAsCounterparty.invoice']);
+        $contact->load([
+            'invoices.payments',
+            'invoicePaymentsAsCounterparty.invoice',
+            'contactTransactions.counterpartyContact',
+            'contactTransactions.paymentOption',
+        ]);
         $paymentsAsCounterparty = $contact->invoicePaymentsAsCounterparty()
             ->with('invoice.contact')
             ->orderByDesc('paid_at')
             ->get();
+        $contactTransactions = $contact->contactTransactions;
         $invoices = $contact->invoices()->with('payments')->orderByDesc('date')->get();
-        return view('transactions.contact-detail', compact('contact', 'paymentsAsCounterparty', 'invoices'));
+        return view('transactions.contact-detail', compact('contact', 'paymentsAsCounterparty', 'contactTransactions', 'invoices'));
     }
 }

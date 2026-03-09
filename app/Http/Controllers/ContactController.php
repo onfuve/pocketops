@@ -192,6 +192,63 @@ class ContactController extends Controller
         return redirect()->route('contacts.show', $contact)->with('success', $data['type'] === 'receive' ? 'دریافت ثبت شد.' : 'پرداخت ثبت شد.');
     }
 
+    public function editContactTransaction(Contact $contact, ContactTransaction $transaction)
+    {
+        abort_unless($contact->isVisibleTo(request()->user()), 403, 'شما به این مخاطب دسترسی ندارید.');
+        abort_if($transaction->contact_id !== $contact->id, 404, 'تراکنش مربوط به این مخاطب نیست.');
+
+        $transaction->load('counterpartyContact', 'paymentOption');
+        $paymentOptions = PaymentOption::orderBy('sort')->get();
+        return view('contacts.transactions.edit', compact('contact', 'transaction', 'paymentOptions'));
+    }
+
+    public function updateContactTransaction(Request $request, Contact $contact, ContactTransaction $transaction)
+    {
+        abort_unless($contact->isVisibleTo($request->user()), 403, 'شما به این مخاطب دسترسی ندارید.');
+        abort_if($transaction->contact_id !== $contact->id, 404, 'تراکنش مربوط به این مخاطب نیست.');
+
+        $data = $request->validate([
+            'type' => 'required|in:receive,pay',
+            'amount' => 'required|numeric|min:0.01',
+            'paid_at' => 'required|string|max:20',
+            'payment_option_id' => 'nullable|exists:payment_options,id',
+            'counterparty_contact_id' => 'nullable|exists:contacts,id',
+            'notes' => 'nullable|string',
+        ]);
+        if (empty($data['payment_option_id']) && empty($data['counterparty_contact_id'])) {
+            return back()->withErrors(['payment_option_id' => 'یکی از حساب بانکی یا مخاطب طرف معامله را انتخاب کنید.'])->withInput();
+        }
+        if (!empty($data['payment_option_id']) && !empty($data['counterparty_contact_id'])) {
+            return back()->withErrors(['payment_option_id' => 'فقط یکی از حساب بانکی یا مخاطب را انتخاب کنید.'])->withInput();
+        }
+        $paidAt = trim($data['paid_at']);
+        $gregorian = FormatHelper::shamsiToGregorian($paidAt);
+        if ($gregorian === null) {
+            return back()->withErrors(['paid_at' => 'تاریخ شمسی معتبر نیست. فرمت: ۱۴۰۳/۱۱/۱۳'])->withInput();
+        }
+        $data['paid_at'] = $gregorian;
+
+        $transaction->reverseBalances();
+        if (!empty($data['payment_option_id'])) {
+            $data['counterparty_contact_id'] = null;
+        } else {
+            $data['payment_option_id'] = null;
+        }
+        $transaction->update($data);
+        $transaction->applyBalances();
+        return redirect()->route('transactions.contact-detail', $contact)->with('success', 'تراکنش به‌روزرسانی شد.');
+    }
+
+    public function destroyContactTransaction(Request $request, Contact $contact, ContactTransaction $transaction)
+    {
+        abort_unless($contact->isVisibleTo($request->user()), 403, 'شما به این مخاطب دسترسی ندارید.');
+        abort_if($transaction->contact_id !== $contact->id, 404, 'تراکنش مربوط به این مخاطب نیست.');
+
+        $transaction->reverseBalances();
+        $transaction->delete();
+        return redirect()->route('transactions.contact-detail', $contact)->with('success', 'تراکنش حذف شد.');
+    }
+
     public function edit(Contact $contact)
     {
         abort_unless(request()->user()->canModule('contacts', \App\Models\User::ABILITY_EDIT), 403, 'شما مجوز ویرایش مخاطب را ندارید.');

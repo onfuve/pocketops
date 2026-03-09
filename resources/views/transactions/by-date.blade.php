@@ -1,4 +1,4 @@
-@php use App\Helpers\FormatHelper; use App\Models\Invoice; @endphp
+@php use App\Helpers\FormatHelper; use App\Models\Invoice; use App\Models\ContactTransaction; @endphp
 @extends('layouts.app')
 @section('title', 'تراکنش‌ها بر اساس تاریخ')
 @section('content')
@@ -24,7 +24,9 @@
             </form>
         </div>
     </div>
-    <div class="card">
+    {{-- Invoice-based transactions --}}
+    <div class="card mb-4">
+        <h5 class="card-header">پرداخت‌های مرتبط با فاکتور</h5>
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
@@ -63,6 +65,61 @@
         </div>
         @if($transactions->hasPages())
             <div class="card-footer">{{ $transactions->links() }}</div>
+        @endif
+    </div>
+
+    {{-- Contact receive/pay (no invoice) --}}
+    <div class="card">
+        <h5 class="card-header">دریافت / پرداخت (بدون فاکتور)</h5>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>تاریخ</th>
+                        <th>مبلغ</th>
+                        <th>نوع</th>
+                        <th>مخاطب</th>
+                        <th>طرف معامله / حساب</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($contactTransactions as $t)
+                    <tr>
+                        <td>{{ FormatHelper::shamsi($t->paid_at) }}</td>
+                        <td>{{ FormatHelper::rial($t->amount) }}</td>
+                        <td>
+                            @if($t->type === ContactTransaction::TYPE_RECEIVE)
+                                <span class="badge bg-success">دریافت</span>
+                            @else
+                                <span class="badge bg-warning text-dark">پرداخت</span>
+                            @endif
+                        </td>
+                        <td><a href="{{ route('contacts.show', $t->contact) }}">{{ $t->contact->name }}</a></td>
+                        <td>
+                            @if($t->paymentOption)
+                                <i class="fas fa-university me-1"></i>{{ $t->paymentOption->label ?: ($t->paymentOption->holder_name ?? $t->paymentOption->bank_name ?? '—') }}
+                            @elseif($t->counterpartyContact)
+                                <i class="fas fa-user me-1"></i><a href="{{ route('contacts.show', $t->counterpartyContact) }}">{{ $t->counterpartyContact->name }}</a>
+                            @else — @endif
+                        </td>
+                        <td>
+                            <a href="{{ route('contacts.transactions.edit', [$t->contact, $t]) }}" class="btn btn-sm btn-outline-secondary">ویرایش</a>
+                            <form method="post" action="{{ route('contacts.transactions.destroy', [$t->contact, $t]) }}" class="d-inline" onsubmit="return confirm('حذف این تراکنش؟');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-outline-danger">حذف</button>
+                            </form>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="6" class="text-center text-muted">تراکنش بدون فاکتور یافت نشد.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        @if($contactTransactions->hasPages())
+            <div class="card-footer">{{ $contactTransactions->links() }}</div>
         @endif
     </div>
 </div>

@@ -38,7 +38,7 @@
             .invoice {
                 width: 148mm !important;
                 max-width: 148mm !important;
-                margin: 0 auto !important;
+                margin: 6mm auto 0 auto !important;
                 padding: 5mm 8mm 8mm 8mm !important;
                 overflow: hidden;
             }

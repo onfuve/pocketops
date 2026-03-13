@@ -25,10 +25,6 @@
 
     <div class="ds-form-card">
         <h2 class="ds-form-card-title">ثبت هزینه / پاداش مرتبط با این فاکتور</h2>
-        <p class="text-sm text-stone-500 mb-4">
-            این فرم یک «دریافت / پرداخت» جدید ایجاد می‌کند که می‌توانید آن را برای هر مخاطبی ثبت کنید:
-            مثلاً <strong>پاداش معرفی برای A</strong> یا <strong>هزینه حمل برای پیک</strong>.
-        </p>
 
         <form action="{{ route('invoices.cost-reward.store', $invoice) }}" method="post" class="space-y-5 max-w-xl">
             @csrf
@@ -51,14 +47,11 @@
                 <label class="ds-label">مخاطب دریافت‌کننده هزینه / پاداش <span style="color:#b91c1c;">*</span></label>
                 <input type="hidden" name="contact_id" id="contact_id" value="{{ old('contact_id') }}">
                 <input type="text" id="contact_search" value="{{ old('contact_name') }}"
-                       class="ds-input @error('contact_id') border-red-500 @enderror" placeholder="جستجو نام مخاطب (مثلاً معرف A یا پیک)" autocomplete="off">
+                       class="ds-input @error('contact_id') border-red-500 @enderror" placeholder="جستجو نام مخاطب" autocomplete="off">
                 <div id="contact_results" class="dropdown-results" style="display:none;"></div>
                 @error('contact_id')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
-                <p class="mt-1 text-xs text-stone-500">
-                    برای پاداش معرفی: مخاطب را روی معرف (A) بگذارید و در یادداشت نام خریدار (B) را بنویسید.
-                </p>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -110,7 +103,7 @@
 
             <div>
                 <label class="ds-label">یادداشت</label>
-                <textarea name="notes" rows="2" class="ds-textarea" placeholder="مثال: پاداش معرفی برای فروش لپ‌تاپ به B — فاکتور {{ $invoice->invoice_number ?: '#' . $invoice->id }}">{{ old('notes') }}</textarea>
+                <textarea name="notes" rows="2" class="ds-textarea" placeholder="مثال: هزینه حمل یا پاداش مرتبط با این فاکتور">{{ old('notes') }}</textarea>
             </div>
 
             @isset($tags)

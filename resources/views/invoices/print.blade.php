@@ -10,36 +10,36 @@
     <link href="{{ asset('vendor/fonts/vazirmatn/vazirmatn.css') }}" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
-        /* A5: 148mm × 210mm. Content area = 128mm wide (148 - 10*2) so right/left fit inside page. */
+        /* A5: 148mm × 210mm. We keep our own inner margins and assume some browsers may add unchangeable outer margins. */
         @page {
             size: 148mm 210mm;
-            margin: 10mm;
+            margin: 0;
         }
         @media print {
             html {
                 margin: 0 !important;
                 padding: 0 !important;
-                width: 148mm !important;
-                min-height: 210mm !important;
+                width: 100% !important;
+                min-height: 100% !important;
                 background: #fff !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
             body {
-                margin: 0 auto !important;
-                padding: 0 2mm !important;
-                width: 124mm !important;
-                max-width: 124mm !important;
-                min-height: 190mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: 100% !important;
                 background: #fff !important;
                 font-size: 11px !important;
             }
             .no-print { display: none !important; }
             .invoice {
-                width: 100% !important;
-                max-width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
+                width: 148mm !important;
+                max-width: 148mm !important;
+                margin: 0 auto !important;
+                padding: 5mm 8mm 8mm 8mm !important;
                 overflow: hidden;
             }
         }

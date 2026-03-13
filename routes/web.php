@@ -98,6 +98,8 @@ Route::get('invoices/{invoice}/mark-final', [InvoiceController::class, 'showMark
 Route::post('invoices/{invoice}/mark-final', [InvoiceController::class, 'markFinal'])->name('invoices.mark-final');
 Route::get('invoices/{invoice}/set-paid', [InvoiceController::class, 'showSetPaid'])->name('invoices.set-paid');
 Route::post('invoices/{invoice}/set-paid', [InvoiceController::class, 'submitSetPaid'])->name('invoices.set-paid.submit');
+Route::get('invoices/{invoice}/cost-reward', [InvoiceController::class, 'showCostReward'])->name('invoices.cost-reward.create');
+Route::post('invoices/{invoice}/cost-reward', [InvoiceController::class, 'storeCostReward'])->name('invoices.cost-reward.store');
 Route::delete('invoices/{invoice}/payments/{payment}', [InvoiceController::class, 'destroyPayment'])->name('invoices.payments.destroy')->where(['invoice' => '[0-9]+', 'payment' => '[0-9]+']);
 Route::put('invoices/{invoice}/payment-options', [InvoiceController::class, 'updatePaymentOptions'])->name('invoices.payment-options.update');
 Route::post('invoices/{invoice}/attachments', [InvoiceController::class, 'storeAttachment'])->name('invoices.attachments.store');

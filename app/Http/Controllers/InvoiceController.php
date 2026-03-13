@@ -7,6 +7,7 @@ use App\Models\Attachment;
 use App\Models\PaymentOption;
 use App\Models\Product;
 use App\Models\Contact;
+use App\Models\ContactTransaction;
 use App\Models\FormLink;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
@@ -345,6 +346,86 @@ class InvoiceController extends Controller
         return back()->with('success', 'پرداخت حذف شد.');
     }
 
+    /** Show generic cost/reward سند form for this invoice, with free choice of contact (e.g. referrer). */
+    public function showCostReward(Invoice $invoice)
+    {
+        abort_unless(request()->user()->canModule('invoices', \App\Models\User::ABILITY_VIEW), 403, 'شما به این بخش دسترسی ندارید.');
+        abort_unless($invoice->isVisibleTo(request()->user()), 403, 'شما به این فاکتور دسترسی ندارید.');
+
+        $paymentOptions = PaymentOption::orderBy('sort')->get();
+        $tags = Tag::forCurrentUser()->orderBy('name')->get();
+        $defaultPaidAt = FormatHelper::shamsi(now());
+
+        return view('invoices.cost-reward', compact('invoice', 'paymentOptions', 'tags', 'defaultPaidAt'));
+    }
+
+    /** Store a standalone ContactTransaction as cost/reward related to this invoice (contact is chosen in form). */
+    public function storeCostReward(Request $request, Invoice $invoice)
+    {
+        abort_unless($request->user()->canModule('invoices', \App\Models\User::ABILITY_EDIT), 403, 'شما مجوز ثبت هزینه برای فاکتور را ندارید.');
+        abort_unless($invoice->isVisibleTo($request->user()), 403, 'شما به این فاکتور دسترسی ندارید.');
+
+        $data = $request->validate([
+            'contact_id' => 'required|exists:contacts,id',
+            'amount' => 'required|numeric|min:0.01',
+            'paid_at' => 'required|string|max:20',
+            'payment_option_id' => 'nullable|exists:payment_options,id',
+            'notes' => 'nullable|string',
+            'tag_ids' => 'nullable|array',
+            'tag_ids.*' => 'integer|exists:tags,id',
+            'fee_amount' => 'nullable|numeric|min:0.01',
+        ]);
+
+        // Ensure user can see chosen contact
+        abort_unless(
+            Contact::visibleToUser($request->user())->where('id', $data['contact_id'])->exists(),
+            403,
+            'شما به این مخاطب دسترسی ندارید.'
+        );
+
+        $paidAt = trim($data['paid_at']);
+        $gregorian = FormatHelper::shamsiToGregorian($paidAt);
+        if ($gregorian === null) {
+            return back()->withErrors(['paid_at' => 'تاریخ شمسی معتبر نیست. فرمت: ۱۴۰۳/۱۱/۱۳'])->withInput();
+        }
+
+        $tagIds = $data['tag_ids'] ?? [];
+        $feeAmount = $data['fee_amount'] ?? null;
+        unset($data['tag_ids'], $data['fee_amount']);
+
+        $baseData = [
+            'contact_id' => $data['contact_id'],
+            'type' => \App\Models\ContactTransaction::TYPE_PAY,
+            'amount' => $data['amount'],
+            'paid_at' => $gregorian,
+            'payment_option_id' => $data['payment_option_id'] ?? null,
+            'counterparty_contact_id' => null,
+            'notes' => $data['notes'] ?? null,
+        ];
+
+        // Main cost/reward سند
+        $transaction = ContactTransaction::create($baseData);
+        $transaction->applyBalances();
+        $this->syncCostRewardTags($transaction, $tagIds);
+
+        // Optional separate سند for transaction fee
+        if ($feeAmount) {
+            $feeData = $baseData;
+            $feeData['amount'] = $feeAmount;
+            $feeData['notes'] = trim(($feeData['notes'] ?? '') . ' (کارمزد انتقال)');
+            $feeTx = ContactTransaction::create($feeData);
+            $feeTx->applyBalances();
+
+            $feeTag = Tag::forCurrentUser()->where('name', 'کارمزد انتقال')->first();
+            if ($feeTag) {
+                $feeTx->tags()->syncWithoutDetaching([$feeTag->id]);
+            }
+            $this->syncCostRewardTags($feeTx, $tagIds);
+        }
+
+        return redirect()->route('invoices.show', $invoice)->with('success', 'سند هزینه / پاداش برای این فاکتور ثبت شد.');
+    }
+
     public function print(Invoice $invoice)
     {
         abort_unless($invoice->isVisibleTo(request()->user()), 403, 'شما به این فاکتور دسترسی ندارید.');
@@ -597,6 +678,15 @@ class InvoiceController extends Controller
             ->pluck('id')
             ->toArray();
         $invoice->tags()->sync($validTagIds);
+    }
+
+    private function syncCostRewardTags(ContactTransaction $transaction, array $tagIds): void
+    {
+        $validTagIds = Tag::forCurrentUser()
+            ->whereIn('id', $tagIds)
+            ->pluck('id')
+            ->toArray();
+        $transaction->tags()->sync($validTagIds);
     }
 
     public function storeAttachment(Request $request, Invoice $invoice)

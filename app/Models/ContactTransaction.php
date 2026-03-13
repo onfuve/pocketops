@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class ContactTransaction extends Model
 {
@@ -44,6 +45,11 @@ class ContactTransaction extends Model
     public function counterpartyContact(): BelongsTo
     {
         return $this->belongsTo(Contact::class, 'counterparty_contact_id');
+    }
+
+    public function tags(): MorphToMany
+    {
+        return $this->morphToMany(Tag::class, 'taggable');
     }
 
     /**

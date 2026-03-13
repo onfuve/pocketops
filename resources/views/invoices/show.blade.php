@@ -83,6 +83,12 @@
                     <a href="{{ route('invoices.set-paid', $invoice) }}" class="btn-action btn-action-primary"><span style="color:#fff;">ثبت پرداخت</span></a>
                 @endif
             @endif
+            @if (!$isBuy)
+                <a href="{{ route('invoices.cost-reward.create', $invoice) }}"
+                   class="btn-action btn-action-secondary" title="ثبت سند هزینه یا پاداش (مثلاً پاداش معرفی برای A یا هزینه حمل برای پیک) با انتخاب آزاد مخاطب">
+                    ثبت سند هزینه / پاداش
+                </a>
+            @endif
             <a href="{{ route('invoices.index') }}" class="btn-action btn-action-secondary">لیست فاکتورها</a>
         </div>
     </div>

@@ -1,4 +1,8 @@
-@php use App\Helpers\FormatHelper; @endphp
+@php
+use App\Helpers\FormatHelper;
+    $initialType = old('type', request('type', 'receive'));
+    $initialNotes = old('notes', request('notes'));
+@endphp
 @extends('layouts.app')
 
 @section('title', 'دریافت / پرداخت — ' . $contact->name)
@@ -53,6 +57,17 @@
             <span class="text-stone-600">نام</span>
             <span class="font-semibold text-stone-800">{{ $contact->name }}</span>
         </div>
+        @isset($sourceInvoice)
+            <div class="summary-row">
+                <span class="text-stone-600">سند مرتبط با</span>
+                <span class="font-vazir text-sm">
+                    <a href="{{ route('invoices.show', $sourceInvoice) }}" class="font-medium" style="color:#047857;">
+                        {{ $sourceInvoice->type === \App\Models\Invoice::TYPE_BUY ? 'رسید خرید' : 'فاکتور فروش' }}
+                        {{ $sourceInvoice->invoice_number ?? '#' . $sourceInvoice->id }}
+                    </a>
+                </span>
+            </div>
+        @endisset
         <div class="summary-row">
             <span class="text-stone-600">مانده فعلی</span>
             <span class="font-vazir font-semibold" style="{{ $contact->balance > 0 ? 'color:#047857;' : ($contact->balance < 0 ? 'color:#b45309;' : 'color:#78716c;') }}">{{ FormatHelper::rial(abs($contact->balance)) }} {{ $contact->balance > 0 ? '(بستانکار)' : ($contact->balance < 0 ? '(بدهکار)' : '') }}</span>
@@ -66,17 +81,26 @@
             <div class="form-group">
                 <label>نوع <span style="color:#b91c1c;">*</span></label>
                 <div class="payment-method type-choice">
-                    <input type="radio" name="type" id="type_receive" value="receive" {{ old('type', 'receive') === 'receive' ? 'checked' : '' }}>
+                    <input type="radio" name="type" id="type_receive" value="receive" {{ $initialType === 'receive' ? 'checked' : '' }}>
                     <label for="type_receive">دریافت از این مخاطب</label>
-                    <input type="radio" name="type" id="type_pay" value="pay" {{ old('type') === 'pay' ? 'checked' : '' }}>
+                    <input type="radio" name="type" id="type_pay" value="pay" {{ $initialType === 'pay' ? 'checked' : '' }}>
                     <label for="type_pay">پرداخت به این مخاطب</label>
                 </div>
                 <p class="text-muted">دریافت: این مخاطب به شما پرداخت کرده. پرداخت: شما به این مخاطب پرداخت کرده‌اید.</p>
             </div>
+            <p class="text-muted" style="margin-top:-0.5rem;margin-bottom:1.25rem;">
+                برای طرف‌های عمومی مثل پیک یا شرکت حمل، یک مخاطب بسازید (مثلاً «پیک شهری») و اینجا همان مخاطب را انتخاب کنید، سپس با برچسب‌هایی مثل «هزینه حمل» یا «کارمزد انتقال» دسته‌بندی کنید.
+            </p>
             <div class="form-group">
                 <label>مبلغ (ریال) <span style="color:#b91c1c;">*</span></label>
                 <input type="number" name="amount" id="amount" value="{{ old('amount') }}" min="1" required class="@error('amount') border-red-500 @enderror" dir="ltr" style="text-align:left;">
                 @error('amount')<p class="text-danger">{{ $message }}</p>@enderror
+            </div>
+            <div class="form-group" id="fee_group" style="{{ old('type', request('type', 'receive')) === 'pay' ? '' : 'display:none;' }}">
+                <label>کارمزد انتقال (ریال)</label>
+                <input type="number" name="fee_amount" id="fee_amount" value="{{ old('fee_amount') }}" min="1" class="@error('fee_amount') border-red-500 @enderror" dir="ltr" style="text-align:left;">
+                <p class="text-muted">در صورت وارد کردن، یک سند جداگانه برای کارمزد (با همان تاریخ و روش پرداخت) ثبت می‌شود.</p>
+                @error('fee_amount')<p class="text-danger">{{ $message }}</p>@enderror
             </div>
             <div class="form-group">
                 <label>تاریخ (شمسی) <span style="color:#b91c1c;">*</span></label>
@@ -128,8 +152,11 @@
             </div>
             <div class="form-group">
                 <label>یادداشت</label>
-                <textarea name="notes" rows="2" placeholder="اختیاری">{{ old('notes') }}</textarea>
+                <textarea name="notes" rows="2" placeholder="مثال: کارمزد انتقال، هزینه پست، تعمیرات دستگاه …">{{ $initialNotes }}</textarea>
             </div>
+            @isset($tags)
+                @include('components._tag-section', ['tags' => $tags, 'entity' => null, 'embedded' => true])
+            @endisset
             @error('payment_option_id')<p class="text-danger">{{ $message }}</p>@enderror
             @error('counterparty_contact_id')<p class="text-danger">{{ $message }}</p>@enderror
             <div class="flex flex-wrap items-center gap-3 mt-6">
@@ -172,9 +199,21 @@
             panelContact.classList.add('active');
             bankSelect.value = '';
         }
+        var feeGroup = document.getElementById('fee_group');
+        var feeInput = document.getElementById('fee_amount');
+        if (feeGroup && feeInput) {
+            if (document.getElementById('type_pay').checked) {
+                feeGroup.style.display = '';
+            } else {
+                feeGroup.style.display = 'none';
+                feeInput.value = '';
+            }
+        }
     }
     payTypeBank.addEventListener('change', togglePanels);
     payTypeContact.addEventListener('change', togglePanels);
+    document.getElementById('type_receive').addEventListener('change', togglePanels);
+    document.getElementById('type_pay').addEventListener('change', togglePanels);
 
     function showChosen(name) {
         chosenName.textContent = name;

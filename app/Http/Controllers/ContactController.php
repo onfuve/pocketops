@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FormatHelper;
-use App\Models\PaymentOption;
 use App\Models\Contact;
 use App\Models\ContactPhone;
 use App\Models\ContactTransaction;
+use App\Models\Invoice;
+use App\Models\PaymentOption;
 use App\Models\Setting;
 use App\Models\Tag;
 use Illuminate\Http\Request;
@@ -159,7 +160,17 @@ class ContactController extends Controller
 
         $paymentOptions = PaymentOption::orderBy('sort')->get();
         $defaultPaidAt = FormatHelper::shamsi(now());
-        return view('contacts.receive-pay', compact('contact', 'paymentOptions', 'defaultPaidAt'));
+        $tags = Tag::forCurrentUser()->orderBy('name')->get();
+        $sourceInvoice = null;
+        $invoiceId = request()->query('invoice_id');
+        if ($invoiceId) {
+            $sourceInvoice = Invoice::query()
+                ->visibleToUser(request()->user())
+                ->with('contact')
+                ->find($invoiceId);
+        }
+
+        return view('contacts.receive-pay', compact('contact', 'paymentOptions', 'defaultPaidAt', 'tags', 'sourceInvoice'));
     }
 
     public function submitReceivePay(Request $request, Contact $contact)
@@ -173,6 +184,9 @@ class ContactController extends Controller
             'payment_option_id' => 'nullable|exists:payment_options,id',
             'counterparty_contact_id' => 'nullable|exists:contacts,id',
             'notes' => 'nullable|string',
+            'tag_ids' => 'nullable|array',
+            'tag_ids.*' => 'integer|exists:tags,id',
+            'fee_amount' => 'nullable|numeric|min:0.01',
         ]);
         if (empty($data['payment_option_id']) && empty($data['counterparty_contact_id'])) {
             return back()->withErrors(['payment_option_id' => 'یکی از حساب بانکی یا مخاطب طرف معامله را انتخاب کنید.'])->withInput();
@@ -187,8 +201,31 @@ class ContactController extends Controller
         }
         $data['paid_at'] = $gregorian;
         $data['contact_id'] = $contact->id;
+        $feeAmount = $data['fee_amount'] ?? null;
+        unset($data['fee_amount']);
+
         $transaction = ContactTransaction::create($data);
         $transaction->applyBalances();
+        $this->syncTransactionTags($transaction, $request->input('tag_ids', []));
+
+        // Optional separate سند for transaction fee when paying (bank-style fee line)
+        if ($feeAmount && $data['type'] === ContactTransaction::TYPE_PAY) {
+            $feeData = $data;
+            $feeData['amount'] = $feeAmount;
+            $feeData['notes'] = trim(($feeData['notes'] ?? '') . ' (کارمزد انتقال)');
+            $feeTx = ContactTransaction::create($feeData);
+            $feeTx->applyBalances();
+
+            // Auto-tag with "کارمزد انتقال" if such a tag exists for current user
+            $feeTag = Tag::forCurrentUser()->where('name', 'کارمزد انتقال')->first();
+            if ($feeTag) {
+                $feeTx->tags()->syncWithoutDetaching([$feeTag->id]);
+            }
+            $extraTagIds = $request->input('tag_ids', []);
+            if (!empty($extraTagIds)) {
+                $this->syncTransactionTags($feeTx, $extraTagIds);
+            }
+        }
         return redirect()->route('contacts.show', $contact)->with('success', $data['type'] === 'receive' ? 'دریافت ثبت شد.' : 'پرداخت ثبت شد.');
     }
 
@@ -197,9 +234,10 @@ class ContactController extends Controller
         abort_unless($contact->isVisibleTo(request()->user()), 403, 'شما به این مخاطب دسترسی ندارید.');
         abort_if($transaction->contact_id !== $contact->id, 404, 'تراکنش مربوط به این مخاطب نیست.');
 
-        $transaction->load('counterpartyContact', 'paymentOption');
+        $transaction->load('counterpartyContact', 'paymentOption', 'tags');
         $paymentOptions = PaymentOption::orderBy('sort')->get();
-        return view('contacts.transactions.edit', compact('contact', 'transaction', 'paymentOptions'));
+        $tags = Tag::forCurrentUser()->orderBy('name')->get();
+        return view('contacts.transactions.edit', compact('contact', 'transaction', 'paymentOptions', 'tags'));
     }
 
     public function updateContactTransaction(Request $request, Contact $contact, ContactTransaction $transaction)
@@ -214,6 +252,8 @@ class ContactController extends Controller
             'payment_option_id' => 'nullable|exists:payment_options,id',
             'counterparty_contact_id' => 'nullable|exists:contacts,id',
             'notes' => 'nullable|string',
+            'tag_ids' => 'nullable|array',
+            'tag_ids.*' => 'integer|exists:tags,id',
         ]);
         if (empty($data['payment_option_id']) && empty($data['counterparty_contact_id'])) {
             return back()->withErrors(['payment_option_id' => 'یکی از حساب بانکی یا مخاطب طرف معامله را انتخاب کنید.'])->withInput();
@@ -236,6 +276,7 @@ class ContactController extends Controller
         }
         $transaction->update($data);
         $transaction->applyBalances();
+        $this->syncTransactionTags($transaction, $request->input('tag_ids', []));
         return redirect()->route('transactions.contact-detail', $contact)->with('success', 'تراکنش به‌روزرسانی شد.');
     }
 
@@ -518,6 +559,15 @@ class ContactController extends Controller
             ->pluck('id')
             ->toArray();
         $contact->tags()->sync($validTagIds);
+    }
+
+    private function syncTransactionTags(ContactTransaction $transaction, array $tagIds): void
+    {
+        $validTagIds = Tag::forCurrentUser()
+            ->whereIn('id', $tagIds)
+            ->pluck('id')
+            ->toArray();
+        $transaction->tags()->sync($validTagIds);
     }
 
     /** Normalize text: trim, collapse multiple spaces, Arabic ك/ي/ى → Persian ک/ی */

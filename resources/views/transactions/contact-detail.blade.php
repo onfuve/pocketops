@@ -93,7 +93,10 @@
     {{-- Contact transactions (receive/pay without invoice) --}}
     <div class="card mb-6">
         <h2 class="mb-4 border-b pb-3 text-base font-semibold text-stone-800" style="border-color: #e7e5e4;">دریافت / پرداخت (بدون فاکتور)</h2>
-        <p class="mb-4 text-sm text-stone-500">تراکنش‌های مستقیم با این مخاطب یا از طریق مخاطب دیگر — بدون ارتباط به فاکتور.</p>
+        <p class="mb-4 text-sm text-stone-500">
+            تراکنش‌های مستقیم با این مخاطب یا از طریق مخاطب دیگر — بدون ارتباط به فاکتور.
+            برای هزینه‌ها و کارمزدها (مثل «هزینه حمل»، «کارمزد انتقال»، «نگهداری تجهیزات») از برچسب‌ها استفاده کنید تا بعداً بتوانید گزارش شفاف‌تری بگیرید.
+        </p>
         @if (!isset($contactTransactions) || $contactTransactions->isEmpty())
             <div class="empty-state">
                 <p class="mb-3" style="color: #57534e;">تراکنش بدون فاکتور ثبت نشده است.</p>
@@ -108,6 +111,7 @@
                             <th class="px-4 py-3 text-xs font-semibold text-stone-700 border-l border-stone-200">مبلغ</th>
                             <th class="px-4 py-3 text-xs font-semibold text-stone-700 border-l border-stone-200">نوع</th>
                             <th class="px-4 py-3 text-xs font-semibold text-stone-700 border-l border-stone-200">طرف معامله / حساب</th>
+                            <th class="px-4 py-3 text-xs font-semibold text-stone-700 border-l border-stone-200">برچسب‌ها</th>
                             <th class="px-4 py-3 text-xs font-semibold text-stone-700 border-l border-stone-200">یادداشت</th>
                             <th class="px-4 py-3 text-xs font-semibold text-stone-700">عملیات</th>
                         </tr>
@@ -130,6 +134,17 @@
                                     @elseif($t->counterpartyContact)
                                         <a href="{{ route('contacts.show', $t->counterpartyContact) }}" class="font-medium hover:underline" style="color: #047857;">{{ $t->counterpartyContact->name }}</a>
                                     @else — @endif
+                                </td>
+                                <td class="px-4 py-3 border-l border-stone-200">
+                                    @if($t->tags && $t->tags->isNotEmpty())
+                                        <div class="flex flex-wrap gap-1">
+                                            @foreach($t->tags as $tag)
+                                                <span class="badge" style="background-color: {{ $tag->color }}15; color: {{ $tag->color }}; border: 1px solid {{ $tag->color }}40;">{{ $tag->name }}</span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-stone-400 text-xs">—</span>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 text-stone-600 border-l border-stone-200">{{ $t->notes ? Str::limit($t->notes, 40) : '—' }}</td>
                                 <td class="px-4 py-3">

@@ -25,7 +25,7 @@ class TransactionController extends Controller
         $transactions = $query->paginate(30)->withQueryString();
 
         // Contact transactions (receive/pay without invoice) — same date filter, visible contacts
-        $contactTxQuery = ContactTransaction::with(['contact', 'counterpartyContact', 'paymentOption'])
+        $contactTxQuery = ContactTransaction::with(['contact', 'counterpartyContact', 'paymentOption', 'tags'])
             ->whereHas('contact', fn ($q) => $q->visibleToUser($user))
             ->orderByDesc('paid_at')->orderByDesc('id');
         if ($request->filled('from')) {
@@ -67,6 +67,7 @@ class TransactionController extends Controller
             'invoicePaymentsAsCounterparty.invoice',
             'contactTransactions.counterpartyContact',
             'contactTransactions.paymentOption',
+            'contactTransactions.tags',
         ]);
         $paymentsAsCounterparty = $contact->invoicePaymentsAsCounterparty()
             ->with('invoice.contact')

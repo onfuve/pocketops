@@ -80,6 +80,9 @@ $paymentType = old('payment_type', $transaction->counterparty_contact_id ? 'cont
                 </div>
                 <p class="text-muted">دریافت: این مخاطب به شما پرداخت کرده. پرداخت: شما به این مخاطب پرداخت کرده‌اید.</p>
             </div>
+            <p class="text-muted" style="margin-top:-0.5rem;margin-bottom:1.25rem;">
+                اگر این تراکنش مثلاً کارمزد انتقال یا هزینه حمل است، بهتر است مخاطب واقعی دریافت‌کننده (مثل پیک یا شرکت حمل) را به‌عنوان مخاطب اصلی این تراکنش نگه دارید و از برچسب‌هایی مانند «هزینه حمل»، «کارمزد انتقال»، «نگهداری» برای دسته‌بندی استفاده کنید.
+            </p>
             <div class="form-group">
                 <label>مبلغ (ریال) <span style="color:#b91c1c;">*</span></label>
                 <input type="number" name="amount" id="amount" value="{{ old('amount', $transaction->amount) }}" min="1" required class="@error('amount') border-red-500 @enderror" dir="ltr" style="text-align:left;">
@@ -135,6 +138,9 @@ $paymentType = old('payment_type', $transaction->counterparty_contact_id ? 'cont
             </div>
             @error('payment_option_id')<p class="text-danger">{{ $message }}</p>@enderror
             @error('counterparty_contact_id')<p class="text-danger">{{ $message }}</p>@enderror
+            @isset($tags)
+                @include('components._tag-section', ['tags' => $tags, 'entity' => $transaction, 'embedded' => true])
+            @endisset
             <div class="flex flex-wrap items-center gap-3 mt-6">
                 <button type="submit" class="btn btn-primary px-6 py-3" style="font-size:1rem;"><span style="color:#fff;">ذخیره</span></button>
                 <a href="{{ route('transactions.contact-detail', $contact) }}" class="btn btn-secondary">انصراف</a>

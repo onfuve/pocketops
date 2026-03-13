@@ -80,6 +80,7 @@
                         <th>نوع</th>
                         <th>مخاطب</th>
                         <th>طرف معامله / حساب</th>
+                        <th>برچسب‌ها</th>
                         <th>عملیات</th>
                     </tr>
                 </thead>
@@ -102,6 +103,15 @@
                             @elseif($t->counterpartyContact)
                                 <i class="fas fa-user me-1"></i><a href="{{ route('contacts.show', $t->counterpartyContact) }}">{{ $t->counterpartyContact->name }}</a>
                             @else — @endif
+                        </td>
+                        <td>
+                            @if($t->tags && $t->tags->isNotEmpty())
+                                @foreach($t->tags as $tag)
+                                    <span class="badge bg-light text-dark border" style="border-color: {{ $tag->color }}40; color: {{ $tag->color }}; background-color: {{ $tag->color }}15; margin-inline-start: 0.15rem;">{{ $tag->name }}</span>
+                                @endforeach
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
                         </td>
                         <td>
                             <a href="{{ route('contacts.transactions.edit', [$t->contact, $t]) }}" class="btn btn-sm btn-outline-secondary">ویرایش</a>

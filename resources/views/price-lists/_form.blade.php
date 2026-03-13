@@ -20,11 +20,11 @@
 @endphp
 @push('styles')
 <style>
-.pl-form .section-block { border: 2px solid var(--ds-border); border-radius: var(--ds-radius-lg); padding: 1.25rem; margin-bottom: 1.25rem; background: linear-gradient(to bottom, var(--ds-bg-muted) 0%, var(--ds-bg) 100%); }
-.pl-form .section-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+.pl-form .section-block { border: 2px solid var(--ds-border); border-radius: var(--ds-radius-lg); padding: 1.25rem; margin-bottom: 1.5rem; background: linear-gradient(to bottom, var(--ds-bg-muted) 0%, var(--ds-bg) 100%); }
+.pl-form .section-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
 .pl-form .section-header input { flex: 1; min-width: 0; }
-.pl-form .item-row { display: grid; gap: 1rem; grid-template-columns: 1fr auto; align-items: start; margin-bottom: 0.75rem; padding: 1rem; background: var(--ds-bg); border-radius: var(--ds-radius); border: 1px solid var(--ds-border); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-@media (min-width: 768px) { .pl-form .item-row { grid-template-columns: 1fr 10rem 8rem auto; } }
+.pl-form .item-row { display: grid; gap: 0.75rem; grid-template-columns: 1fr; align-items: start; margin-bottom: 0.75rem; padding: 1rem; background: var(--ds-bg); border-radius: var(--ds-radius); border: 1px solid var(--ds-border); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+@media (min-width: 768px) { .pl-form .item-row { grid-template-columns: 1.4fr 0.8fr 0.7fr auto; } }
 .pl-form .item-row .item-name-wrap { min-width: 0; position: relative; }
 .pl-form .item-row .item-price { min-width: 0; }
 .pl-form .item-row .item-badge { min-width: 0; }
@@ -35,8 +35,12 @@
 .pl-form .item-product-results a:hover { background: var(--ds-bg-subtle); }
 .pl-form .item-product-results a.already-added .item-name-part { text-decoration: line-through; color: var(--ds-text-subtle); }
 .pl-form .item-product-results a.already-added .item-tick { color: #059669; font-weight: bold; flex-shrink: 0; }
-.pl-form .add-section-btn, .pl-form .add-item-btn { font-size: 0.875rem; }
+.pl-form .add-section-btn, .pl-form .add-item-btn { font-size: 0.875rem; width: 100%; max-width: 14rem; }
 .pl-form .hidden { display: none !important; }
+@media (max-width: 640px) {
+    .pl-form .section-header { flex-direction: column; align-items: stretch; }
+    .pl-form .section-header .ds-btn { width: 100%; justify-content: center; }
+}
 </style>
 @endpush
 <form id="price-list-form" action="{{ route('price-lists.update', $priceList) }}" method="post" class="pl-form">
@@ -202,9 +206,10 @@
                     @foreach ($sec['items'] ?? [] as $iIdx => $it)
                     <div class="item-row" data-item-idx="{{ $iIdx }}">
                         <div class="item-name-wrap">
-                            <label class="ds-label" style="font-size: 0.75rem;">کالا</label>
+                            <label class="ds-label" style="font-size: 0.75rem;">نام در لیست (برای مشتری)</label>
                             <input type="hidden" name="sections[{{ $sIdx }}][items][{{ $iIdx }}][product_id]" value="{{ $it['product_id'] ?? '' }}" class="item-product-id">
-                            <input type="text" name="sections[{{ $sIdx }}][items][{{ $iIdx }}][custom_name]" value="{{ $it['custom_name'] ?? ($products->firstWhere('id', $it['product_id'] ?? 0)?->name ?? '') }}" class="ds-input item-name-input" placeholder="جستجو یا تایپ نام کالا…" autocomplete="off">
+                            <input type="text" name="sections[{{ $sIdx }}][items][{{ $iIdx }}][custom_name]" value="{{ $it['custom_name'] ?? ($products->firstWhere('id', $it['product_id'] ?? 0)?->name ?? '') }}" class="ds-input item-name-input" placeholder="نام بازاری یا نامی که مشتری می‌شناسد…" autocomplete="off">
+                            <p style="margin-top:0.25rem;font-size:0.75rem;color:var(--ds-text-subtle);">این نام در لیست به مشتری نمایش داده می‌شود؛ می‌توانید نام کالا را از کاتالوگ جستجو کنید یا نام دلخواه را تایپ کنید.</p>
                             <div class="item-product-results hidden"></div>
                         </div>
                         <div class="item-price">

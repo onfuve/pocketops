@@ -47,6 +47,7 @@
             <p style="font-weight: 600; margin-bottom: 0.5rem;">لینک جدید ساخته شد. این لینک را برای مشتری بفرستید:</p>
             <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
                 <input type="text" readonly value="{{ $newLink->public_url }}" id="form-link-url" style="flex: 1; min-width: 12rem; padding: 0.5rem 0.75rem; border-radius: var(--ds-radius); border: 2px solid var(--ds-border); font-size: 0.875rem;">
+                <a href="{{ $newLink->public_url }}" target="_blank" class="ds-btn ds-btn-secondary">باز کردن فرم</a>
                 <button type="button" class="ds-btn ds-btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('form-link-url').value); this.textContent='کپی شد!'; setTimeout(() => this.textContent='کپی لینک', 1500);">کپی لینک</button>
             </div>
         </div>

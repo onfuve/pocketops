@@ -38,9 +38,11 @@
     @else
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
             @foreach ($priceLists as $pl)
-                <a href="{{ route('price-lists.show', $pl) }}" class="ds-card" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
+                <div class="ds-card" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
                     <div style="min-width: 0; flex: 1;">
-                        <div style="font-weight: 600; font-size: 1rem; color: var(--ds-text);">{{ $pl->name }}</div>
+                        <a href="{{ route('price-lists.show', $pl) }}" style="text-decoration:none;">
+                            <div style="font-weight: 600; font-size: 1rem; color: var(--ds-text);">{{ $pl->name }}</div>
+                        </a>
                         <div style="font-size: 0.875rem; color: var(--ds-text-subtle); margin-top: 0.25rem;">
                             {{ $pl->sections->count() }} بخش · {{ $pl->sections->sum(fn($s) => $s->items->count()) }} آیتم
                             @if ($pl->code)
@@ -50,11 +52,11 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         @if ($pl->code)
-                            <a href="{{ route('price-lists.links', $pl) }}" class="ds-btn ds-btn-outline" style="padding: 0.375rem 0.75rem;" onclick="event.stopPropagation();">لینک</a>
+                            <a href="{{ route('price-lists.links', $pl) }}" class="ds-btn ds-btn-outline" style="padding: 0.375rem 0.75rem;">لینک</a>
                         @endif
-                        <span class="ds-btn ds-btn-outline" style="padding: 0.375rem 0.75rem;">مشاهده</span>
+                        <a href="{{ route('price-lists.show', $pl) }}" class="ds-btn ds-btn-ghost" style="padding: 0.375rem 0.75rem;">مشاهده</a>
                     </div>
-                </a>
+                </div>
             @endforeach
         </div>
 

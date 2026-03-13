@@ -36,6 +36,18 @@
         <div class="ds-alert-success" style="margin-bottom: 1rem;">{{ session('success') }}</div>
     @endif
 
+    <div class="ds-form-card" style="margin-bottom: 1rem;">
+        <form method="get" class="ds-search-row" style="display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">
+            <div style="flex:1; min-width: 180px;">
+                <input type="text" name="q" value="{{ $q ?? '' }}" class="ds-input" placeholder="جستجو در عنوان فرم‌ها…">
+            </div>
+            <button type="submit" class="ds-btn ds-btn-secondary">
+                @include('components._icons', ['name' => 'search', 'class' => 'w-4 h-4'])
+                جستجو
+            </button>
+        </form>
+    </div>
+
     @if ($forms->isEmpty())
         <div class="ds-empty">
             <p style="margin: 0 0 0.5rem 0; color: var(--ds-text-subtle);">هنوز فرمی نساخته‌اید.</p>
@@ -46,9 +58,11 @@
     @else
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
             @foreach ($forms as $form)
-                <a href="{{ route('forms.show', $form) }}" class="ds-card" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
+                <div class="ds-card" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
                     <div>
-                        <div style="font-weight: 600; font-size: 1rem; color: var(--ds-text);">{{ $form->title }}</div>
+                        <a href="{{ route('forms.show', $form) }}" style="text-decoration:none;">
+                            <div style="font-weight: 600; font-size: 1rem; color: var(--ds-text);">{{ $form->title }}</div>
+                        </a>
                         <div style="font-size: 0.8125rem; color: var(--ds-text-subtle); margin-top: 0.25rem;">
                             {{ $form->links_count }} لینک · {{ $form->submissions_count }} ارسال
                             · وضعیت:
@@ -59,9 +73,10 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <a href="{{ route('forms.edit', $form) }}" class="ds-btn ds-btn-ghost" style="padding: 0.5rem 0.75rem;">ویرایش</a>
+                        <a href="{{ route('forms.inbox', ['form_id' => $form->id]) }}" class="ds-btn ds-btn-outline" style="padding: 0.4rem 0.7rem; font-size: 0.8rem;">ارسال‌ها</a>
+                        <a href="{{ route('forms.show', $form) }}" class="ds-btn ds-btn-ghost" style="padding: 0.5rem 0.75rem;">جزئیات</a>
                     </div>
-                </a>
+                </div>
             @endforeach
         </div>
         <div style="margin-top: 1.5rem;">

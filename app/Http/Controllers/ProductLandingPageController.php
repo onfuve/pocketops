@@ -12,14 +12,21 @@ class ProductLandingPageController extends Controller
 {
     public function index(Request $request)
     {
+        $q = $request->get('q');
+
         $pages = ProductLandingPage::query()
             ->with('product')
             ->visibleToUser($request->user())
+            ->when($q, function ($query, $q) {
+                $query->whereHas('product', function ($q2) use ($q) {
+                    $q2->where('name', 'like', '%' . $q . '%');
+                })->orWhere('code', 'like', '%' . $q . '%');
+            })
             ->orderBy('updated_at', 'desc')
             ->paginate(20)
             ->withQueryString();
 
-        return view('product-landing-pages.index', compact('pages'));
+        return view('product-landing-pages.index', compact('pages', 'q'));
     }
 
     public function create()

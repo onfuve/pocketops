@@ -12,14 +12,19 @@ class FormController extends Controller
 {
     public function index(Request $request)
     {
+        $q = $request->get('q');
+
         $forms = Form::query()
             ->visibleToUser($request->user())
+            ->when($q, function ($query, $q) {
+                $query->where('title', 'like', '%' . $q . '%');
+            })
             ->withCount(['links', 'submissions'])
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
-        return view('forms.index', compact('forms'));
+        return view('forms.index', compact('forms', 'q'));
     }
 
     public function create()
@@ -214,14 +219,17 @@ class FormController extends Controller
     /** Inbox: all submissions for current user's forms. */
     public function inbox(Request $request)
     {
+        $formId = $request->get('form_id');
+
         $submissions = FormSubmission::query()
             ->whereHas('form', fn ($q) => $q->visibleToUser($request->user()))
+            ->when($formId, fn ($q) => $q->where('form_id', $formId))
             ->with(['form', 'formLink', 'contact', 'lead'])
             ->latest('updated_at')
             ->paginate(20)
             ->withQueryString();
 
-        return view('forms.inbox', compact('submissions'));
+        return view('forms.inbox', compact('submissions', 'formId'));
     }
 
     public function showSubmission(FormSubmission $submission)

@@ -19,8 +19,30 @@
                 @endif
             </p>
         </div>
-        <a href="{{ route('forms.inbox') }}" class="ds-btn ds-btn-outline">صندوق ورودی</a>
+        <div class="print-hidden" style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+            <button type="button" class="ds-btn ds-btn-primary" onclick="window.print()">
+                @include('components._icons', ['name' => 'printer', 'class' => 'w-4 h-4'])
+                چاپ
+            </button>
+            <a href="{{ route('forms.inbox') }}" class="ds-btn ds-btn-outline">صندوق ورودی</a>
+        </div>
     </div>
+
+    @push('styles')
+    <style>
+    @media print {
+        .print-hidden {
+            display: none !important;
+        }
+        .ds-page {
+            padding: 0 !important;
+        }
+        .ds-page-header {
+            margin-bottom: 0.75rem !important;
+        }
+    }
+    </style>
+    @endpush
 
     @if(isset($invoice) || $submission->contact || $submission->lead || $submission->task)
         <div class="ds-form-card" style="margin-bottom: 1rem;">

@@ -30,6 +30,18 @@
         <div class="ds-alert-success" style="margin-bottom: 1rem;">{{ session('success') }}</div>
     @endif
 
+    <div class="ds-form-card" style="margin-bottom: 1rem;">
+        <form method="get" class="ds-search-row" style="display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">
+            <div style="flex:1; min-width: 180px;">
+                <input type="text" name="q" value="{{ $q ?? '' }}" class="ds-input" placeholder="جستجو بر اساس نام محصول یا کد صفحه…">
+            </div>
+            <button type="submit" class="ds-btn ds-btn-secondary">
+                @include('components._icons', ['name' => 'search', 'class' => 'w-4 h-4'])
+                جستجو
+            </button>
+        </form>
+    </div>
+
     @if ($pages->isEmpty())
         <div class="ds-empty">
             <p style="margin: 0 0 0.5rem 0; color: var(--ds-text-subtle);">هنوز صفحه فرودی ایجاد نشده است.</p>
@@ -49,15 +61,20 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <a href="{{ route('product-landing-pages.edit', $p) }}" class="ds-btn ds-btn-outline" style="padding: 0.375rem 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="event.stopPropagation();">
+                        <a href="{{ route('product-landing-pages.edit', $p) }}" class="ds-btn ds-btn-outline" style="padding: 0.375rem 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem;">
                             @include('components._icons', ['name' => 'pencil', 'class' => 'w-4 h-4'])
                             ویرایش
                         </a>
                         @if ($p->code)
-                            <a href="{{ $p->public_url }}" target="_blank" rel="noopener" class="ds-btn ds-btn-outline" style="padding: 0.375rem 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="event.stopPropagation();">مشاهده</a>
-                            <a href="{{ route('product-landing-pages.links', $p) }}" class="ds-btn ds-btn-outline" style="padding: 0.375rem 0.75rem;" onclick="event.stopPropagation();">لینک</a>
+                            <a href="{{ $p->public_url }}" target="_blank" rel="noopener" class="ds-btn ds-btn-outline" style="padding: 0.375rem 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem;">مشاهده</a>
+                            <a href="{{ route('product-landing-pages.links', $p) }}" class="ds-btn ds-btn-outline" style="padding: 0.375rem 0.75rem;">لینک</a>
                         @else
-                            <span class="ds-btn ds-btn-outline" style="padding: 0.375rem 0.75rem; opacity: 0.7;">کد تولید کنید</span>
+                            <form action="{{ route('product-landing-pages.generate-code', $p) }}" method="post" style="margin:0;">
+                                @csrf
+                                <button type="submit" class="ds-btn ds-btn-outline" style="padding: 0.375rem 0.75rem;">
+                                    تولید کد
+                                </button>
+                            </form>
                         @endif
                     </div>
                 </div>

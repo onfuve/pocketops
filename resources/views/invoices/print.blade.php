@@ -1,5 +1,9 @@
 @php
     use App\Helpers\FormatHelper;
+    use App\Helpers\QrCodeHelper;
+
+    $formUrl = $invoiceFormUrl ?? null;
+    $invoiceQrImgSrc = ($formUrl !== null && $formUrl !== '') ? QrCodeHelper::dataUriImageSrc($formUrl) : null;
 @endphp
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -186,9 +190,13 @@
             </div>
         @endif
 
-        @if (!empty($invoiceFormUrl))
+        @if (! empty($invoiceFormUrl))
             <div class="invoice-qr-block">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=96x96&data={{ urlencode($invoiceFormUrl) }}" alt="QR فرم" width="48" height="48">
+                @if ($invoiceQrImgSrc)
+                    <img src="{{ $invoiceQrImgSrc }}" alt="QR فرم" width="48" height="48">
+                @else
+                    <div class="invoice-qr-fallback" title="{{ $invoiceFormUrl }}" style="width:48px;height:48px;border:1px dashed #78716c;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;line-height:1.1;text-align:center;padding:2px;word-break:break-all;color:#44403c;">QR</div>
+                @endif
                 <div>
                     <div class="qr-label">{{ !empty($invoiceFormDescription) ? $invoiceFormDescription : 'فرم پیوست' }}</div>
                     <div class="qr-cta">اسکن کنید!</div>

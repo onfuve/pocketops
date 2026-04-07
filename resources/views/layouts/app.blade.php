@@ -19,6 +19,54 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     {{-- Fallback: ensure key colors and navigation always work --}}
     <style>
+        {{--
+          Offline / missing Vite build: @vite CSS may 404 or be empty on some VMs.
+          These mirror common Tailwind utilities used for icons and settings grids so the UI
+          does not depend on loading app-*.css from public/build (no CDN required).
+        --}}
+        .shrink-0 { flex-shrink: 0; }
+        .w-3.h-3, svg.w-3.h-3 { width: 0.75rem; height: 0.75rem; box-sizing: border-box; max-width: 100%; }
+        .w-4.h-4, svg.w-4.h-4 { width: 1rem; height: 1rem; box-sizing: border-box; max-width: 100%; }
+        .w-5.h-5, svg.w-5.h-5 { width: 1.25rem; height: 1.25rem; box-sizing: border-box; max-width: 100%; }
+        .w-6.h-6, svg.w-6.h-6 { width: 1.5rem; height: 1.5rem; box-sizing: border-box; max-width: 100%; }
+        .w-7.h-7, svg.w-7.h-7 { width: 1.75rem; height: 1.75rem; box-sizing: border-box; max-width: 100%; }
+        .w-8.h-8, svg.w-8.h-8 { width: 2rem; height: 2rem; box-sizing: border-box; max-width: 100%; }
+        .h-10.w-10, .w-10.h-10 { width: 2.5rem; height: 2.5rem; box-sizing: border-box; }
+        svg.w-10.h-10 { width: 2.5rem; height: 2.5rem; box-sizing: border-box; max-width: 100%; }
+        .h-12.w-12, .w-12.h-12, svg.h-12.w-12, svg.w-12.h-12 { width: 3rem; height: 3rem; box-sizing: border-box; max-width: 100%; }
+        .flex { display: flex; }
+        .inline-flex { display: inline-flex; }
+        .flex-col { flex-direction: column; }
+        .flex-wrap { flex-wrap: wrap; }
+        .items-center { align-items: center; }
+        .items-start { align-items: flex-start; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-1 { gap: 0.25rem; }
+        .gap-1\.5 { gap: 0.375rem; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 0.75rem; }
+        .gap-4 { gap: 1rem; }
+        .grid { display: grid; }
+        @media (min-width: 640px) {
+            .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .sm\:flex-row { flex-direction: row; }
+            .sm\:items-center { align-items: center; }
+            .sm\:justify-between{ justify-content: space-between; }
+            .sm\:px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+            .sm\:py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+            .sm\:w-auto { width: auto; }
+        }
+        @media (min-width: 1024px) {
+            .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        .max-w-4xl { max-width: 56rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .min-h-screen { min-height: 100vh; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+        .w-full { width: 100%; }
+
         .btn-primary, a.btn-primary { background-color: #059669 !important; color: #fff !important; }
         .btn-primary:hover, a.btn-primary:hover { background-color: #047857 !important; }
         .nav-link:hover { background-color: #ecfdf5 !important; color: #047857 !important; }
@@ -96,6 +144,40 @@
         body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-group + .nav-group { padding-top: 0.25rem; margin-top: 0.25rem; border-top: 1px solid #e7e5e4; }
         body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-group-label { display: block !important; padding: 0.5rem 1.25rem 0.15rem; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #78716c; }
         body.nav-drawer-open { overflow: hidden; }
+        /* Mobile drawer: brand strip + icon pills (sidebar UX) */
+        .nav-drawer-brand { display: none; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 1rem 1.25rem 0.75rem; margin-bottom: 0.25rem; border-bottom: 1px solid #e7e5e4; background: linear-gradient(180deg, #f0fdf4 0%, #fff 100%); border-radius: 1rem 0 0 0; flex-shrink: 0; }
+        .nav-drawer-brand-inner { display: flex; align-items: center; gap: 0.75rem; min-width: 0; text-decoration: none; color: #1c1917; flex: 1; }
+        .nav-drawer-brand-inner:hover { color: #047857; }
+        .nav-drawer-brand-icon { display: flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 0.75rem; background: linear-gradient(145deg, #d1fae5 0%, #a7f3d0 100%); color: #047857; box-shadow: 0 1px 2px rgba(5,150,105,0.15); flex-shrink: 0; }
+        .nav-drawer-brand-text { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; text-align: right; }
+        .nav-drawer-brand-title { font-size: 1rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; }
+        .nav-drawer-brand-sub { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #78716c; }
+        .nav-drawer-close { display: none; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border: none; border-radius: 0.625rem; background: #f5f5f4; color: #57534e; cursor: pointer; flex-shrink: 0; transition: background 0.15s, color 0.15s; }
+        .nav-drawer-close:hover { background: #e7e5e4; color: #292524; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-brand { display: flex !important; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-close { display: inline-flex !important; }
+        @media (min-width: 1024px) {
+          .nav-drawer-brand, .nav-drawer-close { display: none !important; }
+        }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-link-icon-only svg,
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-link-new-lead svg,
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-cta svg { flex-shrink: 0; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-link-icon-only svg { padding: 0.45rem; border-radius: 0.5rem; background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%); color: #047857; box-sizing: content-box; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-link-active.nav-link-icon-only svg { background: linear-gradient(145deg, #a7f3d0 0%, #6ee7b7 100%); color: #065f46; box-shadow: inset 0 1px 0 rgba(255,255,255,0.5); }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-link-new-lead svg { padding: 0.35rem; border-radius: 0.45rem; background: rgba(255,255,255,0.25); box-sizing: content-box; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-cta svg { padding: 0.35rem; border-radius: 0.45rem; background: rgba(255,255,255,0.2); box-sizing: content-box; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-group-label { display: flex !important; align-items: center; gap: 0.5rem; }
+        body.mobile-nav .main-nav.mobile-open .nav-drawer-panel .nav-group-label::before { content: ''; width: 0.25rem; height: 0.25rem; border-radius: 9999px; background: #059669; opacity: 0.85; }
+        .main-nav .nav-link-active { background-color: #ecfdf5 !important; color: #047857 !important; }
+        .main-nav .nav-cta.nav-link-active { background-color: #047857 !important; color: #fff !important; box-shadow: 0 2px 8px rgba(5,150,105,0.35) !important; }
+        .main-nav .nav-link-new-lead.nav-link-active { background: linear-gradient(135deg, #d97706, #b45309) !important; color: #fff !important; }
+        @media (min-width: 1024px) {
+          .main-nav .nav-link-icon-only svg { transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease; border-radius: 0.5rem; padding: 0.35rem; box-sizing: content-box; }
+          .main-nav .nav-link-icon-only:hover svg { background: #ecfdf5; color: #047857; }
+          .main-nav .nav-link-active.nav-link-icon-only svg { background: #d1fae5; color: #047857; }
+          .nav-more-trigger { gap: 0.375rem; }
+          .nav-more-trigger svg { opacity: 0.85; }
+        }
     </style>
     @include('components._design-system')
     @stack('styles')
@@ -120,34 +202,44 @@
             <nav class="main-nav nav-touch" id="main-nav" aria-label="منوی اصلی">
                 <span class="nav-drawer-backdrop" id="nav-drawer-backdrop" aria-hidden="true"></span>
                 <div class="nav-drawer-panel">
+                    <div class="nav-drawer-brand">
+                        <a href="{{ route('dashboard') }}" class="nav-drawer-brand-inner">
+                            <span class="nav-drawer-brand-icon" aria-hidden="true">@include('components._icons', ['name' => 'users', 'class' => 'w-5 h-5 shrink-0'])</span>
+                            <span class="nav-drawer-brand-text">
+                                <span class="nav-drawer-brand-title">{{ config('app.name') }}</span>
+                                <span class="nav-drawer-brand-sub">منوی اصلی</span>
+                            </span>
+                        </a>
+                        <button type="button" class="nav-drawer-close" id="nav-drawer-close" aria-label="بستن منو" title="بستن">@include('components._icons', ['name' => 'x', 'class' => 'w-5 h-5 shrink-0'])</button>
+                    </div>
                     {{-- 1) Primary: Dashboard, Contacts, Invoices, Leads --}}
                     <div class="nav-group nav-group-primary">
                         <span class="nav-group-label">اصلی</span>
-                        <a href="{{ route('dashboard') }}" class="nav-link nav-link-icon-only" title="داشبورد" style="display: inline-flex; align-items: center; gap: 0.375rem;">
-                            @include('components._icons', ['name' => 'lightbulb', 'class' => 'w-4 h-4 shrink-0'])
+                        <a href="{{ route('dashboard') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('dashboard')]) title="داشبورد" style="display: inline-flex; align-items: center; gap: 0.375rem;" @if(request()->routeIs('dashboard')) aria-current="page" @endif>
+                            @include('components._icons', ['name' => 'home', 'class' => 'w-4 h-4 shrink-0'])
                             <span>داشبورد</span>
                         </a>
-                        <a href="{{ route('contacts.index') }}" class="nav-link nav-link-icon-only" title="مخاطبین" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                        <a href="{{ route('contacts.index') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('contacts.*')]) title="مخاطبین" style="display: inline-flex; align-items: center; gap: 0.375rem;" @if(request()->routeIs('contacts.*')) aria-current="page" @endif>
                             @include('components._icons', ['name' => 'users', 'class' => 'w-4 h-4 shrink-0'])
                             <span>مخاطبین</span>
                         </a>
-                        <a href="{{ route('invoices.index') }}" class="nav-link nav-link-icon-only" title="فاکتورها" style="display: inline-flex; align-items: center; gap: 0.375rem;">
-                            @include('components._icons', ['name' => 'document', 'class' => 'w-4 h-4 shrink-0'])
+                        <a href="{{ route('invoices.index') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('invoices.*')]) title="فاکتورها" style="display: inline-flex; align-items: center; gap: 0.375rem;" @if(request()->routeIs('invoices.*')) aria-current="page" @endif>
+                            @include('components._icons', ['name' => 'clipboard-list', 'class' => 'w-4 h-4 shrink-0'])
                             <span>فاکتورها</span>
                         </a>
-                        <a href="{{ route('leads.index') }}" class="nav-link nav-link-icon-only" title="سرنخ‌ها" style="display: inline-flex; align-items: center; gap: 0.375rem;">
-                            @include('components._icons', ['name' => 'lightbulb', 'class' => 'w-4 h-4 shrink-0'])
+                        <a href="{{ route('leads.index') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('leads.*') && ! request()->routeIs('leads.create')]) title="سرنخ‌ها" style="display: inline-flex; align-items: center; gap: 0.375rem;" @if(request()->routeIs('leads.*') && ! request()->routeIs('leads.create')) aria-current="page" @endif>
+                            @include('components._icons', ['name' => 'funnel', 'class' => 'w-4 h-4 shrink-0'])
                             <span>سرنخ‌ها</span>
                         </a>
                     </div>
                     {{-- 2) Focus CTAs: New Lead, New Contact --}}
-                    <a href="{{ route('leads.create') }}" class="nav-link nav-link-new-lead" title="سرنخ جدید" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                    <a href="{{ route('leads.create') }}" @class(['nav-link', 'nav-link-new-lead', 'nav-link-active' => request()->routeIs('leads.create')]) title="سرنخ جدید" style="display: inline-flex; align-items: center; gap: 0.375rem;" @if(request()->routeIs('leads.create')) aria-current="page" @endif>
                         @include('components._icons', ['name' => 'plus', 'class' => 'w-4 h-4 shrink-0'])
                         <span>سرنخ جدید</span>
                     </a>
                     <div class="nav-group nav-group-ctas">
                         <span class="nav-group-label">عملیات</span>
-                        <a href="{{ route('contacts.create') }}" class="nav-link nav-cta" style="display: inline-flex; align-items: center; gap: 0.5rem; color: #fff !important; background-color: #059669 !important;">
+                        <a href="{{ route('contacts.create') }}" @class(['nav-link', 'nav-cta', 'nav-link-active' => request()->routeIs('contacts.create')]) style="display: inline-flex; align-items: center; gap: 0.5rem; color: #fff !important; background-color: #059669 !important;">
                             @include('components._icons', ['name' => 'user-plus', 'class' => 'w-4 h-4'])
                             <span>مخاطب جدید</span>
                         </a>
@@ -155,7 +247,7 @@
                     {{-- 3) Desktop only: More dropdown (sub-items) --}}
                     <div class="nav-group nav-group-more" style="display: none;">
                         <span class="nav-group-label" style="display: none;"></span>
-                        <span class="nav-more-trigger" aria-haspopup="true" aria-expanded="false">بیشتر</span>
+                        <span class="nav-more-trigger" aria-haspopup="true" aria-expanded="false">@include('components._icons', ['name' => 'dots-grid', 'class' => 'w-4 h-4 shrink-0']) بیشتر</span>
                         <div class="nav-more-dropdown" role="menu">
                             <div class="nav-dropdown-section">
                                 <div class="nav-dropdown-label">برنامه‌ریزی</div>
@@ -163,17 +255,17 @@
                                 @if(auth()->user()?->canModule('subscriptions', \App\Models\User::ABILITY_VIEW))
                                 <a href="{{ route('subscriptions.index') }}" role="menuitem">@include('components._icons', ['name' => 'calendar', 'class' => 'w-4 h-4 shrink-0']) اشتراک‌ها</a>
                                 @endif
-                                <a href="{{ route('tasks.index') }}" role="menuitem">@include('components._icons', ['name' => 'check', 'class' => 'w-4 h-4 shrink-0']) وظایف</a>
+                                <a href="{{ route('tasks.index') }}" role="menuitem">@include('components._icons', ['name' => 'clipboard-check', 'class' => 'w-4 h-4 shrink-0']) وظایف</a>
                             </div>
                             <div class="nav-dropdown-section">
                                 <div class="nav-dropdown-label">کالا و فروش</div>
                                 <a href="{{ route('products.index') }}" role="menuitem">@include('components._icons', ['name' => 'sell', 'class' => 'w-4 h-4 shrink-0']) کالاها</a>
                                 <a href="{{ route('price-lists.index') }}" role="menuitem">@include('components._icons', ['name' => 'document', 'class' => 'w-4 h-4 shrink-0']) قیمت</a>
-                                <a href="{{ route('product-landing-pages.index') }}" role="menuitem">@include('components._icons', ['name' => 'sell', 'class' => 'w-4 h-4 shrink-0']) فرود</a>
+                                <a href="{{ route('product-landing-pages.index') }}" role="menuitem">@include('components._icons', ['name' => 'link', 'class' => 'w-4 h-4 shrink-0']) فرود</a>
                             </div>
                             <div class="nav-dropdown-section">
                                 <div class="nav-dropdown-label">گزارش‌ها</div>
-                                <a href="{{ route('reports.servqual') }}" role="menuitem">@include('components._icons', ['name' => 'check', 'class' => 'w-4 h-4 shrink-0']) کیفیت خدمات (SERVQUAL)</a>
+                                <a href="{{ route('reports.servqual') }}" role="menuitem">@include('components._icons', ['name' => 'chart-bar', 'class' => 'w-4 h-4 shrink-0']) کیفیت خدمات (SERVQUAL)</a>
                             </div>
                             <div class="nav-dropdown-section">
                                 <div class="nav-dropdown-label">تنظیمات</div>
@@ -182,7 +274,7 @@
                                 <a href="{{ route('settings.lead-channels') }}" role="menuitem">@include('components._icons', ['name' => 'cog', 'class' => 'w-4 h-4 shrink-0']) کانال</a>
                                 <a href="{{ route('forms.index') }}" role="menuitem">@include('components._icons', ['name' => 'document', 'class' => 'w-4 h-4 shrink-0']) فرم</a>
                                 @if(auth()->user()?->isAdmin())
-                                <a href="{{ route('settings.company') }}" role="menuitem"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg> شرکت</a>
+                                <a href="{{ route('settings.company') }}" role="menuitem">@include('components._icons', ['name' => 'building-office', 'class' => 'w-4 h-4 shrink-0']) شرکت</a>
                                 @endif
                             </div>
                         </div>
@@ -190,61 +282,61 @@
                     {{-- 4) Mobile: Planning, Products, Settings (hidden on desktop) --}}
                     <div class="nav-group nav-group-planning">
                         <span class="nav-group-label">برنامه‌ریزی</span>
-                        <a href="{{ route('calendar.index') }}" class="nav-link nav-link-icon-only" title="تقویم" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                        <a href="{{ route('calendar.index') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('calendar.*')]) title="تقویم" style="display: inline-flex; align-items: center; gap: 0.375rem;">
                             @include('components._icons', ['name' => 'calendar', 'class' => 'w-4 h-4 shrink-0'])
                             <span>تقویم</span>
                         </a>
                         @if(auth()->user()?->canModule('subscriptions', \App\Models\User::ABILITY_VIEW))
-                        <a href="{{ route('subscriptions.index') }}" class="nav-link nav-link-icon-only" title="اشتراک‌ها" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                        <a href="{{ route('subscriptions.index') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('subscriptions.*')]) title="اشتراک‌ها" style="display: inline-flex; align-items: center; gap: 0.375rem;">
                             @include('components._icons', ['name' => 'calendar', 'class' => 'w-4 h-4 shrink-0'])
                             <span>اشتراک‌ها</span>
                         </a>
                         @endif
-                        <a href="{{ route('tasks.index') }}" class="nav-link nav-link-icon-only" title="وظایف" style="display: inline-flex; align-items: center; gap: 0.375rem;">
-                            @include('components._icons', ['name' => 'check', 'class' => 'w-4 h-4 shrink-0'])
+                        <a href="{{ route('tasks.index') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('tasks.*')]) title="وظایف" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                            @include('components._icons', ['name' => 'clipboard-check', 'class' => 'w-4 h-4 shrink-0'])
                             <span>وظایف</span>
                         </a>
                     </div>
                     <div class="nav-group nav-group-products">
                         <span class="nav-group-label">کالا و فروش</span>
-                        <a href="{{ route('products.index') }}" class="nav-link nav-link-icon-only" title="کالاها و خدمات" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                        <a href="{{ route('products.index') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('products.*')]) title="کالاها و خدمات" style="display: inline-flex; align-items: center; gap: 0.375rem;">
                             @include('components._icons', ['name' => 'sell', 'class' => 'w-4 h-4 shrink-0'])
                             <span>کالاها</span>
                         </a>
-                        <a href="{{ route('price-lists.index') }}" class="nav-link nav-link-icon-only" title="لیست قیمت" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                        <a href="{{ route('price-lists.index') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('price-lists.*')]) title="لیست قیمت" style="display: inline-flex; align-items: center; gap: 0.375rem;">
                             @include('components._icons', ['name' => 'document', 'class' => 'w-4 h-4 shrink-0'])
                             <span>قیمت</span>
                         </a>
-                        <a href="{{ route('product-landing-pages.index') }}" class="nav-link nav-link-icon-only" title="صفحه فرود" style="display: inline-flex; align-items: center; gap: 0.375rem;">
-                            @include('components._icons', ['name' => 'sell', 'class' => 'w-4 h-4 shrink-0'])
+                        <a href="{{ route('product-landing-pages.index') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('product-landing-pages.*')]) title="صفحه فرود" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                            @include('components._icons', ['name' => 'link', 'class' => 'w-4 h-4 shrink-0'])
                             <span>فرود</span>
                         </a>
                     </div>
                     <div class="nav-group nav-group-settings">
                         <span class="nav-group-label">گزارش و تنظیمات</span>
-                        <a href="{{ route('reports.servqual') }}" class="nav-link nav-link-icon-only" title="گزارش کیفیت خدمات" style="display: inline-flex; align-items: center; gap: 0.375rem;">
-                            @include('components._icons', ['name' => 'check', 'class' => 'w-4 h-4 shrink-0'])
+                        <a href="{{ route('reports.servqual') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('reports.servqual')]) title="گزارش کیفیت خدمات" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                            @include('components._icons', ['name' => 'chart-bar', 'class' => 'w-4 h-4 shrink-0'])
                             <span>کیفیت خدمات (SERVQUAL)</span>
                         </a>
-                        <a href="{{ route('tags.index') }}" class="nav-link nav-link-icon-only" title="برچسب‌ها" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                        <a href="{{ route('tags.index') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('tags.*')]) title="برچسب‌ها" style="display: inline-flex; align-items: center; gap: 0.375rem;">
                             @include('components._icons', ['name' => 'tag', 'class' => 'w-4 h-4 shrink-0'])
                             <span>برچسب</span>
                         </a>
-                        <a href="{{ route('contacts.import') }}" class="nav-link nav-link-icon-only" title="ورود CSV" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                        <a href="{{ route('contacts.import') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('contacts.import')]) title="ورود CSV" style="display: inline-flex; align-items: center; gap: 0.375rem;">
                             @include('components._icons', ['name' => 'file-import', 'class' => 'w-4 h-4 shrink-0'])
                             <span>CSV</span>
                         </a>
-                        <a href="{{ route('settings.lead-channels') }}" class="nav-link nav-link-icon-only" title="کانال سرنخ" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                        <a href="{{ route('settings.lead-channels') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('settings.lead-channels') || request()->routeIs('settings.lead-channels.*')]) title="کانال سرنخ" style="display: inline-flex; align-items: center; gap: 0.375rem;">
                             @include('components._icons', ['name' => 'cog', 'class' => 'w-4 h-4 shrink-0'])
                             <span>کانال</span>
                         </a>
-                        <a href="{{ route('forms.index') }}" class="nav-link nav-link-icon-only" title="فرم‌های جمع‌آوری" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                        <a href="{{ route('forms.index') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('forms.*')]) title="فرم‌های جمع‌آوری" style="display: inline-flex; align-items: center; gap: 0.375rem;">
                             @include('components._icons', ['name' => 'document', 'class' => 'w-4 h-4 shrink-0'])
                             <span>فرم</span>
                         </a>
                         @if(auth()->user()?->isAdmin())
-                        <a href="{{ route('settings.company') }}" class="nav-link nav-link-icon-only" title="تنظیمات شرکت" style="display: inline-flex; align-items: center; gap: 0.375rem;">
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        <a href="{{ route('settings.company') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('settings.company') || request()->routeIs('settings.company.*')]) title="تنظیمات شرکت" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                            @include('components._icons', ['name' => 'building-office', 'class' => 'w-4 h-4 shrink-0'])
                             <span>شرکت</span>
                         </a>
                         @endif
@@ -298,6 +390,8 @@
         }
         if (hamburger) hamburger.addEventListener('click', openNav);
         if (backdrop) backdrop.addEventListener('click', closeNav);
+        var closeBtn = document.getElementById('nav-drawer-close');
+        if (closeBtn) closeBtn.addEventListener('click', closeNav);
     })();
     </script>
     {{-- PWA: register service worker for "Add to Home Screen" (Android) --}}

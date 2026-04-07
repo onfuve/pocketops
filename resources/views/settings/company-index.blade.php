@@ -17,7 +17,7 @@
         <a href="{{ route('settings.company.address') }}" class="card-flat block rounded-xl p-5 no-underline transition hover:border-sky-300 hover:shadow-md" style="border: 2px solid #e7e5e4; background: #fff; text-decoration: none; color: inherit;">
             <div class="flex items-start gap-4">
                 <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl" style="background-color: #dbeafe; color: #0369a1;">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <svg class="w-6 h-6 shrink-0" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 </span>
                 <div class="min-w-0">
                     <h2 class="text-base font-semibold text-stone-800">آدرس فرستنده</h2>

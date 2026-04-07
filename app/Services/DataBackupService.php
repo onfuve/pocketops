@@ -15,6 +15,46 @@ class DataBackupService
 
     public const APP_KEY = 'pocket-business';
 
+    /**
+     * Laravel / some clients list tables as "database.table" or "schema.table".
+     * The app always uses unqualified table names for Schema and the query builder.
+     */
+    protected function normalizeTableName(string $table): string
+    {
+        $table = trim($table);
+        if ($table === '') {
+            return $table;
+        }
+        if (str_contains($table, '.')) {
+            return substr($table, (int) strrpos($table, '.') + 1);
+        }
+
+        return $table;
+    }
+
+    /**
+     * @param  array<string, mixed>  $tablesData
+     * @return array<string, mixed>
+     */
+    protected function normalizeBackupTableKeys(array $tablesData): array
+    {
+        $out = [];
+        foreach ($tablesData as $key => $rows) {
+            if (! is_string($key)) {
+                continue;
+            }
+            $bare = $this->normalizeTableName($key);
+            if (array_key_exists($bare, $out)) {
+                throw new InvalidArgumentException(
+                    'فایل پشتیبان برای جدول «'.$bare.'» دو ورودی دارد (کلیدهای با و بدون نام دیتابیس). یکی را در JSON حذف یا ادغام کنید.'
+                );
+            }
+            $out[$bare] = $rows;
+        }
+
+        return $out;
+    }
+
     /** @return list<string> */
     protected function excludedTables(): array
     {
@@ -41,10 +81,13 @@ class DataBackupService
         $exclude = array_flip($this->excludedTables());
         $tables = [];
         foreach (Schema::getTableListing() as $name) {
-            if (! isset($exclude[$name])) {
-                $tables[] = $name;
+            $name = $this->normalizeTableName($name);
+            if ($name === '' || isset($exclude[$name])) {
+                continue;
             }
+            $tables[] = $name;
         }
+        $tables = array_values(array_unique($tables));
         sort($tables);
 
         return $tables;
@@ -134,6 +177,8 @@ class DataBackupService
         if (! is_array($tablesData)) {
             throw new InvalidArgumentException('ساختار فایل پشتیبان ناقص است (جداول یافت نشد).');
         }
+
+        $tablesData = $this->normalizeBackupTableKeys($tablesData);
 
         $this->assertBackupTablesAreCompatible($tablesData);
 

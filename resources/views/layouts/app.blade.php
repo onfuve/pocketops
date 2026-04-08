@@ -265,6 +265,7 @@
                             </div>
                             <div class="nav-dropdown-section">
                                 <div class="nav-dropdown-label">گزارش‌ها</div>
+                                <a href="{{ route('reports.business.index') }}" role="menuitem">@include('components._icons', ['name' => 'chart-bar', 'class' => 'w-4 h-4 shrink-0']) گزارش‌های مالی</a>
                                 <a href="{{ route('reports.servqual') }}" role="menuitem">@include('components._icons', ['name' => 'chart-bar', 'class' => 'w-4 h-4 shrink-0']) کیفیت خدمات (SERVQUAL)</a>
                             </div>
                             <div class="nav-dropdown-section">
@@ -314,6 +315,10 @@
                     </div>
                     <div class="nav-group nav-group-settings">
                         <span class="nav-group-label">گزارش و تنظیمات</span>
+                        <a href="{{ route('reports.business.index') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('reports.business.*')]) title="گزارش‌های مالی" style="display: inline-flex; align-items: center; gap: 0.375rem;">
+                            @include('components._icons', ['name' => 'chart-bar', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>گزارش‌های مالی</span>
+                        </a>
                         <a href="{{ route('reports.servqual') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('reports.servqual')]) title="گزارش کیفیت خدمات" style="display: inline-flex; align-items: center; gap: 0.375rem;">
                             @include('components._icons', ['name' => 'chart-bar', 'class' => 'w-4 h-4 shrink-0'])
                             <span>کیفیت خدمات (SERVQUAL)</span>

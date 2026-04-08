@@ -2,12 +2,14 @@
 
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\BusinessReportController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CustomerPriceListController;
 use App\Http\Controllers\CustomerProductController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataBackupController;
+use App\Http\Controllers\InstanceSyncController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LeadChannelController;
 use App\Http\Controllers\LeadController;
@@ -59,6 +61,14 @@ Route::get('i/{invoice}/v', [InvoiceController::class, 'publicPrint'])->name('in
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('reports/servqual', [ServqualReportController::class, 'index'])->name('reports.servqual');
+
+    Route::prefix('reports/business')->name('reports.business.')->group(function () {
+        Route::get('/', [BusinessReportController::class, 'index'])->name('index');
+        Route::get('/bank-account', [BusinessReportController::class, 'bankAccount'])->name('bank-account');
+        Route::get('/all-transactions', [BusinessReportController::class, 'allTransactions'])->name('all-transactions');
+        Route::get('/invoices', [BusinessReportController::class, 'invoices'])->name('invoices');
+        Route::get('/balances', [BusinessReportController::class, 'balances'])->name('balances');
+    });
 
     Route::get('attachments/{attachment}', [AttachmentController::class, 'show'])->name('attachments.show');
 
@@ -131,6 +141,13 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/data-backup', [DataBackupController::class, 'index'])->name('settings.data-backup');
     Route::get('settings/data-backup/export', [DataBackupController::class, 'export'])->name('settings.data-backup.export');
     Route::post('settings/data-backup/import', [DataBackupController::class, 'import'])->name('settings.data-backup.import');
+
+    Route::get('settings/instance-sync', [InstanceSyncController::class, 'index'])->name('settings.instance-sync');
+    Route::post('settings/instance-sync/incoming-token', [InstanceSyncController::class, 'generateIncomingToken'])->name('settings.instance-sync.incoming-token');
+    Route::post('settings/instance-sync/revoke-incoming', [InstanceSyncController::class, 'revokeIncomingToken'])->name('settings.instance-sync.revoke-incoming');
+    Route::post('settings/instance-sync/remote', [InstanceSyncController::class, 'saveRemote'])->name('settings.instance-sync.remote');
+    Route::post('settings/instance-sync/remote/clear', [InstanceSyncController::class, 'clearRemote'])->name('settings.instance-sync.remote.clear');
+    Route::post('settings/instance-sync/run', [InstanceSyncController::class, 'runSync'])->name('settings.instance-sync.run');
 
     Route::get('products/import/form', [ProductController::class, 'importForm'])->name('products.import');
     Route::post('products/import', [ProductController::class, 'import'])->name('products.import.store');

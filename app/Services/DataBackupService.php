@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -226,6 +227,145 @@ class DataBackupService
                 'بازیابی با خطای دیتابیس متوقف شد. معمولاً یعنی اسکیمای این نصب با فایل پشتیبان یکی نیست (ابتدا همان نسخهٔ migrate را اجرا کنید) یا محدودیت یکتا/کلید خارجی نقض شده است.'
             );
         }
+    }
+
+    /**
+     * Merge remote backup-shaped payload into the current database (does not truncate all tables).
+     *
+     * @param  array<string, mixed>  $payload
+     * @param  array{add_missing?: bool, update_existing?: bool, delete_orphans?: bool, include_users?: bool}  $options
+     * @return array{inserted: int, updated: int, deleted: int}
+     */
+    public function mergeFromRemotePayload(array $payload, array $options): array
+    {
+        $addMissing = (bool) ($options['add_missing'] ?? true);
+        $updateExisting = (bool) ($options['update_existing'] ?? true);
+        $deleteOrphans = (bool) ($options['delete_orphans'] ?? false);
+        $includeUsers = (bool) ($options['include_users'] ?? false);
+
+        if (($payload['app'] ?? null) !== self::APP_KEY) {
+            throw new InvalidArgumentException('این payload معتبر برنامه pocket-business نیست.');
+        }
+
+        $formatVersion = $payload['format_version'] ?? null;
+        if ($formatVersion !== self::FORMAT_VERSION && $formatVersion !== (string) self::FORMAT_VERSION) {
+            throw new InvalidArgumentException('نسخهٔ قالب داده پشتیبانی نمی‌شود. باید نسخهٔ '.self::FORMAT_VERSION.' باشد.');
+        }
+
+        $tablesData = $payload['tables'] ?? null;
+        if (! is_array($tablesData)) {
+            throw new InvalidArgumentException('ساختار payload ناقص است (جداول یافت نشد).');
+        }
+
+        $tablesData = $this->normalizeBackupTableKeys($tablesData);
+        $this->assertBackupTablesAreCompatible($tablesData);
+
+        $stats = ['inserted' => 0, 'updated' => 0, 'deleted' => 0];
+        $tables = $this->listBackupTables();
+
+        try {
+            DB::transaction(function () use ($tables, $tablesData, $addMissing, $updateExisting, $deleteOrphans, $includeUsers, &$stats) {
+                $this->withoutForeignKeyChecks(function () use ($tables, $tablesData, $addMissing, $updateExisting, $deleteOrphans, $includeUsers, &$stats) {
+                    foreach ($tables as $table) {
+                        if ($table === 'users' && ! $includeUsers) {
+                            continue;
+                        }
+                        if (! isset($tablesData[$table]) || ! is_array($tablesData[$table])) {
+                            continue;
+                        }
+                        $rows = $tablesData[$table];
+
+                        $isSettings = $table === 'settings';
+                        if ($deleteOrphans) {
+                            if ($isSettings) {
+                                $remoteKeys = [];
+                                foreach ($rows as $r) {
+                                    if (is_array($r) && array_key_exists('key', $r) && $r['key'] !== null && $r['key'] !== '') {
+                                        $remoteKeys[] = (string) $r['key'];
+                                    }
+                                }
+                                $remoteKeys = array_values(array_unique($remoteKeys));
+                                $deleted = $remoteKeys === []
+                                    ? DB::table($table)->delete()
+                                    : DB::table($table)->whereNotIn('key', $remoteKeys)->delete();
+                                $stats['deleted'] += (int) $deleted;
+                            } elseif (Schema::hasColumn($table, 'id')) {
+                                $remoteIds = [];
+                                foreach ($rows as $r) {
+                                    if (is_array($r) && isset($r['id']) && $r['id'] !== null && $r['id'] !== '') {
+                                        $remoteIds[] = $r['id'];
+                                    }
+                                }
+                                $remoteIds = array_values(array_unique($remoteIds));
+                                $deleted = $remoteIds === []
+                                    ? DB::table($table)->delete()
+                                    : DB::table($table)->whereNotIn('id', $remoteIds)->delete();
+                                $stats['deleted'] += (int) $deleted;
+                            }
+                        }
+
+                        foreach ($rows as $row) {
+                            if (! is_array($row)) {
+                                continue;
+                            }
+                            $clean = $this->rowForInsert($table, $row);
+                            if ($isSettings) {
+                                $key = $clean['key'] ?? null;
+                                if ($key === null || $key === '') {
+                                    continue;
+                                }
+                                $exists = DB::table($table)->where('key', $key)->exists();
+                                if ($exists) {
+                                    if ($updateExisting) {
+                                        $update = Arr::except($clean, ['key']);
+                                        if ($update !== []) {
+                                            DB::table($table)->where('key', $key)->update($update);
+                                            $stats['updated']++;
+                                        }
+                                    }
+                                } elseif ($addMissing) {
+                                    DB::table($table)->insert($clean);
+                                    $stats['inserted']++;
+                                }
+                            } elseif (Schema::hasColumn($table, 'id')) {
+                                $id = $clean['id'] ?? null;
+                                if ($id === null || $id === '') {
+                                    continue;
+                                }
+                                $exists = DB::table($table)->where('id', $id)->exists();
+                                if ($exists) {
+                                    if ($updateExisting) {
+                                        $update = Arr::except($clean, ['id']);
+                                        if ($update !== []) {
+                                            DB::table($table)->where('id', $id)->update($update);
+                                            $stats['updated']++;
+                                        }
+                                    }
+                                } elseif ($addMissing) {
+                                    DB::table($table)->insert($clean);
+                                    $stats['inserted']++;
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+            try {
+                $this->refreshSqliteAutoincrement();
+            } catch (Throwable $e) {
+                Log::warning('SQLite sequence refresh after merge sync failed', ['exception' => $e]);
+            }
+        } catch (QueryException $e) {
+            Log::warning('Data merge sync failed (SQL)', [
+                'exception' => $e,
+                'sql' => $e->getSql(),
+            ]);
+            throw new InvalidArgumentException(
+                'ادغام با خطای دیتابیس متوقف شد. اسکیما را با نصب مقابل هم‌تراز کنید و محدودیت یکتا/کلید خارجی را بررسی کنید.'
+            );
+        }
+
+        return $stats;
     }
 
     /**

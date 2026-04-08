@@ -21,10 +21,16 @@
                 حدود <strong>{{ number_format($summary['row_count']) }}</strong> ردیف (بدون migration و کش).
             </p>
         </div>
-        <a href="{{ route('settings.company') }}" class="ds-btn ds-btn-secondary" style="white-space: nowrap;">
-            @include('components._icons', ['name' => 'arrow-left', 'class' => 'w-4 h-4'])
-            تنظیمات شرکت
-        </a>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('settings.instance-sync') }}" class="ds-btn ds-btn-secondary" style="white-space: nowrap;">
+                @include('components._icons', ['name' => 'link', 'class' => 'w-4 h-4'])
+                همگام‌سازی نصب‌ها
+            </a>
+            <a href="{{ route('settings.company') }}" class="ds-btn ds-btn-secondary" style="white-space: nowrap;">
+                @include('components._icons', ['name' => 'arrow-left', 'class' => 'w-4 h-4'])
+                تنظیمات شرکت
+            </a>
+        </div>
     </header>
 
     @if (session('success'))

@@ -7,6 +7,7 @@
     $selectedTagIds = (array) ($selectedTagIds ?? []);
     $accentColor = $accentColor ?? 'var(--ds-primary)';
     $embedded = $embedded ?? false;
+    $noCollapse = $noCollapse ?? false;
 @endphp
 @push('styles')
 <style>
@@ -24,27 +25,37 @@
 .tag-section .tag-chip-wrap label { cursor: pointer; margin: 0; }
 .tag-section .tag-summary { font-size: 0.75rem; color: var(--ds-text-subtle); margin-top: 0.5rem; }
 .tag-section-embedded .tag-list { max-height: 10rem; }
+.tag-section-no-collapse .tag-section-body { display: block !important; padding-top: 0.75rem; }
+.tag-section-no-collapse .tag-list { max-height: 18rem; }
+.tag-section-no-collapse.tag-section-embedded .tag-list { max-height: 16rem; }
 </style>
 @endpush
 @isset($tags)
-<div class="{{ $embedded ? '' : 'ds-form-card ' }}tag-section {{ $embedded ? 'tag-section-embedded' : '' }} {{ $tags->count() > 8 ? '' : 'expanded' }}" id="tag-section">
-    <div class="tag-section-header" id="tag-section-toggle">
-        <div>
+<div class="{{ $embedded ? '' : 'ds-form-card ' }}tag-section {{ $embedded ? 'tag-section-embedded' : '' }} {{ $noCollapse ? 'tag-section-no-collapse expanded' : ($tags->count() > 8 ? '' : 'expanded') }}" id="tag-section">
+    @if ($noCollapse)
+        <div class="tag-section-static-head" style="padding: 0.35rem 0 0 0;">
             <h2 class="ds-form-card-title" style="margin: 0; border: none; padding: 0;">برچسب‌ها</h2>
             <span id="tag-header-summary" class="tag-summary" style="margin: 0.25rem 0 0 0;"></span>
         </div>
-        <span class="tag-toggle" aria-hidden="true">▼</span>
-    </div>
+    @else
+        <div class="tag-section-header" id="tag-section-toggle">
+            <div>
+                <h2 class="ds-form-card-title" style="margin: 0; border: none; padding: 0;">برچسب‌ها</h2>
+                <span id="tag-header-summary" class="tag-summary" style="margin: 0.25rem 0 0 0;"></span>
+            </div>
+            <span class="tag-toggle" aria-hidden="true">▼</span>
+        </div>
+    @endif
     @if ($tags->isEmpty())
         <p style="font-size: 0.875rem; color: var(--ds-text-subtle); margin: 0.5rem 0 0 0;">هنوز برچسبی ثبت نشده است. <a href="{{ route('tags.create') }}" style="color: var(--ds-primary); text-decoration: none;">اولین برچسب را اضافه کنید</a></p>
     @else
         <div class="tag-section-body">
             <div class="tag-search-wrap">
-                <input type="text" id="tag-search" class="ds-input" placeholder="جستجو برچسب…" autocomplete="off">
+                <input type="text" id="tag-search" class="ds-input w-full" placeholder="جستجو برچسب…" autocomplete="off" dir="rtl">
             </div>
             <div id="tag-list" class="tag-list">
                 @foreach ($tags as $tag)
-                    <div class="tag-chip-wrap" data-tag-name="{{ strtolower($tag->name) }}">
+                    <div class="tag-chip-wrap" data-tag-name="{{ mb_strtolower($tag->name, 'UTF-8') }}">
                         <label class="ds-chip">
                             <input type="checkbox" name="tag_ids[]" value="{{ $tag->id }}" {{ in_array($tag->id, (array)$selectedTagIds) ? 'checked' : '' }} style="accent-color: {{ $accentColor }};">
                             <span style="display: inline-block; width: 0.875rem; height: 0.875rem; border-radius: 0.25rem; background: {{ $tag->color }};"></span>
@@ -68,8 +79,10 @@
     var tagList = document.getElementById('tag-list');
     var tagSummary = document.getElementById('tag-summary');
     var tagHeaderSummary = document.getElementById('tag-header-summary');
-    if (tagSection && tagToggle && tagList) {
-        tagToggle.addEventListener('click', function () { tagSection.classList.toggle('expanded'); });
+    if (tagSection && tagList) {
+        if (tagToggle && !tagSection.classList.contains('tag-section-no-collapse')) {
+            tagToggle.addEventListener('click', function () { tagSection.classList.toggle('expanded'); });
+        }
         if (tagSearch) {
             tagSearch.addEventListener('input', filterTags);
             tagSearch.addEventListener('keyup', filterTags);

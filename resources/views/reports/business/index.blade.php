@@ -57,6 +57,17 @@
                 ماندهٔ مخاطبین: مانده مثبت یعنی ما به مخاطب بدهکاریم؛ مانده منفی یعنی مخاطب به ما بدهکار است.
             </p>
         </a>
+        @if(auth()->user()?->canModule('expenses', \App\Models\User::ABILITY_VIEW))
+        <a href="{{ route('expenses.index') }}" class="ds-form-card block no-underline transition hover:border-amber-200 hover:shadow-md" style="text-decoration: none; color: inherit; border: 2px solid #e7e5e4; background: #fff; border-radius: 0.75rem; padding: 1.25rem;">
+            <h2 class="ds-form-card-title" style="display: flex; align-items: center; gap: 0.5rem; font-size: 1rem;">
+                @include('components._icons', ['name' => 'credit-card', 'class' => 'w-5 h-5'])
+                هزینه‌های عملیاتی
+            </h2>
+            <p class="text-sm" style="color: var(--ds-text-muted); margin: 0.5rem 0 0 0; line-height: 1.65;">
+                پست، برق، بسته‌بندی، اینترنت و غیره — با دسته و برچسب و خروجی CSV در بازهٔ تاریخ.
+            </p>
+        </a>
+        @endif
     </div>
 </div>
 @endsection

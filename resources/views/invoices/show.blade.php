@@ -226,6 +226,39 @@
         </div>
     @endif
 
+    @if (!$isBuy)
+        @php
+            $linkedBuy = $invoice->totalLinkedBuyCostRial();
+            $linkedExp = $invoice->totalLinkedExpenseCostRial();
+            $linkedTotal = $invoice->totalAttributedCostRial();
+            $grossProfit = $invoice->grossProfitFromLinkedBuysRial();
+            $marginPct = $invoice->marginPercentFromLinkedBuys();
+        @endphp
+        <div class="invoice-section mb-6" style="border-color:#a7f3d0;background:#f0fdf4;">
+            <h2 class="invoice-section-title" style="font-family:'Vazirmatn',sans-serif;">سود و بهای تمام‌شده (رسید خرید + هزینه)</h2>
+            <p class="text-sm mb-4" style="color:#065f46;">با وصل کردن ردیف‌ها به <strong>رسید خرید</strong> و در صورت نیاز <strong>مبلغ هزینهٔ عملیاتی</strong> در صفحهٔ اتصال، جمع بهای تمام‌شده و سود دقیق‌تر می‌شود.</p>
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-4" style="gap:1rem;">
+                <div class="rounded-xl border-2 border-stone-200 bg-white p-4">
+                    <p class="text-xs font-semibold text-stone-500 mb-1">بهای خرید وصل‌شده</p>
+                    <p class="font-vazir text-lg font-semibold text-stone-800">{{ FormatHelper::rial($linkedBuy) }}</p>
+                </div>
+                <div class="rounded-xl border-2 border-stone-200 bg-white p-4">
+                    <p class="text-xs font-semibold text-stone-500 mb-1">مبلغ هزینه</p>
+                    <p class="font-vazir text-lg font-semibold text-stone-800">{{ FormatHelper::rial($linkedExp) }}</p>
+                </div>
+                <div class="rounded-xl border-2 border-stone-200 bg-white p-4">
+                    <p class="text-xs font-semibold text-stone-500 mb-1">جمع بهای تمام‌شده</p>
+                    <p class="font-vazir text-lg font-semibold text-stone-800">{{ FormatHelper::rial($linkedTotal) }}</p>
+                </div>
+                <div class="rounded-xl border-2 border-stone-200 bg-white p-4">
+                    <p class="text-xs font-semibold text-stone-500 mb-1">سود ناخالص · حاشیه</p>
+                    <p class="font-vazir text-lg font-semibold text-stone-800">{{ FormatHelper::rial($grossProfit) }} @if($marginPct !== null)<span class="text-stone-500 text-base">({{ FormatHelper::englishToPersian((string) $marginPct) }} %)</span>@endif</p>
+                </div>
+            </div>
+            <a href="{{ route('invoices.item-costs.show', $invoice) }}" class="btn-action btn-action-secondary">مدیریت اتصال خرید و هزینه</a>
+        </div>
+    @endif
+
     <div class="invoice-section invoice-paper overflow-hidden" style="border:2px solid {{ $isBuy ? '#7dd3fc' : '#a8a29e' }};">
         <div class="border-b-2 border-stone-400 px-4 py-5 sm:px-8" style="background: {{ $isBuy ? '#f0f9ff' : '#f5f5f4' }};">
             <div class="grid gap-6 grid-cols-1 sm:grid-cols-2">

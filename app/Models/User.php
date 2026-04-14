@@ -13,18 +13,23 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     public const ROLE_ADMIN = 'admin';
+
     public const ROLE_TEAM = 'team';
 
     /** Module-based abilities: view, create, edit, delete */
     public const ABILITY_VIEW = 'view';
+
     public const ABILITY_CREATE = 'create';
+
     public const ABILITY_EDIT = 'edit';
+
     public const ABILITY_DELETE = 'delete';
 
     public const MODULES = [
         'contacts' => 'مخاطبین',
         'leads' => 'سرنخ‌ها',
         'invoices' => 'فاکتورها',
+        'expenses' => 'هزینه‌های عملیاتی',
         'subscriptions' => 'اشتراک‌ها',
         'products' => 'محصولات',
         'price_lists' => 'لیست قیمت',
@@ -115,9 +120,10 @@ class User extends Authenticatable
             return $this->legacyCanModule($module, $ability);
         }
         $allowed = $permissions[$module] ?? [];
-        if (!is_array($allowed)) {
+        if (! is_array($allowed)) {
             $allowed = [];
         }
+
         return in_array($ability, $allowed, true);
     }
 
@@ -134,6 +140,7 @@ class User extends Authenticatable
                 default => false,
             };
         }
+
         return false;
     }
 
@@ -142,6 +149,7 @@ class User extends Authenticatable
     {
         if ($this->isAdmin()) {
             $all = [self::ABILITY_VIEW, self::ABILITY_CREATE, self::ABILITY_EDIT, self::ABILITY_DELETE];
+
             return array_fill_keys(array_keys(self::MODULES), $all);
         }
         $permissions = $this->permissions ?? [];
@@ -160,6 +168,7 @@ class User extends Authenticatable
                 }
             }
         }
+
         return $permissions;
     }
 
@@ -172,5 +181,4 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
-
 }

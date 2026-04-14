@@ -38,6 +38,18 @@
             </div>
         </a>
 
+        <a href="{{ route('settings.expense-categories') }}" class="card-flat block rounded-xl p-5 no-underline transition hover:border-amber-200 hover:shadow-md" style="border: 2px solid #e7e5e4; background: #fff; text-decoration: none; color: inherit;">
+            <div class="flex items-start gap-4">
+                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl" style="background-color: #ffedd5; color: #c2410c;">
+                    @include('components._icons', ['name' => 'sell', 'class' => 'w-6 h-6'])
+                </span>
+                <div class="min-w-0">
+                    <h2 class="text-base font-semibold text-stone-800">دسته‌های هزینه</h2>
+                    <p class="mt-1 text-sm text-stone-500">پست، برق، سایر و دسته‌های دلخواه برای هزینه‌های عملیاتی</p>
+                </div>
+            </div>
+        </a>
+
         <a href="{{ route('settings.company.stamp') }}" class="card-flat block rounded-xl p-5 no-underline transition hover:border-sky-300 hover:shadow-md" style="border: 2px solid #e7e5e4; background: #fff; text-decoration: none; color: inherit;">
             <div class="flex items-start gap-4">
                 <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl" style="background-color: #e0e7ff; color: #4338ca;">

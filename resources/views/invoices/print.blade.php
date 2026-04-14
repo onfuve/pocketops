@@ -51,9 +51,31 @@
         .no-print { margin-bottom: 12px; }
         .invoice { max-width: 128mm; margin: 0 auto; padding: 0; }
         .top-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #1c1917; }
-        .top-row .right { text-align: right; }
-        .top-row .left { text-align: left; }
-        .customer-name { font-size: 13px; font-weight: 700; color: #1c1917; margin: 0; }
+        .top-row .right { flex: 1 1 0%; min-width: 0; text-align: right; }
+        .top-row .left { flex: 0 0 auto; max-width: 42%; text-align: left; }
+        .customer-name { font-weight: 700; color: #1c1917; margin: 0; }
+        .customer-role-label { font-size: 10px; font-weight: 600; color: #78716c; margin: 0 0 4px; }
+        .customer-name-row { font-size: 14px; font-weight: 800; line-height: 1.4; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; gap: 4px 8px; margin: 0; max-width: 100%; }
+        .customer-name-row .name-text {
+            flex: 1 1 auto;
+            min-width: min(100%, 6.5rem);
+            max-width: 100%;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            text-align: right;
+        }
+        .customer-phones {
+            font-size: 12px;
+            font-weight: 700;
+            color: #44403c;
+            flex: 0 1 auto;
+            min-width: 0;
+            max-width: 100%;
+            text-align: right;
+            line-height: 1.35;
+        }
+        .customer-phones .tel { direction: ltr; display: inline-block; unicode-bidi: embed; letter-spacing: 0.02em; }
+        .customer-phones .tel-sep { color: #a8a29e; font-weight: 600; margin: 0 4px; }
         .inv-meta { font-size: 10px; color: #44403c; margin-top: 2px; }
         .inv-meta strong { color: #1c1917; }
         table { width: 100%; max-width: 100%; border-collapse: collapse; margin-bottom: 10px; border: 1px solid #1c1917; table-layout: fixed; }
@@ -80,10 +102,10 @@
         .payment-list .label { font-weight: 600; color: #78716c; }
         .payment-list .value { font-family: 'Vazirmatn', monospace; direction: ltr; text-align: left; letter-spacing: 0.02em; color: #57534e; font-size: 8px; }
         .notes { margin-top: 10px; padding: 8px; border: 1px solid #78716c; font-size: 9px; color: #44403c; }
-        .signature-section { margin-top: 12px; padding-top: 10px; border-top: 1px solid #78716c; display: flex; justify-content: flex-end; }
-        .signature-field { display: flex; align-items: center; gap: 10px; }
-        .signature-field .label { font-size: 10px; font-weight: 600; color: #44403c; white-space: nowrap; }
-        .signature-field .box { width: 80px; height: 36px; border: 1px solid #78716c; border-radius: 3px; background: #fafaf9; }
+        .signature-section { margin-top: 14px; padding-top: 12px; border-top: 1px solid #78716c; display: flex; justify-content: flex-end; }
+        .signature-field { display: flex; align-items: center; gap: 12px; }
+        .signature-field .label { font-size: 12px; font-weight: 700; color: #292524; white-space: nowrap; }
+        .signature-field .box { width: 132px; height: 52px; border: 1px solid #57534e; border-radius: 4px; background: #fafaf9; }
         .invoice-stamp { position: absolute; bottom: 8px; right: 0; max-width: 52px; max-height: 52px; object-fit: contain; opacity: 0.85; pointer-events: none; }
         .invoice-qr-block { margin-top: 10px; padding: 6px 8px; border: 1px solid #d6d3d1; background: #fafaf9; border-radius: 4px; display: inline-flex; align-items: center; gap: 8px; }
         .invoice-qr-block img { width: 48px; height: 48px; display: block; }
@@ -106,8 +128,18 @@
         </h2>
         <div class="top-row">
             <div class="right">
-                <p class="customer-name" style="font-size: 12px; color: #78716c; margin-bottom: 2px;">{{ $isBuy ? 'فروشنده' : 'مشتری' }}</p>
-                <p class="customer-name">{{ $invoice->contact->name }}</p>
+                <p class="customer-role-label">{{ $isBuy ? 'فروشنده' : 'مشتری' }}</p>
+                <p class="customer-name-row">
+                    <span class="name-text">{{ $invoice->contact->name }}</span>
+                    @if ($invoice->contact->contactPhones->isNotEmpty())
+                        <span class="customer-phones">
+                            @foreach ($invoice->contact->contactPhones as $cp)
+                                @if (! $loop->first)<span class="tel-sep">·</span>@endif
+                                <span class="tel">{{ $cp->phone }}</span>
+                            @endforeach
+                        </span>
+                    @endif
+                </p>
             </div>
             <div class="left">
                 <div class="inv-meta">{{ $isBuy ? 'شماره رسید' : 'شماره فاکتور' }}: <strong>{{ $invoice->invoice_number ?: $invoice->id }}</strong></div>

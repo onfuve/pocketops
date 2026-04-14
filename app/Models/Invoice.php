@@ -41,11 +41,15 @@ class Invoice extends Model
     ];
 
     public const TYPE_SELL = 'sell';
+
     public const TYPE_BUY = 'buy';
 
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_FINAL = 'final';
+
     public const STATUS_PAID = 'paid';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     public function contact(): BelongsTo
@@ -81,12 +85,13 @@ class Invoice extends Model
     /** Invoices visible to the given user: own, assigned to them, or all for admin / can_see_all_invoices. */
     public function scopeVisibleToUser($query, $user)
     {
-        if (!$user) {
+        if (! $user) {
             return $query->whereRaw('1 = 0');
         }
         if ($user->canSeeAllInvoices()) {
             return $query;
         }
+
         return $query->where(function ($q) use ($user) {
             $q->where('user_id', $user->id)
                 ->orWhere('assigned_to_id', $user->id);
@@ -95,12 +100,13 @@ class Invoice extends Model
 
     public function isVisibleTo($user): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
         if ($user->canSeeAllInvoices()) {
             return true;
         }
+
         return $this->user_id === $user->id || $this->assigned_to_id === $user->id;
     }
 
@@ -111,6 +117,7 @@ class Invoice extends Model
         if ($ids === []) {
             return PaymentOption::forPrint();
         }
+
         return PaymentOption::whereIn('id', $ids)->orderBy('sort')->get();
     }
 
@@ -126,6 +133,7 @@ class Invoice extends Model
                 $lines[] = $line;
             }
         }
+
         return $lines;
     }
 
@@ -148,6 +156,7 @@ class Invoice extends Model
         if ($this->discount_percent !== null) {
             return (int) round($subtotal * (float) $this->discount_percent / 100);
         }
+
         return (int) $this->discount;
     }
 
@@ -197,7 +206,7 @@ class Invoice extends Model
     public function applyContactBalanceForInvoice(): void
     {
         $contact = $this->contact;
-        if (!$contact) {
+        if (! $contact) {
             return;
         }
         $total = (float) $this->total;
@@ -213,7 +222,7 @@ class Invoice extends Model
     public function reverseContactBalanceForInvoice(): void
     {
         $contact = $this->contact;
-        if (!$contact) {
+        if (! $contact) {
             return;
         }
         $total = (float) $this->total;
@@ -228,6 +237,64 @@ class Invoice extends Model
     /** Whether this finalized invoice can be edited or deleted (no payments/transactions recorded). */
     public function canEditOrDelete(): bool
     {
-        return !$this->payments()->exists();
+        return ! $this->payments()->exists();
+    }
+
+    /** Sum of linked buy costs for all sell lines (only meaningful for sell invoices). */
+    public function totalLinkedBuyCostRial(): int
+    {
+        if ($this->type !== self::TYPE_SELL) {
+            return 0;
+        }
+        $total = 0;
+        foreach ($this->items as $item) {
+            $total += $item->totalLinkedBuyCostRial();
+        }
+
+        return $total;
+    }
+
+    /** Sum of operational expense amounts attributed to sell lines (item-costs). */
+    public function totalLinkedExpenseCostRial(): int
+    {
+        if ($this->type !== self::TYPE_SELL) {
+            return 0;
+        }
+        $total = 0;
+        foreach ($this->items as $item) {
+            $total += $item->totalLinkedExpenseCostRial();
+        }
+
+        return $total;
+    }
+
+    /** Linked buy + allocated expenses (full attributed cost). */
+    public function totalAttributedCostRial(): int
+    {
+        return $this->totalLinkedBuyCostRial() + $this->totalLinkedExpenseCostRial();
+    }
+
+    /** Revenue minus attributed costs: linked buys + allocated operational expenses. */
+    public function grossProfitFromLinkedBuysRial(): int
+    {
+        if ($this->type !== self::TYPE_SELL) {
+            return 0;
+        }
+
+        return (int) $this->total - $this->totalAttributedCostRial();
+    }
+
+    /** Margin % from attributed costs; null if total revenue is zero. */
+    public function marginPercentFromLinkedBuys(): ?float
+    {
+        if ($this->type !== self::TYPE_SELL) {
+            return null;
+        }
+        $t = (float) $this->total;
+        if ($t <= 0) {
+            return null;
+        }
+
+        return round(100.0 * (float) $this->grossProfitFromLinkedBuysRial() / $t, 2);
     }
 }

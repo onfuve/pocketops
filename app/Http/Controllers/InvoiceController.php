@@ -4,22 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Helpers\FormatHelper;
 use App\Models\Attachment;
-use App\Models\PaymentOption;
-use App\Models\Product;
 use App\Models\Contact;
 use App\Models\ContactTransaction;
 use App\Models\FormLink;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
+use App\Models\PaymentOption;
+use App\Models\Product;
 use App\Models\Reminder;
+use App\Models\Setting;
 use App\Models\Tag;
 use App\Models\Task;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use App\Models\Setting;
 
 class InvoiceController extends Controller
 {
@@ -54,7 +53,7 @@ class InvoiceController extends Controller
             'date' => now(),
             'status' => Invoice::STATUS_DRAFT,
         ]);
-        $invoice->setRelation('items', collect([(object)['description' => '', 'quantity' => 1, 'unit_price' => 0, 'amount' => 0, 'sort' => 0]]));
+        $invoice->setRelation('items', collect([(object) ['description' => '', 'quantity' => 1, 'unit_price' => 0, 'amount' => 0, 'sort' => 0]]));
         $paymentOptions = PaymentOption::printableInSettings()->orderBy('sort')->get();
         $selectedIds = [];
         $tags = Tag::forCurrentUser()->orderBy('name')->get();
@@ -68,7 +67,7 @@ class InvoiceController extends Controller
     {
         abort_unless($request->user()->canModule('invoices', \App\Models\User::ABILITY_CREATE), 403, 'شما مجوز ایجاد فاکتور را ندارید.');
         $dateErrors = $this->normalizeShamsiDates($request);
-        if (!empty($dateErrors)) {
+        if (! empty($dateErrors)) {
             return back()->withErrors($dateErrors)->withInput();
         }
         $validated = $request->validate($this->rules());
@@ -126,6 +125,9 @@ class InvoiceController extends Controller
         abort_unless($invoice->isVisibleTo(request()->user()), 403, 'شما به این فاکتور دسترسی ندارید.');
 
         $invoice->load('contact', 'items', 'user', 'assignedTo', 'tasks.assignedUsers', 'formLink.form');
+        if ($invoice->type === Invoice::TYPE_SELL) {
+            $invoice->load(['items.sellBuyCostLinks.buyItem']);
+        }
         try {
             $invoice->load('tags', 'attachments', 'payments.bankAccount', 'payments.contact');
         } catch (\Illuminate\Database\QueryException $e) {
@@ -208,7 +210,7 @@ class InvoiceController extends Controller
             return redirect()->route('invoices.show', $invoice)->with('error', 'این فاکتور قابل ویرایش نیست.');
         }
         $dateErrors = $this->normalizeShamsiDates($request);
-        if (!empty($dateErrors)) {
+        if (! empty($dateErrors)) {
             return back()->withErrors($dateErrors)->withInput();
         }
         $validated = $request->validate($this->rules());
@@ -251,6 +253,7 @@ class InvoiceController extends Controller
     public function showMarkFinal(Invoice $invoice)
     {
         abort_unless($invoice->isVisibleTo(request()->user()), 403, 'شما به این فاکتور دسترسی ندارید.');
+
         return redirect()->route('invoices.show', $invoice);
     }
 
@@ -264,6 +267,7 @@ class InvoiceController extends Controller
         }
         $invoice->update(['status' => Invoice::STATUS_FINAL]);
         $invoice->applyContactBalanceForInvoice();
+
         return redirect()->route('invoices.show', $invoice)->with('success', 'فاکتور نهایی شد. اکنون می‌توانید پرداخت ثبت کنید.');
     }
 
@@ -294,6 +298,7 @@ class InvoiceController extends Controller
         $paymentOptions = PaymentOption::orderBy('sort')->get();
         $remaining = (float) $invoice->total - $invoice->totalPaid();
         $defaultPaidAt = FormatHelper::shamsi(now());
+
         return view('invoices.set-paid', compact('invoice', 'paymentOptions', 'remaining', 'defaultPaidAt'));
     }
 
@@ -311,7 +316,7 @@ class InvoiceController extends Controller
         if (empty($data['payment_option_id']) && empty($data['contact_id'])) {
             return back()->withErrors(['payment_option_id' => 'یکی از حساب بانکی یا مخاطب را انتخاب کنید.'])->withInput();
         }
-        if (!empty($data['payment_option_id']) && !empty($data['contact_id'])) {
+        if (! empty($data['payment_option_id']) && ! empty($data['contact_id'])) {
             return back()->withErrors(['payment_option_id' => 'فقط یکی از حساب بانکی یا مخاطب را انتخاب کنید.'])->withInput();
         }
         $paidAt = trim($data['paid_at']);
@@ -330,6 +335,7 @@ class InvoiceController extends Controller
         $invoice->payments()->save($payment);
         $payment->applyInvoiceContactBalance();
         $payment->applyContactBalance();
+
         return redirect()->route('invoices.show', $invoice)->with('success', 'پرداخت ثبت شد.');
     }
 
@@ -343,6 +349,7 @@ class InvoiceController extends Controller
         $payment->reverseInvoiceContactBalance();
         $payment->reverseContactBalance();
         $payment->delete();
+
         return back()->with('success', 'پرداخت حذف شد.');
     }
 
@@ -412,7 +419,7 @@ class InvoiceController extends Controller
         if ($feeAmount) {
             $feeData = $baseData;
             $feeData['amount'] = $feeAmount;
-            $feeData['notes'] = trim(($feeData['notes'] ?? '') . ' (کارمزد انتقال)');
+            $feeData['notes'] = trim(($feeData['notes'] ?? '').' (کارمزد انتقال)');
             $feeTx = ContactTransaction::create($feeData);
             $feeTx->applyBalances();
 
@@ -430,7 +437,7 @@ class InvoiceController extends Controller
     {
         abort_unless($invoice->isVisibleTo(request()->user()), 403, 'شما به این فاکتور دسترسی ندارید.');
 
-        $invoice->load('contact', 'items');
+        $invoice->load(['contact.contactPhones', 'items']);
         $paymentOptions = $invoice->selectedPaymentOptions();
         $printExtras = $this->printExtras($invoice);
 
@@ -440,7 +447,7 @@ class InvoiceController extends Controller
     /** No-login printable invoice via signed URL (for sharing with customer). */
     public function publicPrint(Invoice $invoice)
     {
-        $invoice->load('contact', 'items');
+        $invoice->load(['contact.contactPhones', 'items']);
         $paymentOptions = $invoice->selectedPaymentOptions();
         $printExtras = $this->printExtras($invoice);
 
@@ -464,7 +471,7 @@ class InvoiceController extends Controller
         $link = $invoice->relationLoaded('formLink') ? $invoice->formLink : $invoice->formLink()->first();
         if ($link) {
             $link->load('form:id,title,description');
-            $invoiceFormUrl = url('/f/' . $link->code . '?' . http_build_query([
+            $invoiceFormUrl = url('/f/'.$link->code.'?'.http_build_query([
                 'invoice_id' => $invoice->id,
                 'invoice_number' => $invoice->invoice_number ?: $invoice->id,
             ]));
@@ -484,7 +491,7 @@ class InvoiceController extends Controller
     {
         abort_unless($invoice->isVisibleTo(request()->user()), 403, 'شما به این فاکتور دسترسی ندارید.');
 
-        $invoice->load('contact', 'items');
+        $invoice->load(['contact.contactPhones', 'items']);
         $paymentOptions = $invoice->selectedPaymentOptions();
         $printExtras = $this->printExtras($invoice);
 
@@ -498,13 +505,13 @@ class InvoiceController extends Controller
                 ->setOption('isFontSubsettingEnabled', true)
                 ->setOption('chroot', [public_path(), base_path('storage')]);
 
-            $response = $pdf->download('invoice-' . ($invoice->invoice_number ?: $invoice->id) . '.pdf');
+            $response = $pdf->download('invoice-'.($invoice->invoice_number ?: $invoice->id).'.pdf');
 
             ini_set('memory_limit', $prevMemory);
 
             return $response;
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('PDF generation failed: ' . $e->getMessage(), [
+            \Illuminate\Support\Facades\Log::error('PDF generation failed: '.$e->getMessage(), [
                 'invoice_id' => $invoice->id,
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -520,6 +527,7 @@ class InvoiceController extends Controller
             return $default;
         }
         $value = FormatHelper::persianToEnglish((string) $value);
+
         return (int) preg_replace('/[^0-9-]/', '', $value) ?: $default;
     }
 
@@ -541,7 +549,7 @@ class InvoiceController extends Controller
     {
         $items = [];
         $raw = $request->get('items', []);
-        if (!is_array($raw)) {
+        if (! is_array($raw)) {
             return $items;
         }
         foreach ($raw as $idx => $item) {
@@ -554,7 +562,7 @@ class InvoiceController extends Controller
             $rawAmount = is_array($item) ? ($item['amount'] ?? null) : null;
             $amount = $rawAmount !== null && $rawAmount !== '' ? $this->numericInput($rawAmount, 0) : (int) round($qty * $price);
             $productId = null;
-            if (!empty($item['product_id']) && Product::query()->visibleToUser($request->user())->where('id', $item['product_id'])->exists()) {
+            if (! empty($item['product_id']) && Product::query()->visibleToUser($request->user())->where('id', $item['product_id'])->exists()) {
                 $productId = (int) $item['product_id'];
             }
             $items[] = [
@@ -566,6 +574,7 @@ class InvoiceController extends Controller
                 'sort' => $idx,
             ];
         }
+
         return $items;
     }
 
@@ -598,6 +607,7 @@ class InvoiceController extends Controller
                 $errors['due_date'] = 'تاریخ سررسید معتبر نیست. فرمت صحیح: ۱۴۰۳/۱۱/۱۳';
             }
         }
+
         return $errors;
     }
 
@@ -612,6 +622,7 @@ class InvoiceController extends Controller
             ->orderBy('form_id')
             ->orderBy('id')
             ->get();
+
         return $links->unique('form_id')->values();
     }
 
@@ -622,6 +633,7 @@ class InvoiceController extends Controller
         }
         $id = (int) $value;
         $exists = \App\Models\FormLink::where('id', $id)->whereNull('contact_id')->whereNull('lead_id')->exists();
+
         return $exists ? $id : null;
     }
 
@@ -632,7 +644,7 @@ class InvoiceController extends Controller
     private function assignInvoiceFormLink(Invoice $invoice, int $templateFormLinkId): void
     {
         $template = FormLink::find($templateFormLinkId);
-        if (!$template) {
+        if (! $template) {
             return;
         }
         $newLink = FormLink::create([
@@ -650,11 +662,11 @@ class InvoiceController extends Controller
      */
     private function resolveInvoiceFormLinkId(Invoice $invoice, ?int $templateFormLinkId): ?int
     {
-        if (!$templateFormLinkId) {
+        if (! $templateFormLinkId) {
             return null;
         }
         $template = FormLink::find($templateFormLinkId);
-        if (!$template) {
+        if (! $template) {
             return null;
         }
         $current = $invoice->formLink()->first();
@@ -668,6 +680,7 @@ class InvoiceController extends Controller
             'lead_id' => null,
             'task_id' => null,
         ]);
+
         return $newLink->id;
     }
 
@@ -695,7 +708,7 @@ class InvoiceController extends Controller
 
         $request->validate(['file' => 'required|file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf']);
         $file = $request->file('file');
-        $dir = 'attachments/invoices/' . $invoice->id;
+        $dir = 'attachments/invoices/'.$invoice->id;
         $path = $file->store($dir, 'public');
         $invoice->attachments()->create([
             'path' => $path,
@@ -703,6 +716,7 @@ class InvoiceController extends Controller
             'mime_type' => $file->getMimeType(),
             'size' => $file->getSize(),
         ]);
+
         return redirect()->route('invoices.show', $invoice)->with('success', 'فایل پیوست شد.');
     }
 
@@ -715,6 +729,7 @@ class InvoiceController extends Controller
         }
         Storage::disk('public')->delete($attachment->path);
         $attachment->delete();
+
         return redirect()->route('invoices.show', $invoice)->with('success', 'پیوست حذف شد.');
     }
 
@@ -731,8 +746,8 @@ class InvoiceController extends Controller
         };
 
         $label = $invoice->type === Invoice::TYPE_BUY ? 'رسید' : 'فاکتور';
-        $titleBase = $label . ' ' . ($invoice->invoice_number ?? '#' . $invoice->id) . ' — ' . ($invoice->contact->name ?? '');
-        $reminderTitle = 'پیگیری ' . $titleBase;
+        $titleBase = $label.' '.($invoice->invoice_number ?? '#'.$invoice->id).' — '.($invoice->contact->name ?? '');
+        $reminderTitle = 'پیگیری '.$titleBase;
 
         $reminder = Reminder::create([
             'title' => $reminderTitle,

@@ -227,6 +227,12 @@
                             @include('components._icons', ['name' => 'clipboard-list', 'class' => 'w-4 h-4 shrink-0'])
                             <span>فاکتورها</span>
                         </a>
+                        @if(auth()->user()?->canModule('expenses', \App\Models\User::ABILITY_VIEW))
+                        <a href="{{ route('expenses.index') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('expenses.*')]) title="هزینه‌های عملیاتی" style="display: inline-flex; align-items: center; gap: 0.375rem;" @if(request()->routeIs('expenses.*')) aria-current="page" @endif>
+                            @include('components._icons', ['name' => 'credit-card', 'class' => 'w-4 h-4 shrink-0'])
+                            <span>هزینه</span>
+                        </a>
+                        @endif
                         <a href="{{ route('leads.index') }}" @class(['nav-link', 'nav-link-icon-only', 'nav-link-active' => request()->routeIs('leads.*') && ! request()->routeIs('leads.create')]) title="سرنخ‌ها" style="display: inline-flex; align-items: center; gap: 0.375rem;" @if(request()->routeIs('leads.*') && ! request()->routeIs('leads.create')) aria-current="page" @endif>
                             @include('components._icons', ['name' => 'funnel', 'class' => 'w-4 h-4 shrink-0'])
                             <span>سرنخ‌ها</span>
@@ -266,6 +272,9 @@
                             <div class="nav-dropdown-section">
                                 <div class="nav-dropdown-label">گزارش‌ها</div>
                                 <a href="{{ route('reports.business.index') }}" role="menuitem">@include('components._icons', ['name' => 'chart-bar', 'class' => 'w-4 h-4 shrink-0']) گزارش‌های مالی</a>
+                                @if(auth()->user()?->canModule('expenses', \App\Models\User::ABILITY_VIEW))
+                                <a href="{{ route('expenses.index') }}" role="menuitem">@include('components._icons', ['name' => 'credit-card', 'class' => 'w-4 h-4 shrink-0']) هزینه عملیاتی</a>
+                                @endif
                                 <a href="{{ route('reports.servqual') }}" role="menuitem">@include('components._icons', ['name' => 'chart-bar', 'class' => 'w-4 h-4 shrink-0']) کیفیت خدمات (SERVQUAL)</a>
                             </div>
                             <div class="nav-dropdown-section">

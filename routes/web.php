@@ -9,8 +9,11 @@ use App\Http\Controllers\CustomerPriceListController;
 use App\Http\Controllers\CustomerProductController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataBackupController;
+use App\Http\Controllers\ExpenseCategoryController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InstanceSyncController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\InvoiceItemCostController;
 use App\Http\Controllers\LeadChannelController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\PaymentOptionController;
@@ -103,6 +106,15 @@ Route::middleware('auth')->group(function () {
     Route::get('api/contacts/search', [ContactController::class, 'searchApi'])->name('contacts.search.api');
     Route::get('api/contacts/{contact}', [ContactController::class, 'showApi'])->name('contacts.show.api');
 
+    Route::get('invoices/{invoice}/item-costs', [InvoiceItemCostController::class, 'show'])->name('invoices.item-costs.show');
+    Route::get('invoices/{invoice}/item-costs/search-buy-receipts', [InvoiceItemCostController::class, 'searchBuyReceipts'])->name('invoices.item-costs.search-buy');
+    Route::get('invoices/{invoice}/item-costs/search-expenses', [InvoiceItemCostController::class, 'searchExpenses'])->name('invoices.item-costs.search-expenses');
+    Route::get('invoices/{invoice}/item-costs/buy-receipts/{buyInvoice}/lines', [InvoiceItemCostController::class, 'buyReceiptLines'])->name('invoices.item-costs.buy-lines');
+    Route::post('invoices/{invoice}/item-costs', [InvoiceItemCostController::class, 'store'])->name('invoices.item-costs.store');
+    Route::post('invoices/{invoice}/item-costs/expense', [InvoiceItemCostController::class, 'storeExpense'])->name('invoices.item-costs.expense.store');
+    Route::delete('invoices/{invoice}/item-costs/expense/{expense_allocation}', [InvoiceItemCostController::class, 'destroyExpense'])->name('invoices.item-costs.expense.destroy');
+    Route::delete('invoices/{invoice}/item-costs/{allocation}', [InvoiceItemCostController::class, 'destroy'])->name('invoices.item-costs.destroy');
+
     Route::resource('invoices', InvoiceController::class);
     Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');
     // Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf'); // Disabled - fix PDF generation later
@@ -117,6 +129,8 @@ Route::middleware('auth')->group(function () {
     Route::post('invoices/{invoice}/attachments', [InvoiceController::class, 'storeAttachment'])->name('invoices.attachments.store');
     Route::delete('invoices/{invoice}/attachments/{attachment}', [InvoiceController::class, 'destroyAttachment'])->name('invoices.attachments.destroy');
 
+    Route::resource('expenses', ExpenseController::class);
+
     Route::resource('subscriptions', SubscriptionController::class);
 
     Route::get('settings/payment-options', [PaymentOptionController::class, 'index'])->name('settings.payment-options');
@@ -128,6 +142,10 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/lead-channels', [LeadChannelController::class, 'index'])->name('settings.lead-channels');
     Route::post('settings/lead-channels', [LeadChannelController::class, 'store'])->name('settings.lead-channels.store');
     Route::delete('settings/lead-channels/{lead_channel}', [LeadChannelController::class, 'destroy'])->name('settings.lead-channels.destroy');
+
+    Route::get('settings/expense-categories', [ExpenseCategoryController::class, 'index'])->name('settings.expense-categories');
+    Route::post('settings/expense-categories', [ExpenseCategoryController::class, 'store'])->name('settings.expense-categories.store');
+    Route::delete('settings/expense-categories/{expense_category}', [ExpenseCategoryController::class, 'destroy'])->name('settings.expense-categories.destroy');
     Route::get('settings/company', [SettingController::class, 'companyIndex'])->name('settings.company');
     Route::get('settings/company/address', [SettingController::class, 'companyAddress'])->name('settings.company.address');
     Route::post('settings/company/address', [SettingController::class, 'updateCompany'])->name('settings.company.update');
